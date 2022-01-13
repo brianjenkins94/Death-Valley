@@ -171,6 +171,8 @@ enum ErrorCode {
 }
 
 class DefaultOptions {
+	public static url = "http://google.github.io/lovefield/error_lookup/src/error_lookup.html?c=";
+
 	public readonly debugMode: boolean;
 
 	public readonly memoryOnly: boolean;
@@ -178,8 +180,6 @@ class DefaultOptions {
 	public readonly exceptionUrl: string;
 
 	public readonly useGetAll: boolean;
-
-	public static url = "http://google.github.io/lovefield/error_lookup/src/error_lookup.html?c=";
 
 	public constructor() {
 		this.debugMode = false;
@@ -3243,7 +3243,7 @@ class ValuePredicate extends PredicateNode {
 		}
 	}
 
-	toString(): string {
+	override toString(): string {
 		return (
 			"value_pred("
 			+ this.column.getNormalizedName()
@@ -3480,7 +3480,7 @@ class SelectContext extends Context {
 		return context;
 	}
 
-	bind(values: unknown[]): this {
+	override bind(values: unknown[]): this {
 		super.bind(values);
 
 		if (this.limitBinder !== undefined && this.limitBinder !== null) {
@@ -3656,7 +3656,7 @@ class ObserverQueryTask extends QueryTask {
 		return TaskPriority.OBSERVER_QUERY_TASK;
 	}
 
-	onSuccess(results: Relation[]): void {
+	override onSuccess(results: Relation[]): void {
 		this.queries.forEach((query, index) => {
 			this.observerRegistry.updateResultsForQuery(query as SelectContext, results[index]);
 		});
@@ -6176,14 +6176,14 @@ class MultiKeyComparator implements Comparator {
 // checking every time, where the wrapper does it only once. This resulted in
 // performance difference and therefore the NullableIndex is kept.
 class SimpleComparatorWithNull extends SimpleComparator {
-	static compareAscending(lhs: SingleKey, rhs: SingleKey): Favor {
+	static override compareAscending(lhs: SingleKey, rhs: SingleKey): Favor {
 		if (lhs === null) {
 			return rhs === null ? Favor.TIE : Favor.RHS;
 		}
 		return rhs === null ? Favor.LHS : SimpleComparator.compareAscending(lhs, rhs);
 	}
 
-	static compareDescending(lhs: SingleKey, rhs: SingleKey): Favor {
+	static override compareDescending(lhs: SingleKey, rhs: SingleKey): Favor {
 		return SimpleComparatorWithNull.compareAscending(rhs, lhs);
 	}
 
@@ -6194,16 +6194,16 @@ class SimpleComparatorWithNull extends SimpleComparator {
 			= order === Order.DESC ? SimpleComparatorWithNull.compareDescending : SimpleComparatorWithNull.compareAscending;
 	}
 
-	isInRange(key: SingleKey, range: SingleKeyRange): boolean {
+	override isInRange(key: SingleKey, range: SingleKeyRange): boolean {
 		return key === null ? range.isAll() : super.isInRange(key, range);
 	}
 
-	min(lhs: SingleKey, rhs: SingleKey): Favor {
+	override min(lhs: SingleKey, rhs: SingleKey): Favor {
 		const results = this.minMax(lhs, rhs);
 		return results === null ? super.min(lhs, rhs) : results;
 	}
 
-	max(lhs: SingleKey, rhs: SingleKey): Favor {
+	override max(lhs: SingleKey, rhs: SingleKey): Favor {
 		const results = this.minMax(lhs, rhs);
 		return results === null ? super.max(lhs, rhs) : results;
 	}
@@ -6706,7 +6706,7 @@ class UserQueryTask extends QueryTask {
 		return TaskPriority.USER_QUERY_TASK;
 	}
 
-	onSuccess(results: Relation[]): void {
+	override onSuccess(results: Relation[]): void {
 		// Depending on the type of this QueryTask either notify observers directly,
 		// or schedule on ObserverTask for queries that need to re-execute.
 		this.getType() === TransactionType.READ_ONLY ? this.notifyObserversDirectly(results) : this.scheduleObserverTask();
@@ -7128,7 +7128,7 @@ class CombinedPredicate extends PredicateNode {
 		return tables;
 	}
 
-	toString(): string {
+	override toString(): string {
 		return `combined_pred_${this.operator.toString()}`;
 	}
 
@@ -7290,7 +7290,7 @@ class JoinPredicate extends PredicateNode {
 		return new Relation(entries, relation.getTables());
 	}
 
-	toString(): string {
+	override toString(): string {
 		return (
 			"join_pred("
 			+ this.leftColumn.getNormalizedName()
@@ -7620,7 +7620,7 @@ class DeleteContext extends Context {
 		return context;
 	}
 
-	bind(values: unknown[]): this {
+	override bind(values: unknown[]): this {
 		super.bind(values);
 		this.bindValuesInSearchCondition(values);
 		return this;
@@ -7676,7 +7676,7 @@ class InsertContext extends Context {
 		return context;
 	}
 
-	bind(values: unknown[]): this {
+	override bind(values: unknown[]): this {
 		super.bind(values);
 
 		if (this.binder) {
@@ -7726,7 +7726,7 @@ class UpdateContext extends Context {
 		return context;
 	}
 
-	bind(values: unknown[]): this {
+	override bind(values: unknown[]): this {
 		super.bind(values);
 
 		this.set.forEach((set) => {
@@ -8174,7 +8174,7 @@ class DeleteBuilder extends BaseBuilder<DeleteContext> {
 		return this;
 	}
 
-	assertExecPreconditions(): void {
+	override assertExecPreconditions(): void {
 		super.assertExecPreconditions();
 		if (this.query.from === undefined || this.query.from === null) {
 			// 517: Invalid usage of delete().
@@ -8207,7 +8207,7 @@ class InsertBuilder extends BaseBuilder<InsertContext> {
 		this.query.allowReplace = allowReplace;
 	}
 
-	assertExecPreconditions(): void {
+	override assertExecPreconditions(): void {
 		super.assertExecPreconditions();
 		const context = this.query;
 
@@ -8341,7 +8341,7 @@ class AggregatedColumn
 		return this.child.getTable() as BaseTable;
 	}
 
-	toString(): string {
+	override toString(): string {
 		return this.getNormalizedName();
 	}
 
@@ -8427,7 +8427,7 @@ class SelectBuilder extends BaseBuilder<SelectContext> {
 		this.checkAggregations();
 	}
 
-	assertExecPreconditions(): void {
+	override assertExecPreconditions(): void {
 		super.assertExecPreconditions();
 		const context = this.query;
 		if (context.from === undefined || context.from === null) {
@@ -8735,7 +8735,7 @@ class UpdateBuilder extends BaseBuilder<UpdateContext> {
 		return this;
 	}
 
-	assertExecPreconditions(): void {
+	override assertExecPreconditions(): void {
 		super.assertExecPreconditions();
 		if (this.query.set === undefined || this.query.set === null) {
 			// 532: Invalid usage of update().
@@ -8776,7 +8776,7 @@ class SelectNode extends LogicalQueryPlanNode {
 		super();
 	}
 
-	toString(): string {
+	override toString(): string {
 		return `select(${this.predicate.toString()})`;
 	}
 }
@@ -8864,7 +8864,7 @@ class CrossProductNode extends LogicalQueryPlanNode {
 		super();
 	}
 
-	toString(): string {
+	override toString(): string {
 		return "cross_product";
 	}
 }
@@ -8940,7 +8940,7 @@ class DeleteNode extends LogicalQueryPlanNode {
 		super();
 	}
 
-	toString(): string {
+	override toString(): string {
 		return `delete(${this.table.getName()})`;
 	}
 }
@@ -8967,7 +8967,7 @@ class TableAccessNode extends LogicalQueryPlanNode {
 		super();
 	}
 
-	toString(): string {
+	override toString(): string {
 		const table = this.table as BaseTable;
 		const postfix = table.getAlias() ? ` as ${table.getAlias()}` : "";
 		return `table_access(${this.table.getName()}${postfix})`;
@@ -9008,7 +9008,7 @@ class JoinNode extends LogicalQueryPlanNode {
 		super();
 	}
 
-	toString(): string {
+	override toString(): string {
 		return (
 			`join(type: ${this.isOuterJoin ? "outer" : "inner"}, `
 			+ `${this.predicate.toString()})`
@@ -9068,7 +9068,7 @@ class InsertNode extends LogicalQueryPlanNode {
 		super();
 	}
 
-	toString(): string {
+	override toString(): string {
 		return `insert(${this.table.getName()}, R${this.values.length})`;
 	}
 }
@@ -9078,7 +9078,7 @@ class InsertOrReplaceNode extends LogicalQueryPlanNode {
 		super();
 	}
 
-	toString(): string {
+	override toString(): string {
 		return `insertOrReplace(${this.table.getName()}, R${this.values.length})`;
 	}
 }
@@ -9270,7 +9270,7 @@ class AggregationNode extends LogicalQueryPlanNode {
 		super();
 	}
 
-	toString(): string {
+	override toString(): string {
 		return `aggregation(${this.columns.toString()})`;
 	}
 }
@@ -9280,7 +9280,7 @@ class GroupByNode extends LogicalQueryPlanNode {
 		super();
 	}
 
-	toString(): string {
+	override toString(): string {
 		return `group_by(${this.columns.toString()})`;
 	}
 }
@@ -9290,7 +9290,7 @@ class LimitNode extends LogicalQueryPlanNode {
 		super();
 	}
 
-	toString(): string {
+	override toString(): string {
 		return `limit(${this.limit})`;
 	}
 }
@@ -9300,7 +9300,7 @@ class OrderByNode extends LogicalQueryPlanNode {
 		super();
 	}
 
-	toString(): string {
+	override toString(): string {
 		return `order_by(${SelectContext.orderByToString(this.orderBy)})`;
 	}
 }
@@ -9310,7 +9310,7 @@ class ProjectNode extends LogicalQueryPlanNode {
 		super();
 	}
 
-	toString(): string {
+	override toString(): string {
 		const columns = this.groupByColumns ? this.groupByColumns.map((col) => col.getNormalizedName()).join(", ") : "";
 		const postfix = columns.length ? `, groupBy(${columns})` : "";
 		return `project(${this.columns.toString()}${postfix})`;
@@ -9322,7 +9322,7 @@ class SkipNode extends LogicalQueryPlanNode {
 		super();
 	}
 
-	toString(): string {
+	override toString(): string {
 		return `skip(${this.skip})`;
 	}
 }
@@ -9489,7 +9489,7 @@ class UpdateNode extends LogicalQueryPlanNode {
 		super();
 	}
 
-	toString(): string {
+	override toString(): string {
 		return `update(${this.table.getName()})`;
 	}
 }
@@ -9639,7 +9639,7 @@ class StarColumn extends NonPredicateProvider implements BaseColumn {
 		return this.getName();
 	}
 
-	toString(): string {
+	override toString(): string {
 		return this.getNormalizedName();
 	}
 
@@ -9884,7 +9884,7 @@ abstract class PhysicalQueryPlanNode extends TreeNode {
 		}
 	}
 
-	toString(): string {
+	override toString(): string {
 		return "dummy_node";
 	}
 
@@ -9943,7 +9943,7 @@ class AggregationStep extends PhysicalQueryPlanNode {
 		super(PhysicalQueryPlanNode.ANY, ExecType.FIRST_CHILD);
 	}
 
-	toString(): string {
+	override toString(): string {
 		const columnNames = this.aggregatedColumns.map((column) => column.getNormalizedName());
 
 		return `aggregation(${columnNames.toString()})`;
@@ -9967,7 +9967,7 @@ class CrossProductStep extends PhysicalQueryPlanNode {
 		super(2, ExecType.ALL);
 	}
 
-	toString(): string {
+	override toString(): string {
 		return "cross_product";
 	}
 
@@ -10007,7 +10007,7 @@ class DeleteStep extends PhysicalQueryPlanNode {
 		super(1, ExecType.FIRST_CHILD);
 	}
 
-	toString(): string {
+	override toString(): string {
 		return `delete(${this.table.getName()})`;
 	}
 
@@ -10066,7 +10066,7 @@ class GetRowCountStep extends PhysicalQueryPlanNode {
 		this.indexStore = global.getService(Service.INDEX_STORE);
 	}
 
-	toString(): string {
+	override toString(): string {
 		return `get_row_count(${this.table.getName()})`;
 	}
 
@@ -10093,7 +10093,7 @@ class TableAccessFullStep extends PhysicalQueryPlanNode {
 		this.indexStore = global.getService(Service.INDEX_STORE);
 	}
 
-	toString(): string {
+	override toString(): string {
 		let postfix = "";
 		const table = this.table as BaseTable;
 		if (table.getAlias()) {
@@ -10171,7 +10171,7 @@ class GroupByStep extends PhysicalQueryPlanNode {
 		super(1, ExecType.FIRST_CHILD);
 	}
 
-	toString(): string {
+	override toString(): string {
 		const columnNames = this.groupByColumns.map((column) => column.getNormalizedName());
 		return `groupBy(${columnNames.toString()})`;
 	}
@@ -10230,7 +10230,7 @@ class JoinStep extends PhysicalQueryPlanNode {
 		this.indexJoinInfo = null as unknown as IndexJoinInfo;
 	}
 
-	toString(): string {
+	override toString(): string {
 		return (
 			`join(type: ${this.isOuterJoin ? "outer" : "inner"}, `
 			+ `impl: ${this.algorithm}, ${this.predicate.toString()})`
@@ -10279,7 +10279,7 @@ class NoOpStep extends PhysicalQueryPlanNode {
 		super(PhysicalQueryPlanNode.ANY, ExecType.NO_CHILD);
 	}
 
-	toString(): string {
+	override toString(): string {
 		return `no_op_step(${this.relations[0].getTables().join(",")})`;
 	}
 
@@ -10704,7 +10704,7 @@ class IndexRangeScanStep extends PhysicalQueryPlanNode {
 		this.useSkip = false;
 	}
 
-	toString(): string {
+	override toString(): string {
 		return (
 			`index_range_scan(${this.index.getNormalizedName()}, ?, `
 			+ (this.reverseOrder ? "reverse" : "natural")
@@ -10714,7 +10714,7 @@ class IndexRangeScanStep extends PhysicalQueryPlanNode {
 		);
 	}
 
-	toContextString(context: SelectContext): string {
+	override toContextString(context: SelectContext): string {
 		let results = this.toString();
 		const keyRanges = this.keyRangeCalculator.getKeyRangeCombinations(context);
 		results = results.replace("?", keyRanges.toString());
@@ -10762,11 +10762,11 @@ class SelectStep extends PhysicalQueryPlanNode {
 		super(1, ExecType.FIRST_CHILD);
 	}
 
-	toString(): string {
+	override toString(): string {
 		return "select(?)";
 	}
 
-	toContextString(context: Context): string {
+	override toContextString(context: Context): string {
 		const predicate = context.getPredicate(this.predicateId);
 		return this.toString().replace("?", predicate.toString());
 	}
@@ -10790,7 +10790,7 @@ class TableAccessByRowIdStep extends PhysicalQueryPlanNode {
 		this.cache = global.getService(Service.CACHE);
 	}
 
-	toString(): string {
+	override toString(): string {
 		return `table_access_by_row_id(${this.table.getName()})`;
 	}
 
@@ -10925,7 +10925,7 @@ class InsertStep extends PhysicalQueryPlanNode {
 		this.indexStore = global.getService(Service.INDEX_STORE);
 	}
 
-	toString(): string {
+	override toString(): string {
 		return `insert(${this.table.getName()})`;
 	}
 
@@ -10950,7 +10950,7 @@ class InsertOrReplaceStep extends PhysicalQueryPlanNode {
 		this.indexStore = global.getService(Service.INDEX_STORE);
 	}
 
-	toString(): string {
+	override toString(): string {
 		return `insert_replace(${this.table.getName()})`;
 	}
 
@@ -10972,11 +10972,11 @@ class LimitStep extends PhysicalQueryPlanNode {
 		super(1, ExecType.FIRST_CHILD);
 	}
 
-	toString(): string {
+	override toString(): string {
 		return "limit(?)";
 	}
 
-	toContextString(context: SelectContext): string {
+	override toContextString(context: SelectContext): string {
 		return this.toString().replace("?", context.limit.toString());
 	}
 
@@ -10996,7 +10996,7 @@ class OrderByStep extends PhysicalQueryPlanNode {
 		super(PhysicalQueryPlanNode.ANY, ExecType.FIRST_CHILD);
 	}
 
-	toString(): string {
+	override toString(): string {
 		return `order_by(${SelectContext.orderByToString(this.orderBy)})`;
 	}
 
@@ -11177,7 +11177,7 @@ class ProjectStep extends PhysicalQueryPlanNode {
 		super(PhysicalQueryPlanNode.ANY, ExecType.FIRST_CHILD);
 	}
 
-	toString(): string {
+	override toString(): string {
 		let postfix = "";
 		if (this.groupByColumns) {
 			const groupBy = this.groupByColumns
@@ -11231,11 +11231,11 @@ class SkipStep extends PhysicalQueryPlanNode {
 		super(1, ExecType.FIRST_CHILD);
 	}
 
-	toString(): string {
+	override toString(): string {
 		return "skip(?)";
 	}
 
-	toContextString(context: SelectContext): string {
+	override toContextString(context: SelectContext): string {
 		return this.toString().replace("?", context.skip.toString());
 	}
 
@@ -11328,7 +11328,7 @@ class MultiIndexRangeScanStep extends PhysicalQueryPlanNode {
 		super(PhysicalQueryPlanNode.ANY, ExecType.ALL);
 	}
 
-	toString(): string {
+	override toString(): string {
 		return "multi_index_range_scan()";
 	}
 
@@ -11708,7 +11708,7 @@ class UpdateStep extends PhysicalQueryPlanNode {
 		super(1, ExecType.FIRST_CHILD);
 	}
 
-	toString(): string {
+	override toString(): string {
 		return `update(${this.table.getName()})`;
 	}
 
@@ -13160,7 +13160,7 @@ class RowImpl extends Row {
 		this.payload_ = payload || this.defaultPayload();
 	}
 
-	defaultPayload(): PayloadType {
+	override defaultPayload(): PayloadType {
 		if (this.columns === undefined) {
 			// Called from base ctor, ignore for now.
 			return null as unknown as PayloadType;
@@ -13173,7 +13173,7 @@ class RowImpl extends Row {
 		return obj;
 	}
 
-	toDbPayload(): PayloadType {
+	override toDbPayload(): PayloadType {
 		const obj: PayloadType = {};
 		this.columns.forEach((col) => {
 			const key = col.getName();
@@ -13191,7 +13191,7 @@ class RowImpl extends Row {
 		return obj;
 	}
 
-	keyOfIndex(indexName: string): Key {
+	override keyOfIndex(indexName: string): Key {
 		const key = super.keyOfIndex(indexName);
 		if (key === null) {
 			const fn = this.functionMap.get(indexName);
