@@ -1,0 +1,41 @@
+{
+  "name": "death-valley",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "build": "rollup --config --watch",
+    "pretest": "{ (git clone https://github.com/arthurhsu/lovefield-ts.git && cd lovefield-ts && npm install) ; } &> /dev/null ; exit 0",
+    "serve": "npx brianjenkins94/serve",
+    "start": "ts-node-transpile-only example.ts",
+    "test": "ts-mocha \"tests/*.spec.ts\" ; find . -type d -name \"ms*\" -maxdepth 1 -exec rm -rf \"{}\" \\;"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/brianjenkins94/Death-Valley.git"
+  },
+  "author": "Brian Jenkins",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/brianjenkins94/Death-Valley/issues"
+  },
+  "homepage": "https://github.com/brianjenkins94/Death-Valley#readme",
+  "dependencies": {
+    "@types/node": "latest",
+    "deferred-leveldown": "latest",
+    "encoding-down": "latest",
+    "leveldown": "latest",
+    "ts-node": "latest",
+    "typescript": "latest"
+  },
+  "devDependencies": {
+    "@rollup/plugin-typescript": "latest",
+    "@types/mocha": "latest",
+    "@typescript-eslint/eslint-plugin": "latest",
+    "@typescript-eslint/parser": "latest",
+    "chai": "latest",
+    "eslint": "^7.32.0",
+    "lovefield-ts": "latest",
+    "rollup-plugin-postprocess": "latest",
+    "ts-mocha": "latest"
+  }
+}
