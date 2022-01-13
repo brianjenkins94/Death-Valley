@@ -297,41 +297,41 @@ class ServiceId<T> {
 interface RawBackStore {
 	// Returns original database instance that can be used for low-level data
 	// manipulations, not really useful for IndexedDB.
-	getRawDBInstance(): unknown;
+	getRawDBInstance: () => unknown;
 
 	// Returns original database upgrade transaction.
-	getRawTransaction(): unknown;
+	getRawTransaction: () => unknown;
 
 	// Removes a table from data store. Lovefield does not support automatic
 	// dropping table. Users must call dropTable manually during upgrade to purge
 	// table that is no longer used from database.
-	dropTable(tableName: string): Promise<void>;
+	dropTable: (tableName: string) => Promise<void>;
 
 	// Adds a column to existing table rows. This API does not provide any
 	// consistency check. Callers are solely responsible for making sure the
 	// values of |columnName| and |defaultValue| are consistent with the new
 	// schema.
-	addTableColumn(
+	addTableColumn: (
 		tableName: string,
 		columnName: string,
-		defaultValue: string | number | boolean | Date | ArrayBuffer | null
-	): Promise<void>;
+		defaultValue: ArrayBuffer | Date | boolean | number | string | null
+	) => Promise<void>;
 
-	dropTableColumn(tableName: string, columnName: string): Promise<void>;
+	dropTableColumn: (tableName: string, columnName: string) => Promise<void>;
 
 	// Renames a column for all existing table rows.
-	renameTableColumn(
+	renameTableColumn: (
 		tableName: string,
 		oldColumnName: string,
 		newColumnName: string
-	): Promise<void>;
+	) => Promise<void>;
 
 	// Creates a Lovefield row structure that can be stored into raw DB instance
 	// via raw transaction.
-	createRow(payload: object): Row;
+	createRow: (payload: object) => Row;
 
 	// Returns version of existing DB.
-	getVersion(): number;
+	getVersion: () => number;
 
 	// Offers last resort for data rescue. This function dumps all rows in the
 	// database to one single JSON object.
@@ -342,99 +342,99 @@ interface RawBackStore {
 	//        ...
 	//        "tableM": [ ... ]
 	//     }
-	dump(): Promise<object>;
+	dump: () => Promise<object>;
 }
 
 // @emptyExport
 interface Predicate {
 	// Returns relation that holds only the entries satisfying given predicate.
-	eval(relation: Relation): Relation;
+	eval: (relation: Relation) => Relation;
 
 	// Reverses the predicate: predicate evaluates to true where before it was
 	// evaluating to false, and vice versa.
-	setComplement(isComplement: boolean): void;
+	setComplement: (isComplement: boolean) => void;
 
 	// Returns a clone of the predicate.
-	copy(): Predicate;
+	copy: () => Predicate;
 
 	// Returns an array of all columns involved in this predicate. The optional
 	// results array as the parameter holds previous results, given that this
 	// function is called recursively.  If provided any column will be added on
 	// that array. If not provided a new array will be allocated.
-	getColumns(results?: Column[]): Column[];
+	getColumns: (results?: Column[]) => Column[];
 
 	// Returns an array of all tables involved in this predicate. The optional
 	// results array as the parameter holds previous results, given that this
 	// function is called recursively.  If provided any table will be added on
 	// that array. If not provided a new array will be allocated.
-	getTables(results?: Set<Table>): Set<Table>;
+	getTables: (results?: Set<Table>) => Set<Table>;
 
-	setId(id: number): void;
-	getId(): number;
+	setId: (id: number) => void;
+	getId: () => number;
 }
 
-type ValueOperandType = Binder | boolean | number | string | Date;
+type ValueOperandType = Binder | Date | boolean | number | string;
 type OperandType = Column | ValueOperandType;
 
 interface PredicateProvider {
 	// Equal to
-	eq(operand: OperandType): Predicate;
+	eq: (operand: OperandType) => Predicate;
 
 	// Not equal to
-	neq(operand: OperandType): Predicate;
+	neq: (operand: OperandType) => Predicate;
 
 	// Less than
-	lt(operand: OperandType): Predicate;
+	lt: (operand: OperandType) => Predicate;
 
 	// Less than or equals to
-	lte(operand: OperandType): Predicate;
+	lte: (operand: OperandType) => Predicate;
 
 	// Greater than
-	gt(operand: OperandType): Predicate;
+	gt: (operand: OperandType) => Predicate;
 
 	// Greater than or equals to
-	gte(operand: OperandType): Predicate;
+	gte: (operand: OperandType) => Predicate;
 
 	// JavaScript regex match
-	match(operand: Binder | RegExp): Predicate;
+	match: (operand: Binder | RegExp) => Predicate;
 
 	// Between test: to must be greater or equals to from.
-	between(from: ValueOperandType, to: ValueOperandType): Predicate;
+	between: (from: ValueOperandType, to: ValueOperandType) => Predicate;
 
 	// Array finding
-	in(values: Binder | ValueOperandType[]): Predicate;
+	in: (values: Binder | ValueOperandType[]) => Predicate;
 
 	// Nullity test
-	isNull(): Predicate;
+	isNull: () => Predicate;
 
 	// Non-nullity test
-	isNotNull(): Predicate;
+	isNotNull: () => Predicate;
 }
 
 // Public column interface
 interface Column extends PredicateProvider {
-	getName(): string;
-	getNormalizedName(): string;
+	getName: () => string;
+	getNormalizedName: () => string;
 
 	// Different from original Lovefield, moved from BaseColumn to here.
 	// This makes more sense since these getter calls are non-mutable and
 	// easier for TypeScript users to determine how to proper cast.
-	getTable(): Table;
-	getType(): Type;
-	isNullable(): boolean;
+	getTable: () => Table;
+	getType: () => Type;
+	isNullable: () => boolean;
 
 	// Additional function call, not existent in original Lovefield.
-	isUnique(): boolean;
+	isUnique: () => boolean;
 
 	// Alias the column, used in query.
-	as(alias: string): Column;
+	as: (alias: string) => Column;
 }
 
 // Public table interface.
 interface Table {
-	getName(): string;
-	as(alias: string): Table;
-	createRow(value?: object): Row;
+	getName: () => string;
+	as: (alias: string) => Table;
+	createRow: (value?: object) => Row;
 
 	// Individual accessor will return BaseColumn.
 	// This conflicts to private members in TableImpl, therefore use a more
@@ -443,12 +443,10 @@ interface Table {
 
 	// Given the indexed type is a big bummer in Typescript, add an additional
 	// method to make life easier.
-	col(name: string): Column;
+	col: (name: string) => Column;
 }
 
-interface PayloadType {
-	[key: string]: unknown;
-}
+type PayloadType = Record<string, unknown>;
 
 interface RawRow {
 	id: number;
@@ -458,8 +456,8 @@ interface RawRow {
 // Interface that models a table in runtime. This is different from schema
 // table. A runtime table is the collection of rows.
 interface RuntimeTable {
-	get(ids: number[]): Promise<Row[]>;
-	put(rows: Row[]): Promise<void>;
+	get: (ids: number[]) => Promise<Row[]>;
+	put: (rows: Row[]) => Promise<void>;
 
 	// If |disableClearTableOptimization| is true, implementations
 	// will avoid an optimization that clears the entire table, as opposed to
@@ -472,41 +470,41 @@ interface RuntimeTable {
 	// of IndexedDb on firefox, we can't do that. Callers must know to set this
 	// parameter to true if they want to do a put on the same table in the same
 	// transaction as this remove call.
-	remove(ids: number[], disableClearTableOptimization?: boolean): Promise<void>;
+	remove: (ids: number[], disableClearTableOptimization?: boolean) => Promise<void>;
 }
 
 interface TransactionStats {
-	success(): boolean;
-	insertedRowCount(): number;
-	updatedRowCount(): number;
-	deletedRowCount(): number;
-	changedTableCount(): number;
+	success: () => boolean;
+	insertedRowCount: () => number;
+	updatedRowCount: () => number;
+	deletedRowCount: () => number;
+	changedTableCount: () => number;
 }
 
 // Tx objects are wrappers of backstore-provided transactions. The interface
 // defines common methods for these wrappers.
 interface Tx {
-	getTable(
+	getTable: (
 		tableName: string,
 		deserializeFn: (value: RawRow) => Row,
 		tableType: TableType
-	): RuntimeTable;
+	) => RuntimeTable;
 
 	// Returns the journal associated with this transaction.
 	// The journal keeps track of all changes happened within the transaction.
 	// Returns null if this is a READ_ONLY transaction.
-	getJournal(): Journal | null;
+	getJournal: () => Journal | null;
 
 	// Commits transaction by applying all changes in this transaction's journal
 	// to the backing store.
-	commit(): Promise<unknown>;
+	commit: () => Promise<unknown>;
 
 	// Aborts transaction. Caller shall listen to rejection of commit() to detect
 	// end of transaction.
-	abort(): void;
+	abort: () => void;
 
 	// Returns transaction stats if transaction is finalized, otherwise null.
-	stats(): TransactionStats | null;
+	stats: () => TransactionStats | null;
 }
 
 // Interface for all backing stores to implement (Indexed DB, filesystem,
@@ -516,31 +514,31 @@ interface BackStore {
 	// |db| must be instance of RawBackStore.
 	// Returned promise contain raw type of the back store, e.g. IDBDatabase,
 	// caller to dynamic cast.
-	init(onUpgrade?: (db: RawBackStore) => Promise<unknown>): Promise<unknown>;
+	init: (onUpgrade?: (db: RawBackStore) => Promise<unknown>) => Promise<unknown>;
 
 	// Creates backstore native transaction that is tied to a given journal.
-	createTx(type: TransactionType, scope: Table[], journal?: Journal): Tx;
+	createTx: (type: TransactionType, scope: Table[], journal?: Journal) => Tx;
 
 	// Closes the database. This is just best-effort.
-	close(): void;
+	close: () => void;
 
 	// Returns one table based on table name.
-	getTableInternal(tableName: string): RuntimeTable;
+	getTableInternal: (tableName: string) => RuntimeTable;
 
 	// Subscribe to back store changes outside of this connection. Each change
 	// event corresponds to one transaction. The events will be fired in the order
 	// of reception, which implies the order of transactions happening. Each
 	// backstore will allow only one change handler.
-	subscribe(handler: (diffs: TableDiff[]) => void): void;
+	subscribe: (handler: (diffs: TableDiff[]) => void) => void;
 
 	// Unsubscribe current change handler.
-	unsubscribe(handler: (diffs: TableDiff[]) => void): void;
+	unsubscribe: (handler: (diffs: TableDiff[]) => void) => void;
 
 	// Notifies registered observers with table diffs.
-	notify(changes: TableDiff[]): void;
+	notify: (changes: TableDiff[]) => void;
 
 	// Whether this backstore supports the `import` operation.
-	supportsImport(): boolean;
+	supportsImport: () => boolean;
 }
 
 interface Pragma {
@@ -550,17 +548,17 @@ interface Pragma {
 
 // Models the return value of Database.getSchema().
 interface DatabaseSchema {
-	name(): string;
-	version(): number;
-	tables(): Table[];
-	table(name: string): Table;
-	pragma(): Pragma;
+	name: () => string;
+	version: () => number;
+	tables: () => Table[];
+	table: (name: string) => Table;
+	pragma: () => Pragma;
 }
 
 // TODO(arthurhsu): original SingleKey can be null.
-type SingleKey = string | number;
+type SingleKey = number | string;
 type MultiKey = SingleKey[];
-type Key = SingleKey | MultiKey;
+type Key = MultiKey | SingleKey;
 
 type KeyRange = SingleKeyRange[];
 
@@ -569,7 +567,7 @@ type KeyRange = SingleKeyRange[];
  * It offers methods to indicate which operand is "favorable".
  */
 interface Comparator {
-	compare(lhs: Key, rhs: Key): Favor;
+	compare: (lhs: Key, rhs: Key) => Favor;
 
 	/**
 	 * Returns an array of boolean which represents the relative positioning of
@@ -578,19 +576,19 @@ interface Comparator {
 	 * range projection covers any value left/right of the key (including the key
 	 * itself), then left/right will be set to true.
 	 */
-	compareRange(key: Key, range: Range): boolean[];
+	compareRange: (key: Key, range: Range) => boolean[];
 
 	/**
 	 * Finds which one of the two operands is the minimum in absolute terms.
 	 */
-	min(lhs: Key, rhs: Key): Favor;
+	min: (lhs: Key, rhs: Key) => Favor;
 
 	/**
 	 * Finds which one of the two operands is the maximum in absolute terms.
 	 */
-	max(lhs: Key, rhs: Key): Favor;
+	max: (lhs: Key, rhs: Key) => Favor;
 
-	isInRange(key: Key, range: Range): boolean;
+	isInRange: (key: Key, range: Range) => boolean;
 
 	/**
 	 * Whether the key's first dimension is in range's first dimension or not.
@@ -598,64 +596,64 @@ interface Comparator {
 	 * B-Tree shall stop looping when the first key is out of range since the tree
 	 * is sorted by first dimension.
 	 */
-	isFirstKeyInRange(key: Key, range: Range): boolean;
+	isFirstKeyInRange: (key: Key, range: Range) => boolean;
 
 	/**
 	 * Returns a range that represents all data.
 	 */
-	getAllRange(): Range;
+	getAllRange: () => Range;
 
 	/**
 	 * Binds unbound values to given key ranges, and sorts them so that these
 	 * ranges will be in the order from left to right.
 	 */
-	sortKeyRanges(keyRanges: Range[]): Range[];
+	sortKeyRanges: (keyRanges: Range[]) => Range[];
 
 	/**
 	 * Returns true if the given range is open ended on the left-hand-side.
 	 */
-	isLeftOpen(range: Range): boolean;
+	isLeftOpen: (range: Range) => boolean;
 
 	/**
 	 * Converts key range to keys.
 	 */
-	rangeToKeys(range: Range): Key[];
+	rangeToKeys: (range: Range) => Key[];
 
 	/**
 	 * Returns false if any dimension of the key contains null.
 	 */
-	comparable(key: Key): boolean;
+	comparable: (key: Key) => boolean;
 
 	/**
 	 * Returns number of key dimensions.
 	 */
-	keyDimensions(): number;
+	keyDimensions: () => number;
 }
 
 // Index used in runtime execution, lf.index.Index.
 interface RuntimeIndex {
 	// Returns normalized name for this index.
-	getName(): string;
+	getName: () => string;
 
 	// Inserts data into index. If the key already existed, append value to the
 	// value list. If the index does not support duplicate keys, adding duplicate
 	// keys will result in throwing CONSTRAINT error.
-	add(key: Key | SingleKey, value: number): void;
+	add: (key: Key | SingleKey, value: number) => void;
 
 	// Replaces data in index. All existing data for that key will be purged.
 	// If the key is not found, inserts the data.
-	set(key: Key | SingleKey, value: number): void;
+	set: (key: Key | SingleKey, value: number) => void;
 
 	// Deletes a row having given key from index. If not found return silently.
 	// If |rowId| is given, delete a single row id when the index allows
 	// duplicate keys. Ignored for index supporting only unique keys.
-	remove(key: Key | SingleKey, rowId?: number): void;
+	remove: (key: Key | SingleKey, rowId?: number) => void;
 
 	// Gets values from index. Returns empty array if not found.
-	get(key: Key | SingleKey): number[];
+	get: (key: Key | SingleKey) => number[];
 
 	// Gets the cost of retrieving data for given range.
-	cost(keyRange?: SingleKeyRange | KeyRange): number;
+	cost: (keyRange?: KeyRange | SingleKeyRange) => number;
 
 	// Retrieves all data within the range. Returns empty array if not found.
 	// When multiple key ranges are specified, the function will return the
@@ -665,67 +663,67 @@ interface RuntimeIndex {
 	// When |reverseOrder| is set to true, retrieves the results in the reverse
 	// ordering of the index's comparator.
 	// |limit| sets max number of rows to return, |skip| skips first N rows.
-	getRange(
-		range?: SingleKeyRange[] | KeyRange[],
+	getRange: (
+		range?: KeyRange[] | SingleKeyRange[],
 		reverseOrder?: boolean,
 		limit?: number,
 		skip?: number
-	): number[];
+	) => number[];
 
 	// Removes everything from the tree.
-	clear(): void;
+	clear: () => void;
 
 	// Special note for NULL: if the given index disallows NULL as key (e.g.
 	// B-Tree), the containsKey will return garbage. Caller needs to be aware of
 	// the behavior of the given index (this shall not be a problem with indices
 	// that are properly wrapped by NullableIndex).
-	containsKey(key: Key | SingleKey): boolean;
+	containsKey: (key: Key | SingleKey) => boolean;
 
 	// Returns an array of exactly two elements, holding the minimum key at
 	// position 0, and all associated values at position 1. If no keys exist in
 	// the index null is returned.
-	min(): unknown[] | null;
+	min: () => unknown[] | null;
 
 	// Returns an array of exactly two elements, holding the maximum key at
 	// position 0, and all associated values at position 1. If no keys exist in
 	// the index null is returned.
-	max(): unknown[] | null;
+	max: () => unknown[] | null;
 
 	// Serializes this index such that it can be persisted.
-	serialize(): Row[];
+	serialize: () => Row[];
 
 	// Returns the comparator used by this index.
-	comparator(): Comparator;
+	comparator: () => Comparator;
 
 	// Whether the index accepts unique key only.
-	isUniqueKey(): boolean;
+	isUniqueKey: () => boolean;
 
 	// Returns the stats associated with this index.
 	// Note: The returned object represents a snapshot of the index state at the
 	// time this call was made. It is not guaranteed to be updated as the index
 	// changes. Caller needs to call this method again if interested in latest
 	// stats.
-	stats(): IndexStats;
+	stats: () => IndexStats;
 }
 
 interface IndexStore {
 	// Initializes index store. This will create empty index instances.
-	init(schema: DatabaseSchema): Promise<void>;
+	init: (schema: DatabaseSchema) => Promise<void>;
 
 	// Returns the index by full qualified name. Returns null if not found.
-	get(name: string): RuntimeIndex | null;
+	get: (name: string) => RuntimeIndex | null;
 
 	// Returns the indices for a given table or an empty array if no indices
 	// exist.
-	getTableIndices(tableName: string): RuntimeIndex[];
+	getTableIndices: (tableName: string) => RuntimeIndex[];
 
 	// Sets the given index. If an index with the same name already exists it will
 	// be overwritten.
-	set(tableName: string, index: RuntimeIndex): void;
+	set: (tableName: string, index: RuntimeIndex) => void;
 }
 interface QueryEngine {
 	// Returns the generated plan that can be understood by Runner.
-	getPlan(query: Context): PhysicalQueryPlan;
+	getPlan: (query: Context) => PhysicalQueryPlan;
 }
 
 class Service {
@@ -909,7 +907,7 @@ class InMemoryUpdater {
 		diff.getAdded().forEach((row) => this.cache.set(tableName, row));
 		diff
 			.getModified()
-			.forEach((modification) => this.cache.set(tableName, modification[1] as Row));
+			.forEach((modification) => this.cache.set(tableName, modification[1]));
 	}
 
 	// Updates index data structures based on the given table diff.
@@ -929,13 +927,13 @@ class InMemoryUpdater {
 		// Using 'undefined' as a special value to indicate insertion/
 		// deletion instead of 'null', since 'null' can be a valid index key.
 		const keyNow
-			= modification[1] === null ? undefined : (modification[1] as Row).keyOfIndex(index.getName());
+			= modification[1] === null ? undefined : modification[1].keyOfIndex(index.getName());
 		const keyThen
-			= modification[0] === null ? undefined : (modification[0] as Row).keyOfIndex(index.getName());
+			= modification[0] === null ? undefined : modification[0].keyOfIndex(index.getName());
 
 		if (keyThen === undefined && keyNow !== undefined) {
 			// Insertion
-			index.add(keyNow, (modification[1] as Row).id());
+			index.add(keyNow, modification[1].id());
 		} else if (keyThen !== undefined && keyNow !== undefined) {
 			// Index comparators may not handle null, so handle it here for them.
 			if (keyNow === null || keyThen === null) {
@@ -950,11 +948,11 @@ class InMemoryUpdater {
 			// NOTE: the order of calling add() and remove() here matters.
 			// Index#add() might throw an exception because of a constraint
 			// violation, in which case the index remains unaffected as expected.
-			index.add(keyNow, (modification[1] as Row).id());
-			index.remove(keyThen, (modification[0] as Row).id());
+			index.add(keyNow, modification[1].id());
+			index.remove(keyThen, modification[0].id());
 		} else if (keyThen !== undefined && keyNow === undefined) {
 			// Deletion
-			index.remove(keyThen, (modification[0] as Row).id());
+			index.remove(keyThen, modification[0].id());
 		}
 	}
 }
@@ -1101,21 +1099,21 @@ class MapSet<K, V> {
 }
 
 interface Index {
-	getNormalizedName(): string;
+	getNormalizedName: () => string;
 
 	// Whether this index refers to any column that is marked as nullable.
-	hasNullableColumn(): boolean;
+	hasNullableColumn: () => boolean;
 }
 
 interface BaseTable extends Table {
-	getColumns(): Column[];
-	getIndices(): Index[];
-	persistentIndex(): boolean;
-	getAlias(): string;
-	getConstraint(): Constraint;
-	getEffectiveName(): string;
-	getRowIdIndexName(): string;
-	deserializeRow(dbRecord: RawRow): Row;
+	getColumns: () => Column[];
+	getIndices: () => Index[];
+	persistentIndex: () => boolean;
+	getAlias: () => string;
+	getConstraint: () => Constraint;
+	getEffectiveName: () => string;
+	getRowIdIndexName: () => string;
+	deserializeRow: (dbRecord: RawRow) => Row;
 }
 
 // Read-only objects that provides information for schema metadata.
@@ -1263,11 +1261,11 @@ interface CascadeUpdateItem {
 type CascadeUpdate = MapSet<number, CascadeUpdateItem>;
 
 interface BaseColumn extends Column {
-	getAlias(): string;
-	getIndices(): Index[];
+	getAlias: () => string;
+	getIndices: () => Index[];
 	// The index that refers only to this column, or null if such index does
 	// not exist.
-	getIndex(): Index | null;
+	getIndex: () => Index | null;
 
 	// Accessor returns unknown to meet the design of DEFAULT_VALUES.
 	[key: string]: unknown;
@@ -1345,11 +1343,11 @@ class ConstraintChecker {
 	): CascadeUpdate {
 		const cascadedUpdates = new MapSet<number, CascadeUpdateItem>();
 		this.loopThroughReferringRows(foreignKeySpecs, modifications, (foreignKeySpec, childIndex, parentKey, modification) => {
-			const childRowIds = childIndex.get(parentKey as Key);
+			const childRowIds = childIndex.get(parentKey);
 			childRowIds.forEach((rowId) => {
 				cascadedUpdates.set(rowId, {
 					"fkSpec": foreignKeySpec,
-					"originalUpdatedRow": modification[1] as Row
+					"originalUpdatedRow": modification[1]
 				});
 			});
 		});
@@ -1454,7 +1452,7 @@ class ConstraintChecker {
 	): number | null {
 		const indexName = indexSchema.getNormalizedName();
 		const indexKey = row.keyOfIndex(indexName);
-		const index = this.indexStore.get(indexName) as RuntimeIndex;
+		const index = this.indexStore.get(indexName);
 
 		const rowIds = index.get(indexKey);
 		return rowIds.length === 0 ? null : rowIds[0];
@@ -1481,10 +1479,10 @@ class ConstraintChecker {
 	): void {
 		const parentIndex = this.getParentIndex(foreignKeySpec);
 		modifications.forEach((modification) => {
-			const didColumnValueChange = ConstraintChecker.didColumnValueChange(modification[0] as Row, modification[1] as Row, foreignKeySpec.name);
+			const didColumnValueChange = ConstraintChecker.didColumnValueChange(modification[0], modification[1], foreignKeySpec.name);
 
 			if (didColumnValueChange) {
-				const rowAfter = modification[1] as Row;
+				const rowAfter = modification[1];
 				const parentKey = rowAfter.keyOfIndex(foreignKeySpec.name);
 				// A null value in the child column implies to ignore it, and not
 				// considering it as a constraint violation.
@@ -1505,8 +1503,8 @@ class ConstraintChecker {
 		const parentColumn = parentTable[foreignKeySpec.parentColumn] as BaseColumn;
 		// getIndex() must find an index since the parent of a foreign key
 		// constraint must have a dedicated index.
-		const parentIndexSchema: Index = parentColumn.getIndex() as Index;
-		return this.indexStore.get(parentIndexSchema.getNormalizedName()) as RuntimeIndex;
+		const parentIndexSchema: Index = parentColumn.getIndex();
+		return this.indexStore.get(parentIndexSchema.getNormalizedName());
 	}
 
 	// Gets the index corresponding to the parent column of the given foreign key.
@@ -1550,7 +1548,7 @@ class ConstraintChecker {
 		}
 
 		this.loopThroughReferringRows(foreignKeySpecs, modifications, (foreignKeySpec, childIndex, parentKey) => {
-			if (childIndex.containsKey(parentKey as Key)) {
+			if (childIndex.containsKey(parentKey)) {
 				// 203: Foreign key constraint violation on constraint {0}.
 				throw new Exception(ErrorCode.FK_VIOLATION, foreignKeySpec.name);
 			}
@@ -1571,7 +1569,7 @@ class ConstraintChecker {
 
 		const referringRowIds = new MapSet<string, number>();
 		this.loopThroughReferringRows(foreignKeySpecs, modifications, (foreignKeySpec, childIndex, parentKey) => {
-			const childRowIds = childIndex.get(parentKey as Key);
+			const childRowIds = childIndex.get(parentKey);
 			if (childRowIds.length > 0) {
 				referringRowIds.setMany(foreignKeySpec.childTable, childRowIds);
 			}
@@ -1593,13 +1591,13 @@ class ConstraintChecker {
 		) => void
 	): void {
 		foreignKeySpecs.forEach((foreignKeySpec) => {
-			const childIndex = this.indexStore.get(foreignKeySpec.name) as RuntimeIndex;
+			const childIndex = this.indexStore.get(foreignKeySpec.name);
 			const parentIndex = this.getParentIndex(foreignKeySpec);
 			modifications.forEach((modification) => {
-				const didColumnValueChange = ConstraintChecker.didColumnValueChange(modification[0] as Row, modification[1] as Row, parentIndex.getName());
+				const didColumnValueChange = ConstraintChecker.didColumnValueChange(modification[0], modification[1], parentIndex.getName());
 
 				if (didColumnValueChange) {
-					const rowBefore = modification[0] as Row;
+					const rowBefore = modification[0];
 					const parentKey = rowBefore.keyOfIndex(parentIndex.getName());
 					callbackFn(foreignKeySpec, childIndex, parentKey, modification);
 				}
@@ -1800,9 +1798,9 @@ class Journal {
 			if (tableSchema.persistentIndex()) {
 				const tableIndices = tableSchema.getIndices();
 				tableIndices.forEach((indexSchema) => {
-					indices.push(this.indexStore.get(indexSchema.getNormalizedName()) as RuntimeIndex);
+					indices.push(this.indexStore.get(indexSchema.getNormalizedName()));
 				}, this);
-				indices.push(this.indexStore.get(tableSchema.getName() + ".#") as RuntimeIndex);
+				indices.push(this.indexStore.get(tableSchema.getName() + ".#"));
 			}
 		}, this);
 		return indices;
@@ -1961,7 +1959,7 @@ class Journal {
 		}
 		const cascadedUpdates = this.constraintChecker.detectCascadeUpdates(table as BaseTable, modifications, foreignKeySpecs);
 		cascadedUpdates.keys().forEach((rowId) => {
-			const updates = cascadedUpdates.get(rowId) as CascadeUpdateItem[];
+			const updates = cascadedUpdates.get(rowId);
 			updates.forEach((update) => {
 				const tbl = this.schema.table(update.fkSpec.childTable) as BaseTable;
 				const rowBefore = this.cache.get(rowId) as Row;
@@ -1990,7 +1988,7 @@ class Journal {
 
 		cascadeDeletion.tableOrder.forEach((tableName) => {
 			const tbl = this.schema.table(tableName) as BaseTable;
-			const rows = (cascadeRowIds.get(tableName) as number[]).map((rowId) => {
+			const rows = cascadeRowIds.get(tableName).map((rowId) => {
 				return this.cache.get(rowId) as Row;
 			}, this);
 			this.constraintChecker.checkForeignKeysForDelete(tbl, rows, ConstraintTiming.IMMEDIATE);
@@ -2032,7 +2030,7 @@ function identity<T>(value: T): T {
 // ComparisonFunction is a special type that needs to allow any.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type ComparisonFunction = (l: any, r: any) => boolean;
-type IndexableType = ValueType | Date;
+type IndexableType = Date | ValueType;
 type KeyOfIndexFunction = (key: IndexableType) => ValueType;
 
 /**
@@ -2084,7 +2082,7 @@ function buildCommonEvaluatorMap(): Map<EvalType, ComparisonFunction> {
 		return a === null || b === null ? false : a > b;
 	});
 	map.set(EvalType.IN, (rowValue: ValueType, values: ListType) => {
-		return values.indexOf(rowValue) !== -1;
+		return values.includes(rowValue);
 	});
 	map.set(EvalType.LTE, (a: ValueType, b: ValueType) => {
 		return a === null || b === null ? false : a <= b;
@@ -2377,14 +2375,14 @@ class SingleKeyRange {
 		excludeL = false,
 		excludeR = false
 	): Favor {
-		const flip = (favor: Favor) => (isLeftHandSide ? favor : favor === Favor.LHS ? Favor.RHS : Favor.LHS);
+		const flip = (favor: Favor) => isLeftHandSide ? favor : favor === Favor.LHS ? Favor.RHS : Favor.LHS;
 
 		// The following logic is implemented for LHS. RHS is achieved using flip().
-		const tieLogic = () => (!SingleKeyRange.xor(excludeL, excludeR)
+		const tieLogic = () => !SingleKeyRange.xor(excludeL, excludeR)
 			? Favor.TIE
 			: excludeL
 				? flip(Favor.LHS)
-				: flip(Favor.RHS));
+				: flip(Favor.RHS);
 
 		if (SingleKeyRange.isUnbound(l)) {
 			return !SingleKeyRange.isUnbound(r) ? flip(Favor.RHS) : tieLogic();
@@ -2861,7 +2859,7 @@ class RelationEntry {
 	}
 }
 
-type AggregationResult = Relation | string | number;
+type AggregationResult = Relation | number | string;
 
 class Relation {
 	// Creates an empty Relation instance. Since a relation is immutable, a
@@ -3522,18 +3520,18 @@ class PhysicalQueryPlan {
 }
 
 interface Task {
-	exec(): Promise<Relation[]>;
-	getType(): TransactionType;
+	exec: () => Promise<Relation[]>;
+	getType: () => TransactionType;
 
 	// Returns the tables that this task refers to.
-	getScope(): Set<Table>;
-	getResolver(): Resolver<Relation[]>;
+	getScope: () => Set<Table>;
+	getResolver: () => Resolver<Relation[]>;
 
 	// Returns a unique number for this task.
-	getId(): number;
+	getId: () => number;
 
 	// Returns the priority of this task.
-	getPriority(): TaskPriority;
+	getPriority: () => TaskPriority;
 }
 
 interface TaskItem {
@@ -3918,7 +3916,7 @@ abstract class BaseTx implements Tx {
 			const table = this.getTable(tableSchema.getName(), tableSchema.deserializeRow.bind(tableSchema), TableType.DATA);
 			const toDeleteRowIds = Array.from(tableDiff.getDeleted().values()).map((row) => row.id());
 			const toPut = Array.from(tableDiff.getModified().values())
-				.map((modification) => modification[1] as Row)
+				.map((modification) => modification[1])
 				.concat(Array.from(tableDiff.getAdded().values()));
 			// If we have things to put and delete in the same transaction then we
 			// need to disable the clear table optimization the backing store might
@@ -4154,10 +4152,7 @@ class DiffCalculator {
 		const oldEntries = oldResults === null ? [] : oldResults.entries;
 
 		// Detecting and applying deletions.
-		const longestCommonSubsequenceLeft = MathHelper.longestCommonSubsequence(
-			oldEntries, newResults.entries, this.comparator.bind(this),
-			(indexLeft, indexRight) => oldEntries[indexLeft]
-		);
+		const longestCommonSubsequenceLeft = MathHelper.longestCommonSubsequence(oldEntries, newResults.entries, this.comparator.bind(this), (indexLeft, indexRight) => oldEntries[indexLeft]);
 
 		const changeRecords: ChangeRecord[] = [];
 		let commonIndex = 0;
@@ -4303,22 +4298,22 @@ interface QueryBuilder {
 	// Executes the query, all errors will be passed to the reject function.
 	// The resolve function may receive parameters as results of execution, for
 	// example, select queries will return results.
-	exec(): Promise<unknown>;
+	exec: () => Promise<unknown>;
 
 	// Returns string representation of query execution plan. Similar to EXPLAIN
 	// in most SQL engines.
-	explain(): string;
+	explain: () => string;
 
 	// Bind values to parameterized queries. Callers are responsible to make sure
 	// the types of values match those specified in the query.
-	bind(values: unknown[]): QueryBuilder;
+	bind: (values: unknown[]) => QueryBuilder;
 
 	// |stripValueInfo| true will remove value info to protect PII, default to
 	// false in all implementations.
-	toSql(stripValueInfo?: boolean): string;
+	toSql: (stripValueInfo?: boolean) => string;
 
-	getTaskItem(): TaskItem;
-	assertExecPreconditions(): void;
+	getTaskItem: () => TaskItem;
+	assertExecPreconditions: () => void;
 }
 
 // Query Builder which constructs a SELECT query. The builder is stateful.
@@ -4326,30 +4321,30 @@ interface QueryBuilder {
 // an exception will be thrown.
 interface SelectQuery extends QueryBuilder {
 	// Specifies the source of the SELECT query.
-	from(...tables: Table[]): SelectQuery;
+	from: (...tables: Table[]) => SelectQuery;
 
 	// Defines search condition of the SELECT query.
-	where(predicate: Predicate): SelectQuery;
+	where: (predicate: Predicate) => SelectQuery;
 
 	// Explicit inner join target table with specified search condition.
-	innerJoin(table: Table, predicate: Predicate): SelectQuery;
+	innerJoin: (table: Table, predicate: Predicate) => SelectQuery;
 
 	// Explicit left outer join target table with specified search condition.
-	leftOuterJoin(table: Table, predicate: Predicate): SelectQuery;
+	leftOuterJoin: (table: Table, predicate: Predicate) => SelectQuery;
 
 	// Limits the number of rows returned in select results. If there are fewer
 	// rows than limit, all rows will be returned.
-	limit(numberOfRows: number | Binder): SelectQuery;
+	limit: (numberOfRows: Binder | number) => SelectQuery;
 
 	// Skips the number of rows returned in select results from the beginning. If
 	// there are fewer rows than skip, no row will be returned.
-	skip(numberOfRows: number | Binder): SelectQuery;
+	skip: (numberOfRows: Binder | number) => SelectQuery;
 
 	// Specify sorting order of returned results.
-	orderBy(column: Column, order?: Order): SelectQuery;
+	orderBy: (column: Column, order?: Order) => SelectQuery;
 
 	// Specify grouping of returned results.
-	groupBy(...columns: Column[]): SelectQuery;
+	groupBy: (...columns: Column[]) => SelectQuery;
 }
 
 // A class responsible for keeping track of all observers as well as all arrays
@@ -7736,7 +7731,7 @@ class UpdateContext extends Context {
 
 		this.set.forEach((set) => {
 			if (set.binding !== undefined && set.binding !== -1) {
-				set.value = values[set.binding as number];
+				set.value = values[set.binding];
 			}
 		});
 		this.bindValuesInSearchCondition(values);
@@ -7751,7 +7746,7 @@ class UpdateContext extends Context {
 	}
 }
 
-type V = boolean | number | string | Date | ArrayBuffer;
+type V = ArrayBuffer | Date | boolean | number | string;
 
 class SqlHelper {
 	static toSql(builder: BaseBuilder<Context>, stripValueInfo = false): string {
@@ -7962,7 +7957,7 @@ class SqlHelper {
 				const c = set.column as BaseColumn;
 				const setter = c.getNormalizedName() + " = ";
 				if (set.binding !== -1) {
-					return setter + "?" + (set.binding as number).toString();
+					return setter + "?" + set.binding.toString();
 				}
 				return (
 					setter + SqlHelper.escapeSqlValue(c.getType(), set.value).toString()
@@ -8916,7 +8911,7 @@ class CrossProductPass extends RewritePass<LogicalQueryPlanNode> {
 // designed as a one-time use objects.
 interface LogicalPlanGenerator {
 	// Generates the logical plan tree. It is a no-op if called more than once.
-	generate(): LogicalQueryPlanNode;
+	generate: () => LogicalQueryPlanNode;
 }
 
 // TODO(arthurhsu): this abstract base class is not necessary. Refactor to
@@ -9689,7 +9684,7 @@ class StarColumn extends NonPredicateProvider implements BaseColumn {
 	}
 }
 
-type AggregatorValueType = number | string | Date | null;
+type AggregatorValueType = Date | number | string | null;
 
 class AggregationCalculator {
 	constructor(
@@ -10080,7 +10075,7 @@ class GetRowCountStep extends PhysicalQueryPlanNode {
 		journal?: Journal,
 		context?: Context
 	): Relation[] {
-		const rowIdIndex = this.indexStore.get((this.table as BaseTable).getRowIdIndexName()) as RuntimeIndex;
+		const rowIdIndex = this.indexStore.get((this.table as BaseTable).getRowIdIndexName());
 		const relation = new Relation([], [this.table.getName()]);
 		relation.setAggregationResult(fn.count(), rowIdIndex.stats().totalRows);
 		return [relation];
@@ -10113,9 +10108,9 @@ class TableAccessFullStep extends PhysicalQueryPlanNode {
 		context?: Context
 	): Relation[] {
 		const table = this.table as BaseTable;
-		const rowIds = (
-			this.indexStore.get(table.getRowIdIndexName()) as RuntimeIndex
-		).getRange();
+		const rowIds
+			= this.indexStore.get(table.getRowIdIndexName())
+				.getRange();
 
 		return [
 			Relation.fromRows(this.cache.getMany(rowIds) as Row[], [
@@ -10268,9 +10263,9 @@ class JoinStep extends PhysicalQueryPlanNode {
 	// join. |column| is the column whose index should be queried.
 	markAsIndexJoin(column: Column): void {
 		this.algorithm = JoinAlgorithm.INDEX_NESTED_LOOP;
-		const index = this.indexStore.get(((column as BaseColumn).getIndex() as Index).getNormalizedName());
+		const index = this.indexStore.get((column as BaseColumn).getIndex().getNormalizedName());
 		this.indexJoinInfo = {
-			"index": index as RuntimeIndex,
+			"index": index,
 			"indexedColumn": column,
 			"nonIndexedColumn":
 				column === this.predicate.leftColumn ? this.predicate.rightColumn : this.predicate.leftColumn
@@ -10379,7 +10374,7 @@ class IndexJoinPass extends RewritePass<PhysicalQueryPlanNode> {
 }
 
 interface IndexKeyRangeCalculator {
-	getKeyRangeCombinations(queryContext: Context): SingleKeyRange[] | KeyRange[];
+	getKeyRangeCombinations: (queryContext: Context) => KeyRange[] | SingleKeyRange[];
 }
 
 class BoundedKeyRangeCalculator implements IndexKeyRangeCalculator {
@@ -10521,7 +10516,7 @@ class IndexRangeCandidate {
 		if (this.keyRangeCalculator === null) {
 			this.keyRangeCalculator = new BoundedKeyRangeCalculator(this.indexSchema, this.predicateMap);
 		}
-		return this.keyRangeCalculator as IndexKeyRangeCalculator;
+		return this.keyRangeCalculator;
 	}
 
 	// Finds which predicates are related to the index schema corresponding to
@@ -10573,7 +10568,7 @@ class IndexRangeCandidate {
 	calculateCost(queryContext: Context): number {
 		const combinations: Range[]
 			= this.getKeyRangeCalculator().getKeyRangeCombinations(queryContext);
-		const indexData = this.indexStore.get(this.indexSchema.getNormalizedName()) as RuntimeIndex;
+		const indexData = this.indexStore.get(this.indexSchema.getNormalizedName());
 
 		return combinations.reduce((costSoFar: number, combination: Range) => {
 			return costSoFar + indexData.cost(combination);
@@ -10630,7 +10625,7 @@ class IndexCostEstimator {
 	// Returns the number of Index#getRange queries that can be performed faster
 	// than scanning the entire table instead.
 	private getIndexQueryThreshold(): number {
-		const rowIdIndex = this.indexStore.get((this.tableSchema as BaseTable).getRowIdIndexName()) as RuntimeIndex;
+		const rowIdIndex = this.indexStore.get((this.tableSchema as BaseTable).getRowIdIndexName());
 		return Math.floor(rowIdIndex.stats().totalRows * INDEX_QUERY_THRESHOLD_PERCENT);
 	}
 
@@ -10741,15 +10736,15 @@ class IndexRangeScanStep extends PhysicalQueryPlanNode {
 	): Relation[] {
 		const context = ctx as SelectContext;
 		const keyRanges = this.keyRangeCalculator.getKeyRangeCombinations(context);
-		const index = this.indexStore.get(this.index.getNormalizedName()) as RuntimeIndex;
+		const index = this.indexStore.get(this.index.getNormalizedName());
 		let rowIds: number[];
 		if (
 			keyRanges.length === 1
 			&& keyRanges[0] instanceof SingleKeyRange
-			&& (keyRanges[0] as SingleKeyRange).isOnly()
+			&& keyRanges[0].isOnly()
 		) {
 			rowIds = IndexHelper.slice(
-				index.get((keyRanges[0] as SingleKeyRange).from as Key), false, // Single key will never reverse order.
+				index.get(keyRanges[0].from as Key), false, // Single key will never reverse order.
 				this.useLimit ? context.limit : undefined, this.useSkip ? context.skip : undefined
 			);
 		} else {
@@ -10908,7 +10903,7 @@ class InsertStep extends PhysicalQueryPlanNode {
 		if (autoIncrement) {
 			const pkColumnName = pkIndexSchema.columns[0].schema.getName();
 			const index = indexStore.get(pkIndexSchema.getNormalizedName());
-			const max = (index as RuntimeIndex).stats().maxKeyEncountered;
+			const max = index.stats().maxKeyEncountered;
 			let maxKey: number = max === null ? 0 : (max as number);
 
 			values.forEach((row) => {
@@ -11492,8 +11487,7 @@ class MultiColumnOrPass extends RewritePass<PhysicalQueryPlanNode> {
 class UnboundedKeyRangeCalculator implements IndexKeyRangeCalculator {
 	constructor(private readonly indexSchema: IndexImpl) { }
 
-	getKeyRangeCombinations(
-		queryContext: Context): KeyRange[] | SingleKeyRange[] {
+	getKeyRangeCombinations(queryContext: Context): KeyRange[] | SingleKeyRange[] {
 		return this.indexSchema.columns.length === 1 ? [SingleKeyRange.all()] : [this.indexSchema.columns.map((col) => SingleKeyRange.all())];
 	}
 }
@@ -11878,9 +11872,9 @@ class ExportTask extends UniqueId implements Task {
 
 		const tables: PayloadType = {};
 		(this.schema.tables() as BaseTable[]).forEach((table) => {
-			const rowIds = (
-				indexStore.get(table.getRowIdIndexName()) as RuntimeIndex
-			).getRange();
+			const rowIds
+				= indexStore.get(table.getRowIdIndexName())
+					.getRange();
 			const payloads = cache.getMany(rowIds).map((row) => (row as Row).payload());
 			tables[table.getName()] = payloads;
 		});
@@ -11995,7 +11989,7 @@ class ImportTask extends UniqueId implements Task {
 	private isEmptyDB(): boolean {
 		return this.schema.tables().every((t) => {
 			const table = t as BaseTable;
-			const index = this.indexStore.get(table.getRowIdIndexName()) as RuntimeIndex;
+			const index = this.indexStore.get(table.getRowIdIndexName());
 			if (index.stats().totalRows > 0) {
 				return false;
 			}
@@ -12012,7 +12006,7 @@ class ImportTask extends UniqueId implements Task {
 			const payloads = this.data["tables"][
 				tableName
 			] as PayloadType[];
-			const rows = payloads.map((value: object) => tableSchema.createRow(value)) as Row[];
+			const rows = payloads.map((value: object) => tableSchema.createRow(value));
 
 			const table = tx.getTable(tableName, tableSchema.deserializeRow, TableType.DATA);
 			this.cache.setMany(tableName, rows);
@@ -12517,7 +12511,7 @@ class TransactionTask extends UniqueId implements Task {
 
 interface Transaction {
 	// Executes a list of queries and commits the transaction.
-	exec(queries: QueryBuilder[]): Promise<unknown>;
+	exec: (queries: QueryBuilder[]) => Promise<unknown>;
 
 	// Begins an explicit transaction. Returns a promise fulfilled when all
 	// required locks have been acquired.
@@ -12525,23 +12519,23 @@ interface Transaction {
 	// |scope| are the tables that this transaction will be allowed to access.
 	// An exclusive lock will be obtained on all tables before any queries
 	// belonging to this transaction can be served.
-	begin(scope: Table[]): Promise<void>;
+	begin: (scope: Table[]) => Promise<void>;
 
 	// Attaches |query| to an existing transaction and runs it.
-	attach(query: QueryBuilder): Promise<unknown>;
+	attach: (query: QueryBuilder) => Promise<unknown>;
 
 	// Commits this transaction. Any queries that were performed will be flushed
 	// to store.
-	commit(): Promise<unknown>;
+	commit: () => Promise<unknown>;
 
 	// Rolls back all changes that were made within this transaction. Rollback is
 	// only allowed if the transaction has not been yet committed.
-	rollback(): Promise<unknown>;
+	rollback: () => Promise<unknown>;
 
 	// Returns transaction statistics. This call will return meaningful value only
 	// after a transaction is committed or rolled back. Read-only transactions
 	// will have stats with success equals to true and all other counts as 0.
-	stats(): TransactionStats | null;
+	stats: () => TransactionStats | null;
 }
 
 class RuntimeTransaction implements Transaction {
@@ -12649,48 +12643,48 @@ class RuntimeTransaction implements Transaction {
 }
 
 interface InsertQuery extends QueryBuilder {
-	into(table: Table): InsertQuery;
-	values(rows: Row[] | Binder | Binder[]): InsertQuery;
+	into: (table: Table) => InsertQuery;
+	values: (rows: Binder | Binder[] | Row[]) => InsertQuery;
 }
 
 interface UpdateQuery extends QueryBuilder {
-	set(column: Column, value: unknown): UpdateQuery;
-	where(predicate: Predicate): UpdateQuery;
+	set: (column: Column, value: unknown) => UpdateQuery;
+	where: (predicate: Predicate) => UpdateQuery;
 }
 
 interface DeleteQuery extends QueryBuilder {
-	from(table: Table): DeleteQuery;
-	where(predicate: Predicate): DeleteQuery;
+	from: (table: Table) => DeleteQuery;
+	where: (predicate: Predicate) => DeleteQuery;
 }
 
 // Defines the interface of a runtime database instance. This models the return
 // value of connect().
 interface DatabaseConnection {
-	getSchema(): DatabaseSchema;
-	select(...columns: Column[]): SelectQuery;
-	insert(): InsertQuery;
-	insertOrReplace(): InsertQuery;
-	update(table: Table): UpdateQuery;
-	delete(): DeleteQuery;
+	getSchema: () => DatabaseSchema;
+	select: (...columns: Column[]) => SelectQuery;
+	insert: () => InsertQuery;
+	insertOrReplace: () => InsertQuery;
+	update: (table: Table) => UpdateQuery;
+	delete: () => DeleteQuery;
 
 	// Registers an observer for the given query.
-	observe(query: SelectQuery, callback: ObserverCallback): void;
+	observe: (query: SelectQuery, callback: ObserverCallback) => void;
 
 	// Un-registers an observer for the given query.
-	unobserve(query: SelectQuery, callback: ObserverCallback): void;
+	unobserve: (query: SelectQuery, callback: ObserverCallback) => void;
 
-	createTransaction(type?: TransactionType): Transaction;
+	createTransaction: (type?: TransactionType) => Transaction;
 
 	// Closes database connection. This is a best effort function and the closing
 	// can happen in a separate thread.
 	// Once a db is closed, all its queries will fail and cannot be reused.
-	close(): void;
+	close: () => void;
 
 	// Exports database as a JSON object.
-	export(): Promise<object>;
+	export: () => Promise<object>;
 
 	// Imports from a JSON object into an empty database.
-	import(data: object): Promise<object[]>;
+	import: (data: object) => Promise<object[]>;
 }
 
 interface ConnectOptions {
@@ -13755,16 +13749,16 @@ interface Builder {
 	// Constructor syntax itself violates the no any rule.
 	// new (dbName: string, dbVersion: number): any;
 
-	getSchema(): DatabaseSchema;
-	getGlobal(): Global;
+	getSchema: () => DatabaseSchema;
+	getGlobal: () => Global;
 
 	// Instantiates a connection to the database. Note: This method can only be
 	// called once per Builder instance. Subsequent calls will throw an error,
 	// unless the previous DB connection has been closed first.
-	connect(options?: ConnectOptions): Promise<DatabaseConnection>;
+	connect: (options?: ConnectOptions) => Promise<DatabaseConnection>;
 
-	createTable(tableName: string): TableBuilder;
-	setPragma(pragma: Pragma): Builder;
+	createTable: (tableName: string) => TableBuilder;
+	setPragma: (pragma: Pragma) => Builder;
 }
 
 class SchemaBuilder implements Builder {
