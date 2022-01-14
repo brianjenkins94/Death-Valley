@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-enum ConstraintAction {
+export enum ConstraintAction {
 	RESTRICT = 0,
 	CASCADE = 1
 }
