@@ -33,12 +33,12 @@ enum DataStoreType {
 	OBSERVABLE_STORE = 5
 }
 
-enum Order {
+export enum Order {
 	DESC = 0,
 	ASC = 1
 }
 
-enum Type {
+export enum Type {
 	ARRAY_BUFFER = 0,
 	BOOLEAN = 1,
 	DATE_TIME = 2,
@@ -726,29 +726,29 @@ interface QueryEngine {
 	getPlan: (query: Context) => PhysicalQueryPlan;
 }
 
-class Service {
+const Service = {
 	// The backing data store used by this connection.
 	// following statement fail compilation, need solution.
-	static BACK_STORE = new ServiceId<BackStore>("backstore");
+	"BACK_STORE": new ServiceId<BackStore>("backstore"),
 
 	// The shared row cache used by this connection.
-	static CACHE = new ServiceId<Cache>("cache");
+	"CACHE": new ServiceId<Cache>("cache"),
 
 	// The shared store of all indices defined.
-	static INDEX_STORE = new ServiceId<IndexStore>("indexstore");
+	"INDEX_STORE": new ServiceId<IndexStore>("indexstore"),
 
 	// Query engine used for generating execution plan.
-	static QUERY_ENGINE = new ServiceId<QueryEngine>("engine");
+	"QUERY_ENGINE": new ServiceId<QueryEngine>("engine"),
 
 	// Query runner which executes transactions.
-	static RUNNER = new ServiceId<Runner>("runner");
+	"RUNNER": new ServiceId<Runner>("runner"),
 
 	// Observer registry storing all observing queries.
-	static OBSERVER_REGISTRY = new ServiceId<ObserverRegistry>("observerregistry");
+	"OBSERVER_REGISTRY": new ServiceId<ObserverRegistry>("observerregistry"),
 
 	// Finalized schema associated with this connection.
-	static SCHEMA = new ServiceId<DatabaseSchema>("schema");
-}
+	"SCHEMA": new ServiceId<DatabaseSchema>("schema")
+};
 
 // The comparison result constant. This must be consistent with the constant
 // required by the sort function of Array.prototype.sort.
@@ -2028,7 +2028,6 @@ function identity<T>(value: T): T {
 }
 
 // ComparisonFunction is a special type that needs to allow any.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type ComparisonFunction = (l: any, r: any) => boolean;
 type IndexableType = Date | ValueType;
 type KeyOfIndexFunction = (key: IndexableType) => ValueType;
@@ -2375,14 +2374,14 @@ class SingleKeyRange {
 		excludeL = false,
 		excludeR = false
 	): Favor {
-		const flip = (favor: Favor) => isLeftHandSide ? favor : favor === Favor.LHS ? Favor.RHS : Favor.LHS;
+		const flip = (favor: Favor) => (isLeftHandSide ? favor : favor === Favor.LHS ? Favor.RHS : Favor.LHS);
 
 		// The following logic is implemented for LHS. RHS is achieved using flip().
-		const tieLogic = () => !SingleKeyRange.xor(excludeL, excludeR)
+		const tieLogic = () => (!SingleKeyRange.xor(excludeL, excludeR)
 			? Favor.TIE
 			: excludeL
 				? flip(Favor.LHS)
-				: flip(Favor.RHS);
+				: flip(Favor.RHS));
 
 		if (SingleKeyRange.isUnbound(l)) {
 			return !SingleKeyRange.isUnbound(r) ? flip(Favor.RHS) : tieLogic();
@@ -2827,11 +2826,7 @@ class RelationEntry {
 		}
 
 		if (this.isPrefixApplied) {
-			return;
-			this.row.payload()[
-				(column.getTable() as BaseTable).getEffectiveName()
-			]
-			[column.getName()];
+			return (this.row.payload()[(column.getTable() as BaseTable).getEffectiveName()])[column.getName()];
 		} else {
 			return this.row.payload()[column.getName()];
 		}
@@ -13781,6 +13776,7 @@ class SchemaBuilder implements Builder {
 	}
 
 	getSchema(): DatabaseSchema {
+		console.log("getSchema");
 		if (!this.finalized) {
 			this.finalize();
 		}
@@ -13788,6 +13784,7 @@ class SchemaBuilder implements Builder {
 	}
 
 	getGlobal(): Global {
+		console.log("getGlobal");
 		const namespaceGlobalId = new ServiceId<Global>(`ns_${this.schema.name()}`);
 		const global = Global.get();
 		let namespacedGlobal: Global;
@@ -13804,6 +13801,7 @@ class SchemaBuilder implements Builder {
 	// called once per Builder instance. Subsequent calls will throw an error,
 	// unless the previous DB connection has been closed first.
 	connect(options?: ConnectOptions): Promise<DatabaseConnection> {
+		console.log("connect");
 		if (this.connectInProgress || this.db !== null && this.db.isOpen()) {
 			// 113: Attempt to connect() to an already connected/connecting database.
 			throw new Exception(ErrorCode.ALREADY_CONNECTED);
@@ -13832,6 +13830,7 @@ class SchemaBuilder implements Builder {
 	}
 
 	createTable(tableName: string): TableBuilder {
+		console.log("createTable");
 		if (this.tableBuilders.has(tableName)) {
 			// 503: Name {0} is already defined.
 			throw new Exception(ErrorCode.NAME_IN_USE, tableName);
@@ -13848,6 +13847,7 @@ class SchemaBuilder implements Builder {
 	}
 
 	setPragma(pragma: Pragma): Builder {
+		console.log("setPragma");
 		if (this.finalized) {
 			// 535: Schema is already finalized.
 			throw new Exception(ErrorCode.SCHEMA_FINALIZED);
@@ -13860,6 +13860,7 @@ class SchemaBuilder implements Builder {
 	// Builds the graph of foreign key relationships and checks for
 	// loop in the graph.
 	private checkFkCycle(): void {
+		console.log("checkFkCycle");
 		// Builds graph.
 		const nodeMap = new Map<string, GraphNode>();
 		this.schema.tables().forEach((table) => {
@@ -13881,6 +13882,7 @@ class SchemaBuilder implements Builder {
 	// child columns, matching of types and uniqueness of referred column
 	// in the parent.
 	private checkForeignKeyValidity(builder: TableBuilder): void {
+		console.log("checkForeignKeyValidity");
 		builder.getFkSpecs().forEach((specs) => {
 			const parentTableName = specs.parentTable;
 			const table = this.tableBuilders.get(parentTableName);
@@ -13913,6 +13915,7 @@ class SchemaBuilder implements Builder {
 
 	// Performs checks to avoid chains of foreign keys on same column.
 	private checkForeignKeyChain(builder: TableBuilder): void {
+		console.log("checkForeignKeyChain");
 		const fkSpecArray = builder.getFkSpecs();
 		fkSpecArray.forEach((specs) => {
 			const parentBuilder = this.tableBuilders.get(specs.parentTable);
@@ -13929,6 +13932,7 @@ class SchemaBuilder implements Builder {
 	}
 
 	private finalize(): void {
+		console.log("finalize");
 		if (!this.finalized) {
 			this.tableBuilders.forEach((builder) => {
 				this.checkForeignKeyValidity(builder);
@@ -13950,6 +13954,7 @@ class SchemaBuilder implements Builder {
 		graphNode: GraphNode,
 		nodeMap: Map<string, GraphNode>
 	): void {
+		console.log("checkCycleUtil");
 		if (!graphNode.visited) {
 			graphNode.visited = true;
 			graphNode.onStack = true;
@@ -13976,7 +13981,7 @@ class SchemaBuilder implements Builder {
 // Keep lower case class name for compatibility with Lovefield API.
 // TODO(arthurhsu): FIXME: Builder should be a public interface, not concrete
 // class. Currently Builder has no @export.
-class schema {
+export class schema {
 	// Returns a builder.
 	// Note that Lovefield builder is a stateful object, and it remembers it has
 	// been used for connecting a database instance. Once the connection is closed
