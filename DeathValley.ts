@@ -525,15 +525,6 @@ interface BackStore {
 	// Returns one table based on table name.
 	getTableInternal: (tableName: string) => RuntimeTable;
 
-	// Subscribe to back store changes outside of this connection. Each change
-	// event corresponds to one transaction. The events will be fired in the order
-	// of reception, which implies the order of transactions happening. Each
-	// backstore will allow only one change handler.
-	subscribe: (handler: (diffs: TableDiff[]) => void) => void;
-
-	// Unsubscribe current change handler.
-	unsubscribe: (handler: (diffs: TableDiff[]) => void) => void;
-
 	// Notifies registered observers with table diffs.
 	notify: (changes: TableDiff[]) => void;
 
@@ -742,9 +733,6 @@ const Service = {
 
 	// Query runner which executes transactions.
 	"RUNNER": new ServiceId<Runner>("runner"),
-
-	// Observer registry storing all observing queries.
-	"OBSERVER_REGISTRY": new ServiceId<ObserverRegistry>("observerregistry"),
 
 	// Finalized schema associated with this connection.
 	"SCHEMA": new ServiceId<DatabaseSchema>("schema")
@@ -3639,117 +3627,6 @@ abstract class QueryTask extends UniqueId implements Task {
 	}
 }
 
-class ObserverQueryTask extends QueryTask {
-	private readonly observerRegistry: ObserverRegistry;
-
-	constructor(global: Global, items: TaskItem[]) {
-		super(global, items);
-		this.observerRegistry = global.getService(Service.OBSERVER_REGISTRY);
-	}
-
-	getPriority(): TaskPriority {
-		return TaskPriority.OBSERVER_QUERY_TASK;
-	}
-
-	override onSuccess(results: Relation[]): void {
-		this.queries.forEach((query, index) => {
-			this.observerRegistry.updateResultsForQuery(query as SelectContext, results[index]);
-		});
-	}
-}
-
-class ExternalChangeTask extends UniqueId implements Task {
-	private readonly observerRegistry: ObserverRegistry;
-
-	private readonly runner: Runner;
-
-	private readonly inMemoryUpdater: InMemoryUpdater;
-
-	private readonly scope: Set<Table>;
-
-	private readonly resolver: Resolver<Relation[]>;
-
-	constructor(private readonly global: Global, private readonly tableDiffs: TableDiff[]) {
-		super();
-		this.observerRegistry = this.global.getService(Service.OBSERVER_REGISTRY);
-		this.runner = this.global.getService(Service.RUNNER);
-		this.inMemoryUpdater = new InMemoryUpdater(this.global);
-
-		const dbSchema = this.global.getService(Service.SCHEMA);
-		const tableSchemas = this.tableDiffs.map((td) => dbSchema.table(td.getName()));
-		this.scope = new Set<Table>(tableSchemas);
-		this.resolver = new Resolver<Relation[]>();
-	}
-
-	exec(): Promise<Relation[]> {
-		this.inMemoryUpdater.update(this.tableDiffs);
-		this.scheduleObserverTask();
-		return Promise.resolve([]);
-	}
-
-	getType(): TransactionType {
-		return TransactionType.READ_WRITE;
-	}
-
-	getScope(): Set<Table> {
-		return this.scope;
-	}
-
-	getResolver(): Resolver<Relation[]> {
-		return this.resolver;
-	}
-
-	getId(): number {
-		return this.getUniqueNumber();
-	}
-
-	getPriority(): TaskPriority {
-		return TaskPriority.EXTERNAL_CHANGE_TASK;
-	}
-
-	// Schedules an ObserverTask for any observed queries that need to be
-	// re-executed, if any.
-	private scheduleObserverTask(): void {
-		const items = this.observerRegistry.getTaskItemsForTables(Array.from(this.scope.values()));
-		if (items.length !== 0) {
-			const observerTask = new ObserverQueryTask(this.global, items);
-			this.runner.scheduleTask(observerTask);
-		}
-	}
-}
-
-class ExternalChangeObserver {
-	private readonly backStore: BackStore;
-
-	private readonly runner: Runner;
-
-	constructor(private readonly global: Global) {
-		this.backStore = global.getService(Service.BACK_STORE);
-		this.runner = global.getService(Service.RUNNER);
-	}
-
-	// Starts observing the backing store for any external changes.
-	startObserving(): void {
-		this.backStore.subscribe(this.onChange.bind(this));
-	}
-
-	// Stops observing the backing store.
-	stopObserving(): void {
-		this.backStore.unsubscribe(this.onChange.bind(this));
-	}
-
-	// Executes every time a change is reported by the backing store. It is
-	// responsible for scheduling a task that will updated the in-memory data
-	// layers (indices and cache) accordingly.
-	private onChange(tableDiffs: TableDiff[]): void {
-		// Note: Current logic does not check for any conflicts between external
-		// changes and in-flight READ_WRITE queries. It assumes that no conflicts
-		// exist (single writer, multiple readers model).
-		const externalChangeTask = new ExternalChangeTask(this.global, tableDiffs);
-		this.runner.scheduleTask(externalChangeTask);
-	}
-}
-
 class MemoryTable implements RuntimeTable {
 	private readonly data: Map<number, Row>;
 
@@ -3995,15 +3872,6 @@ class Memory implements BackStore {
 		// No op.
 	}
 
-	subscribe(handler: (diffs: TableDiff[]) => void): void {
-		// Not supported.
-	}
-
-	// Unsubscribe current change handler.
-	unsubscribe(handler: (diffs: TableDiff[]) => void): void {
-		// Not supported.
-	}
-
 	// Notifies registered observers with table diffs.
 	notify(changes: TableDiff[]): void {
 		// Not supported.
@@ -4238,57 +4106,6 @@ class DiffCalculator {
 	}
 }
 
-type ObserverCallback = (changes: ChangeRecord[]) => void;
-class ObserverRegistryEntry {
-	private readonly observers: Set<ObserverCallback>;
-
-	private readonly observable: object[];
-
-	private lastResults: Relation | null;
-
-	private readonly diffCalculator: DiffCalculator;
-
-	constructor(private readonly builder: SelectBuilder) {
-		this.builder = builder;
-		this.observers = new Set<ObserverCallback>();
-		this.observable = [];
-		this.lastResults = null;
-		const context: SelectContext = builder.getObservableQuery();
-		this.diffCalculator = new DiffCalculator(context, this.observable);
-	}
-
-	addObserver(callback: ObserverCallback): void {
-		if (this.observers.has(callback)) {
-			assert(false, "Attempted to register observer twice.");
-			return;
-		}
-		this.observers.add(callback);
-	}
-
-	// Returns whether the callback was found and removed.
-	removeObserver(callback: ObserverCallback): boolean {
-		return this.observers.delete(callback);
-	}
-
-	getTaskItem(): TaskItem {
-		return this.builder.getObservableTaskItem();
-	}
-
-	hasObservers(): boolean {
-		return this.observers.size > 0;
-	}
-
-	// Updates the results for this query, which causes observes to be notified.
-	updateResults(newResults: Relation): void {
-		const changeRecords = this.diffCalculator.applyDiff(this.lastResults, newResults);
-		this.lastResults = newResults;
-
-		if (changeRecords.length > 0) {
-			this.observers.forEach((observerFn) => { observerFn(changeRecords); });
-		}
-	}
-}
-
 interface QueryBuilder {
 	// Executes the query, all errors will be passed to the reject function.
 	// The resolve function may receive parameters as results of execution, for
@@ -4340,79 +4157,6 @@ interface SelectQuery extends QueryBuilder {
 
 	// Specify grouping of returned results.
 	groupBy: (...columns: Column[]) => SelectQuery;
-}
-
-// A class responsible for keeping track of all observers as well as all arrays
-// that are being observed.
-class ObserverRegistry {
-	private readonly entries: Map<string, ObserverRegistryEntry>;
-
-	constructor() {
-		this.entries = new Map<string, ObserverRegistryEntry>();
-	}
-
-	// Registers an observer for the given query.
-	addObserver(query: SelectQuery, callback: ObserverCallback): void {
-		const builder = query as SelectBuilder;
-		const queryId = this.getQueryId(builder.getObservableQuery());
-		let entry = this.entries.get(queryId) || null;
-		if (entry === null) {
-			entry = new ObserverRegistryEntry(builder);
-			this.entries.set(queryId, entry);
-		}
-		entry.addObserver(callback);
-	}
-
-	// Unregister an observer for the given query.
-	removeObserver(query: SelectQuery, callback: ObserverCallback): void {
-		const builder = query as SelectBuilder;
-		const queryId = this.getQueryId(builder.getObservableQuery());
-
-		const entry: ObserverRegistryEntry = this.entries.get(queryId);
-		assert(entry !== undefined && entry !== null, "Attempted to unobserve a query that was not observed.");
-		const didRemove = entry.removeObserver(callback);
-		assert(didRemove, "removeObserver: Inconsistent state detected.");
-
-		if (!entry.hasObservers()) {
-			this.entries.delete(queryId);
-		}
-	}
-
-	// Finds all the observed queries that reference at least one of the given
-	// tables.
-	getTaskItemsForTables(tables: Table[]): TaskItem[] {
-		const tableSet = new Set<string>();
-		tables.forEach((table) => tableSet.add(table.getName()));
-
-		const items: TaskItem[] = [];
-		this.entries.forEach((entry) => {
-			const item = entry.getTaskItem();
-			const refersToTables = (item.context as SelectContext).from.some((table) => tableSet.has(table.getName()));
-			if (refersToTables) {
-				items.push(item);
-			}
-		});
-		return items;
-	}
-
-	// Updates the results of a given query. It is ignored if the query is no
-	// longer being observed.
-	updateResultsForQuery(query: SelectContext, results: Relation): boolean {
-		const queryId = this.getQueryId(query.clonedFrom !== undefined && query.clonedFrom !== null ? (query.clonedFrom as SelectContext) : query);
-		const entry = this.entries.get(queryId) || null;
-
-		if (entry !== null) {
-			entry.updateResults(results);
-			return true;
-		}
-
-		return false;
-	}
-
-	// Returns a unique ID of the given query.
-	private getQueryId(query: SelectContext): string {
-		return query.getUniqueId();
-	}
 }
 
 class DefaultCache implements Cache {
@@ -6689,38 +6433,13 @@ class MemoryIndexStore implements IndexStore {
 class UserQueryTask extends QueryTask {
 	private readonly runner: Runner;
 
-	private readonly observerRegistry: ObserverRegistry;
-
 	constructor(global: Global, items: TaskItem[]) {
 		super(global, items);
 		this.runner = global.getService(Service.RUNNER);
-		this.observerRegistry = global.getService(Service.OBSERVER_REGISTRY);
 	}
 
 	getPriority(): TaskPriority {
 		return TaskPriority.USER_QUERY_TASK;
-	}
-
-	override onSuccess(results: Relation[]): void {
-		// Depending on the type of this QueryTask either notify observers directly,
-		// or schedule on ObserverTask for queries that need to re-execute.
-		this.getType() === TransactionType.READ_ONLY ? this.notifyObserversDirectly(results) : this.scheduleObserverTask();
-	}
-
-	// Notifies observers of queries that were run as part of this task, if any.
-	private notifyObserversDirectly(results: Relation[]): void {
-		this.queries.forEach((query, index) => {
-			this.observerRegistry.updateResultsForQuery(query as SelectContext, results[index]);
-		});
-	}
-
-	// Schedules an ObserverTask for any observed queries that need to be
-	// re-executed, if any.
-	private scheduleObserverTask(): void {
-		const items = this.observerRegistry.getTaskItemsForTables(Array.from(this.getScope().values()));
-		if (items.length > 0) {
-			this.runner.scheduleTask(new ObserverQueryTask(this.global, items));
-		}
 	}
 }
 
@@ -12383,8 +12102,6 @@ class TransactionTask extends UniqueId implements Task {
 
 	private readonly runner: Runner;
 
-	private readonly observerRegistry: ObserverRegistry;
-
 	private readonly scope: Set<Table>;
 
 	private readonly journal: Journal;
@@ -12401,7 +12118,6 @@ class TransactionTask extends UniqueId implements Task {
 		super();
 		this.backStore = global.getService(Service.BACK_STORE);
 		this.runner = global.getService(Service.RUNNER);
-		this.observerRegistry = global.getService(Service.OBSERVER_REGISTRY);
 		this.scope = new Set<Table>(scope);
 		this.journal = new Journal(this.global, this.scope);
 		this.resolver = new Resolver<Relation[]>();
@@ -12469,7 +12185,6 @@ class TransactionTask extends UniqueId implements Task {
 	commit(): Promise<Relation[]> {
 		this.tx = this.backStore.createTx(this.getType(), Array.from(this.scope.values()), this.journal);
 		this.tx.commit().then(() => {
-			this.scheduleObserverTask();
 			this.execResolver.resolve();
 		}, (e) => {
 			this.journal.rollback();
@@ -12491,16 +12206,6 @@ class TransactionTask extends UniqueId implements Task {
 			results = this.tx.stats() as TransactionStatsImpl;
 		}
 		return results === null ? TransactionStatsImpl.getDefault() : results;
-	}
-
-	// Schedules an ObserverTask for any observed queries that need to be
-	// re-executed, if any.
-	private scheduleObserverTask(): void {
-		const items = this.observerRegistry.getTaskItemsForTables(Array.from(this.scope.values()));
-		if (items.length !== 0) {
-			const observerTask = new ObserverQueryTask(this.global, items);
-			this.runner.scheduleTask(observerTask);
-		}
 	}
 }
 
@@ -12696,18 +12401,11 @@ class RuntimeDatabase implements DatabaseConnection {
 
 	private runner!: Runner;
 
-	private readonly observeExternalChanges: boolean;
-
 	constructor(private readonly global: Global) {
 		this.schema = global.getService(Service.SCHEMA);
 
 		// Whether this connection to the database is active.
 		this.isActive = false;
-
-		// Observe external changes, set for non-local persistence storage.
-		// This was for Firebase but the TypeScript version does not support it.
-		// Kept to allow future integration with other cloud backend.
-		this.observeExternalChanges = false;
 	}
 
 	init(options?: ConnectOptions): Promise<RuntimeDatabase> {
@@ -12726,16 +12424,7 @@ class RuntimeDatabase implements DatabaseConnection {
 				this.global.registerService(Service.QUERY_ENGINE, new DefaultQueryEngine(this.global));
 				this.runner = new Runner();
 				this.global.registerService(Service.RUNNER, this.runner);
-				this.global.registerService(Service.OBSERVER_REGISTRY, new ObserverRegistry());
 				return indexStore.init(this.schema);
-			})
-			.then(() => {
-				if (this.observeExternalChanges) {
-					const externalChangeObserver = new ExternalChangeObserver(this.global);
-					externalChangeObserver.startObserving();
-				}
-				const prefetcher = new Prefetcher(this.global);
-				return prefetcher.init(this.schema);
 			})
 			.then(() => {
 				this.isActive = true;
@@ -12774,18 +12463,6 @@ class RuntimeDatabase implements DatabaseConnection {
 	delete(): DeleteBuilder {
 		this.checkActive();
 		return new DeleteBuilder(this.global);
-	}
-
-	observe(builder: SelectQuery, callback: ObserverCallback): void {
-		this.checkActive();
-		const observerRegistry = this.global.getService(Service.OBSERVER_REGISTRY);
-		observerRegistry.addObserver(builder, callback);
-	}
-
-	unobserve(builder: SelectQuery, callback: ObserverCallback): void {
-		this.checkActive();
-		const observerRegistry = this.global.getService(Service.OBSERVER_REGISTRY);
-		observerRegistry.removeObserver(builder, callback);
 	}
 
 	createTransaction(type?: TransactionType): Transaction {

@@ -189,7 +189,7 @@ import { MockDataGenerator } from "./src/testing/hr_schema/mock_data_generator";
 			})())
 		]);
 
-	const results = (await db.select().from(db.getSchema().table("Job")).where(db.getSchema().table("Job").col("minSalary").gte(300000)).exec());
+	const results = await db.select().from(db.getSchema().table("Job")).where(db.getSchema().table("Job").col("minSalary").gte(300000)).exec();
 
 	console.log(results);
 
