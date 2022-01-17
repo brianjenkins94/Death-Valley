@@ -1,6 +1,3 @@
-//import * as fs from 'fs';
-//import * as path from 'path';
-
 /**
  * Copyright 2016-2021 The Lovefield Project Authors. All Rights Reserved.
  *
@@ -16,32 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-var ConstraintAction$1;
-(function(ConstraintAction) {
+var ConstraintAction;
+(function (ConstraintAction) {
     ConstraintAction[ConstraintAction["RESTRICT"] = 0] = "RESTRICT";
     ConstraintAction[ConstraintAction["CASCADE"] = 1] = "CASCADE";
-})(ConstraintAction$1 || (ConstraintAction$1 = {}));
-var ConstraintTiming$1;
-(function(ConstraintTiming) {
+})(ConstraintAction || (ConstraintAction = {}));
+var ConstraintTiming;
+(function (ConstraintTiming) {
     ConstraintTiming[ConstraintTiming["IMMEDIATE"] = 0] = "IMMEDIATE";
     ConstraintTiming[ConstraintTiming["DEFERRABLE"] = 1] = "DEFERRABLE";
-})(ConstraintTiming$1 || (ConstraintTiming$1 = {}));
-var DataStoreType$1;
-(function(DataStoreType) {
+})(ConstraintTiming || (ConstraintTiming = {}));
+var DataStoreType;
+(function (DataStoreType) {
     DataStoreType[DataStoreType["INDEXED_DB"] = 0] = "INDEXED_DB";
     DataStoreType[DataStoreType["MEMORY"] = 1] = "MEMORY";
     DataStoreType[DataStoreType["LOCAL_STORAGE"] = 2] = "LOCAL_STORAGE";
     DataStoreType[DataStoreType["FIREBASE"] = 3] = "FIREBASE";
     DataStoreType[DataStoreType["WEB_SQL"] = 4] = "WEB_SQL";
     DataStoreType[DataStoreType["OBSERVABLE_STORE"] = 5] = "OBSERVABLE_STORE";
-})(DataStoreType$1 || (DataStoreType$1 = {}));
-var Order$1;
-(function(Order) {
+})(DataStoreType || (DataStoreType = {}));
+var Order;
+(function (Order) {
     Order[Order["DESC"] = 0] = "DESC";
     Order[Order["ASC"] = 1] = "ASC";
-})(Order$1 || (Order$1 = {}));
-var Type$1;
-(function(Type) {
+})(Order || (Order = {}));
+var Type;
+(function (Type) {
     Type[Type["ARRAY_BUFFER"] = 0] = "ARRAY_BUFFER";
     Type[Type["BOOLEAN"] = 1] = "BOOLEAN";
     Type[Type["DATE_TIME"] = 2] = "DATE_TIME";
@@ -49,23 +46,23 @@ var Type$1;
     Type[Type["NUMBER"] = 4] = "NUMBER";
     Type[Type["STRING"] = 5] = "STRING";
     Type[Type["OBJECT"] = 6] = "OBJECT";
-})(Type$1 || (Type$1 = {}));
-const DEFAULT_VALUES$1 = new Map([
-    [Type$1.ARRAY_BUFFER, null],
-    [Type$1.BOOLEAN, false],
-    [Type$1.DATE_TIME, Object.freeze(new Date(0))],
-    [Type$1.INTEGER, 0],
-    [Type$1.NUMBER, 0],
-    [Type$1.STRING, ""],
-    [Type$1.OBJECT, null] // nullable
+})(Type || (Type = {}));
+const DEFAULT_VALUES = new Map([
+    [Type.ARRAY_BUFFER, null],
+    [Type.BOOLEAN, false],
+    [Type.DATE_TIME, Object.freeze(new Date(0))],
+    [Type.INTEGER, 0],
+    [Type.NUMBER, 0],
+    [Type.STRING, ""],
+    [Type.OBJECT, null] // nullable
 ]);
-var TransactionType$1;
-(function(TransactionType) {
+var TransactionType;
+(function (TransactionType) {
     TransactionType[TransactionType["READ_ONLY"] = 0] = "READ_ONLY";
     TransactionType[TransactionType["READ_WRITE"] = 1] = "READ_WRITE";
-})(TransactionType$1 || (TransactionType$1 = {}));
-var ErrorCode$1;
-(function(ErrorCode) {
+})(TransactionType || (TransactionType = {}));
+var ErrorCode;
+(function (ErrorCode) {
     // System level errors
     ErrorCode[ErrorCode["SYSTEM_ERROR"] = 0] = "SYSTEM_ERROR";
     ErrorCode[ErrorCode["VERSION_MISMATCH"] = 1] = "VERSION_MISMATCH";
@@ -165,31 +162,31 @@ var ErrorCode$1;
     ErrorCode[ErrorCode["TEST_ERROR"] = 900] = "TEST_ERROR";
     ErrorCode[ErrorCode["ASSERTION"] = 998] = "ASSERTION";
     ErrorCode[ErrorCode["SIMULATED_ERROR"] = 999] = "SIMULATED_ERROR";
-})(ErrorCode$1 || (ErrorCode$1 = {}));
-class DefaultOptions$1 {
+})(ErrorCode || (ErrorCode = {}));
+class DefaultOptions {
     constructor() {
         this.debugMode = false;
         this.memoryOnly = false;
-        this.exceptionUrl = DefaultOptions$1.url;
+        this.exceptionUrl = DefaultOptions.url;
         this.useGetAll = false;
     }
     errorMessage(code) {
         return code.toString();
     }
 }
-DefaultOptions$1.url = "http://google.github.io/lovefield/error_lookup/src/error_lookup.html?c=";
-class Global$1 {
+DefaultOptions.url = "http://google.github.io/lovefield/error_lookup/src/error_lookup.html?c=";
+class Global {
     constructor() {
         this.services = new Map();
     }
     static get() {
-        if (!Global$1.instance) {
-            Global$1.instance = new Global$1();
+        if (!Global.instance) {
+            Global.instance = new Global();
         }
-        if (!Global$1.instance.opt) {
-            Global$1.instance.setOptions(new DefaultOptions$1());
+        if (!Global.instance.opt) {
+            Global.instance.setOptions(new DefaultOptions());
         }
-        return Global$1.instance;
+        return Global.instance;
     }
     clear() {
         this.services.clear();
@@ -202,7 +199,7 @@ class Global$1 {
         const service = this.services.get(serviceId.toString());
         if (!service) {
             // 7: Service {0} not registered.
-            throw new Exception$1(ErrorCode$1.SERVICE_NOT_FOUND, serviceId.toString());
+            throw new Exception(ErrorCode.SERVICE_NOT_FOUND, serviceId.toString());
         }
         return service;
     }
@@ -219,16 +216,16 @@ class Global$1 {
         this.opt = options;
     }
 }
-class Exception$1 {
+class Exception {
     constructor(code, ...args) {
         this.code = code;
         this.args = args;
-        this.message = Global$1.get().getOptions().exceptionUrl + code.toString();
+        this.message = Global.get().getOptions().exceptionUrl + code.toString();
         if (args.length) {
             // Allow at most 4 parameters, each parameter at most 64 chars.
             for (let i = 0; i < Math.min(4, args.length); ++i) {
                 const val = encodeURIComponent(String(args[i]).slice(0, 64));
-                if (Global$1.get().getOptions().exceptionUrl.length) {
+                if (Global.get().getOptions().exceptionUrl.length) {
                     this.message += `&p${i}=${val}`;
                 }
                 else {
@@ -238,13 +235,13 @@ class Exception$1 {
         }
     }
     toString() {
-        const template = Global$1.get()
+        const template = Global.get()
             .getOptions()
             .errorMessage(this.code) || this.code.toString();
         return template.replace(/{([^}]+)}/g, (match, pattern) => this.args[Number(pattern)]);
     }
 }
-class ServiceId$1 {
+class ServiceId {
     constructor(serviceId) {
         this.serviceId = serviceId;
     }
@@ -256,59 +253,59 @@ class ServiceId$1 {
         return {};
     }
 }
-const Service$1 = {
+const Service = {
     // The backing data store used by this connection.
     // following statement fail compilation, need solution.
-    "BACK_STORE": new ServiceId$1("backstore"),
+    "BACK_STORE": new ServiceId("backstore"),
     // The shared row cache used by this connection.
-    "CACHE": new ServiceId$1("cache"),
+    "CACHE": new ServiceId("cache"),
     // The shared store of all indices defined.
-    "INDEX_STORE": new ServiceId$1("indexstore"),
+    "INDEX_STORE": new ServiceId("indexstore"),
     // Query engine used for generating execution plan.
-    "QUERY_ENGINE": new ServiceId$1("engine"),
+    "QUERY_ENGINE": new ServiceId("engine"),
     // Query runner which executes transactions.
-    "RUNNER": new ServiceId$1("runner"),
+    "RUNNER": new ServiceId("runner"),
     // Finalized schema associated with this connection.
-    "SCHEMA": new ServiceId$1("schema")
+    "SCHEMA": new ServiceId("schema")
 };
 // The comparison result constant. This must be consistent with the constant
 // required by the sort function of Array.prototype.sort.
-var Favor$1;
-(function(Favor) {
+var Favor;
+(function (Favor) {
     Favor[Favor["RHS"] = -1] = "RHS";
     Favor[Favor["TIE"] = 0] = "TIE";
     Favor[Favor["LHS"] = 1] = "LHS"; // favors left hand side, i.e. lhs > rhs
-})(Favor$1 || (Favor$1 = {}));
-var TableType$1;
-(function(TableType) {
+})(Favor || (Favor = {}));
+var TableType;
+(function (TableType) {
     TableType[TableType["DATA"] = 0] = "DATA";
     TableType[TableType["INDEX"] = 1] = "INDEX";
-})(TableType$1 || (TableType$1 = {}));
-var ExecType$1;
-(function(ExecType) {
+})(TableType || (TableType = {}));
+var ExecType;
+(function (ExecType) {
     ExecType[ExecType["NO_CHILD"] = -1] = "NO_CHILD";
     ExecType[ExecType["ALL"] = 0] = "ALL";
     ExecType[ExecType["FIRST_CHILD"] = 1] = "FIRST_CHILD"; // Will invoke only the first child's exec().
-})(ExecType$1 || (ExecType$1 = {}));
-var LockType$1;
-(function(LockType) {
+})(ExecType || (ExecType = {}));
+var LockType;
+(function (LockType) {
     LockType[LockType["EXCLUSIVE"] = 0] = "EXCLUSIVE";
     LockType[LockType["RESERVED_READ_ONLY"] = 1] = "RESERVED_READ_ONLY";
     LockType[LockType["RESERVED_READ_WRITE"] = 2] = "RESERVED_READ_WRITE";
     LockType[LockType["SHARED"] = 3] = "SHARED";
-})(LockType$1 || (LockType$1 = {}));
+})(LockType || (LockType = {}));
 // The priority of each type of task. Lower number means higher priority.
-var TaskPriority$1;
-(function(TaskPriority) {
+var TaskPriority;
+(function (TaskPriority) {
     TaskPriority[TaskPriority["EXPORT_TASK"] = 0] = "EXPORT_TASK";
     TaskPriority[TaskPriority["IMPORT_TASK"] = 0] = "IMPORT_TASK";
     TaskPriority[TaskPriority["OBSERVER_QUERY_TASK"] = 0] = "OBSERVER_QUERY_TASK";
     TaskPriority[TaskPriority["EXTERNAL_CHANGE_TASK"] = 1] = "EXTERNAL_CHANGE_TASK";
     TaskPriority[TaskPriority["USER_QUERY_TASK"] = 2] = "USER_QUERY_TASK";
     TaskPriority[TaskPriority["TRANSACTION_TASK"] = 2] = "TRANSACTION_TASK";
-})(TaskPriority$1 || (TaskPriority$1 = {}));
-var FnType$1;
-(function(FnType) {
+})(TaskPriority || (TaskPriority = {}));
+var FnType;
+(function (FnType) {
     FnType["AVG"] = "AVG";
     FnType["COUNT"] = "COUNT";
     FnType["DISTINCT"] = "DISTINCT";
@@ -317,13 +314,13 @@ var FnType$1;
     FnType["MIN"] = "MIN";
     FnType["STDDEV"] = "STDDEV";
     FnType["SUM"] = "SUM";
-})(FnType$1 || (FnType$1 = {}));
-var Operator$1;
-(function(Operator) {
+})(FnType || (FnType = {}));
+var Operator;
+(function (Operator) {
     Operator["AND"] = "and";
     Operator["OR"] = "or";
-})(Operator$1 || (Operator$1 = {}));
-class Resolver$1 {
+})(Operator || (Operator = {}));
+class Resolver {
     constructor() {
         this.promise = new Promise((resolve, reject) => {
             this.resolveFn = resolve;
@@ -337,7 +334,7 @@ class Resolver$1 {
         this.rejectFn(reason);
     }
 }
-class UniqueId$1 {
+class UniqueId {
     getUniqueId() {
         if (this.uniqueId === undefined) {
             this.uniqueId = `lf_${this.getUniqueNumber()}`;
@@ -346,17 +343,17 @@ class UniqueId$1 {
     }
     getUniqueNumber() {
         if (this.uniqueNumber === undefined) {
-            this.uniqueNumber = ++UniqueId$1.nextId;
+            this.uniqueNumber = ++UniqueId.nextId;
         }
         return this.uniqueNumber;
     }
 }
-UniqueId$1.nextId = 0;
-class InMemoryUpdater$1 {
+UniqueId.nextId = 0;
+class InMemoryUpdater {
     constructor(global) {
-        this.cache = global.getService(Service$1.CACHE);
-        this.indexStore = global.getService(Service$1.INDEX_STORE);
-        this.schema = global.getService(Service$1.SCHEMA);
+        this.cache = global.getService(Service.CACHE);
+        this.indexStore = global.getService(Service.INDEX_STORE);
+        this.schema = global.getService(Service.SCHEMA);
     }
     // Updates all indices and the cache to reflect the changes that are described
     // in the given diffs.
@@ -424,7 +421,7 @@ class InMemoryUpdater$1 {
                     return;
                 }
             }
-            else if (index.comparator().compare(keyThen, keyNow) === Favor$1.TIE) {
+            else if (index.comparator().compare(keyThen, keyNow) === Favor.TIE) {
                 return;
             }
             // Update
@@ -440,7 +437,7 @@ class InMemoryUpdater$1 {
         }
     }
 }
-class TransactionStatsImpl$1 {
+class TransactionStatsImpl {
     constructor(success_, insertedRowCount_, updatedRowCount_, deletedRowCount_, changedTableCount_) {
         this.success_ = success_;
         this.insertedRowCount_ = insertedRowCount_;
@@ -449,7 +446,7 @@ class TransactionStatsImpl$1 {
         this.changedTableCount_ = changedTableCount_;
     }
     static getDefault() {
-        return new TransactionStatsImpl$1(false, 0, 0, 0, 0);
+        return new TransactionStatsImpl(false, 0, 0, 0, 0);
     }
     success() {
         return this.success_;
@@ -467,16 +464,16 @@ class TransactionStatsImpl$1 {
         return this.changedTableCount_;
     }
 }
-function assert$1(condition, message = "assertion failed") {
-    if (Global$1.get().getOptions().debugMode) {
+function assert(condition, message = "assertion failed") {
+    if (Global.get().getOptions().debugMode) {
         if (!condition) {
-            throw new Exception$1(ErrorCode$1.ASSERTION, message);
+            throw new Exception(ErrorCode.ASSERTION, message);
         }
     }
 }
 // A MapSet maps a key to a set of values, without allowing duplicate entries
 // for a given key.
-class MapSet$1 {
+class MapSet {
     constructor() {
         this.map = new Map();
         this.count = 0;
@@ -557,17 +554,17 @@ class MapSet$1 {
     }
 }
 // Read-only objects that provides information for schema metadata.
-class Info$1 {
+class Info {
     constructor(dbSchema) {
         this.dbSchema = dbSchema;
-        this.cascadeReferringFk = new MapSet$1();
-        this.restrictReferringFk = new MapSet$1();
-        this.parents = new MapSet$1();
+        this.cascadeReferringFk = new MapSet();
+        this.restrictReferringFk = new MapSet();
+        this.parents = new MapSet();
         this.colParent = new Map();
-        this.children = new MapSet$1();
-        this.cascadeChildren = new MapSet$1();
-        this.restrictChildren = new MapSet$1();
-        this.colChild = new MapSet$1();
+        this.children = new MapSet();
+        this.cascadeChildren = new MapSet();
+        this.restrictChildren = new MapSet();
+        this.colChild = new MapSet();
         this.dbSchema.tables().forEach((t) => {
             const table = t;
             const tableName = table.getName();
@@ -575,21 +572,21 @@ class Info$1 {
                 .getConstraint()
                 .getForeignKeys()
                 .forEach((fkSpec) => {
-                    this.parents.set(tableName, this.dbSchema.table(fkSpec.parentTable));
-                    this.children.set(fkSpec.parentTable, table);
-                    if (fkSpec.action === ConstraintAction$1.RESTRICT) {
-                        this.restrictReferringFk.set(fkSpec.parentTable, fkSpec);
-                        this.restrictChildren.set(fkSpec.parentTable, table);
-                    }
-                    else {
-                        // fkSpec.action === ConstraintAction.CASCADE
-                        this.cascadeReferringFk.set(fkSpec.parentTable, fkSpec);
-                        this.cascadeChildren.set(fkSpec.parentTable, table);
-                    }
-                    this.colParent.set(table.getName() + "." + fkSpec.childColumn, fkSpec.parentTable);
-                    const ref = `${fkSpec.parentTable}.${fkSpec.parentColumn}`;
-                    this.colChild.set(ref, table.getName());
-                }, this);
+                this.parents.set(tableName, this.dbSchema.table(fkSpec.parentTable));
+                this.children.set(fkSpec.parentTable, table);
+                if (fkSpec.action === ConstraintAction.RESTRICT) {
+                    this.restrictReferringFk.set(fkSpec.parentTable, fkSpec);
+                    this.restrictChildren.set(fkSpec.parentTable, table);
+                }
+                else {
+                    // fkSpec.action === ConstraintAction.CASCADE
+                    this.cascadeReferringFk.set(fkSpec.parentTable, fkSpec);
+                    this.cascadeChildren.set(fkSpec.parentTable, table);
+                }
+                this.colParent.set(table.getName() + "." + fkSpec.childColumn, fkSpec.parentTable);
+                const ref = `${fkSpec.parentTable}.${fkSpec.parentColumn}`;
+                this.colChild.set(ref, table.getName());
+            }, this);
         }, this);
     }
     static from(dbSchema) {
@@ -599,7 +596,7 @@ class Info$1 {
     // If no constraint action type were provided, all types are included.
     getReferencingForeignKeys(tableName, constraintAction) {
         if (constraintAction !== undefined && constraintAction !== null) {
-            return constraintAction === ConstraintAction$1.CASCADE ? this.cascadeReferringFk.get(tableName) : this.restrictReferringFk.get(tableName);
+            return constraintAction === ConstraintAction.CASCADE ? this.cascadeReferringFk.get(tableName) : this.restrictReferringFk.get(tableName);
         }
         else {
             const cascadeConstraints = this.cascadeReferringFk.get(tableName);
@@ -633,7 +630,7 @@ class Info$1 {
         if (!(constraintAction !== undefined && constraintAction !== null)) {
             return this.expandScope(tableName, this.children);
         }
-        else if (constraintAction === ConstraintAction$1.RESTRICT) {
+        else if (constraintAction === ConstraintAction.RESTRICT) {
             return this.expandScope(tableName, this.restrictChildren);
         }
         else {
@@ -657,11 +654,11 @@ class Info$1 {
         return values === null ? [] : values;
     }
 }
-class ConstraintChecker$1 {
+class ConstraintChecker {
     constructor(global) {
-        this.indexStore = global.getService(Service$1.INDEX_STORE);
-        this.schema = global.getService(Service$1.SCHEMA);
-        this.cache = global.getService(Service$1.CACHE);
+        this.indexStore = global.getService(Service.INDEX_STORE);
+        this.schema = global.getService(Service.SCHEMA);
+        this.cache = global.getService(Service.CACHE);
         this.foreignKeysParentIndices = new Map();
     }
     static didColumnValueChange(rowBefore, rowAfter, indexName) {
@@ -693,7 +690,7 @@ class ConstraintChecker$1 {
                 const target = row.payload()[column.getName()];
                 if (!(target !== null && target !== undefined)) {
                     // 202: Attempted to insert NULL value to non-nullable field {0}.
-                    throw new Exception$1(ErrorCode$1.NOT_NULLABLE, column.getNormalizedName());
+                    throw new Exception(ErrorCode.NOT_NULLABLE, column.getNormalizedName());
                 }
             }, this);
         }, this);
@@ -701,7 +698,7 @@ class ConstraintChecker$1 {
     // Finds all rows in the database that should be updated as a result of
     // cascading updates, taking into account the given foreign key constraints.
     detectCascadeUpdates(table, modifications, foreignKeySpecs) {
-        const cascadedUpdates = new MapSet$1();
+        const cascadedUpdates = new MapSet();
         this.loopThroughReferringRows(foreignKeySpecs, modifications, (foreignKeySpec, childIndex, parentKey, modification) => {
             const childRowIds = childIndex.get(parentKey);
             childRowIds.forEach((rowId) => {
@@ -733,7 +730,7 @@ class ConstraintChecker$1 {
             return;
         }
         this.checkReferredKeys(table, modifications, constraintTiming);
-        this.checkReferringKeys(table, modifications, constraintTiming, ConstraintAction$1.RESTRICT);
+        this.checkReferringKeys(table, modifications, constraintTiming, ConstraintAction.RESTRICT);
     }
     // Performs all necessary foreign key constraint checks for the case of
     // existing rows being deleted. Only constraints with |constraintTiming| will
@@ -753,13 +750,13 @@ class ConstraintChecker$1 {
     // account).
     detectCascadeDeletion(table, rows) {
         const result = {
-            "rowIdsPerTable": new MapSet$1(),
+            "rowIdsPerTable": new MapSet(),
             "tableOrder": []
         };
-        let lastRowIdsToDelete = new MapSet$1();
+        let lastRowIdsToDelete = new MapSet();
         lastRowIdsToDelete.setMany(table.getName(), rows.map((row) => row.id()));
         do {
-            const newRowIdsToDelete = new MapSet$1();
+            const newRowIdsToDelete = new MapSet();
             lastRowIdsToDelete.keys().forEach((tableName) => {
                 const tbl = this.schema.table(tableName);
                 const rowIds = lastRowIdsToDelete.get(tableName);
@@ -803,7 +800,7 @@ class ConstraintChecker$1 {
     checkReferredKey(foreignKeySpec, modifications) {
         const parentIndex = this.getParentIndex(foreignKeySpec);
         modifications.forEach((modification) => {
-            const didColumnValueChange = ConstraintChecker$1.didColumnValueChange(modification[0], modification[1], foreignKeySpec.name);
+            const didColumnValueChange = ConstraintChecker.didColumnValueChange(modification[0], modification[1], foreignKeySpec.name);
             if (didColumnValueChange) {
                 const rowAfter = modification[1];
                 const parentKey = rowAfter.keyOfIndex(foreignKeySpec.name);
@@ -811,7 +808,7 @@ class ConstraintChecker$1 {
                 // considering it as a constraint violation.
                 if (parentKey !== null && !parentIndex.containsKey(parentKey)) {
                     // 203: Foreign key constraint violation on constraint {0}.
-                    throw new Exception$1(ErrorCode$1.FK_VIOLATION, foreignKeySpec.name);
+                    throw new Exception(ErrorCode.FK_VIOLATION, foreignKeySpec.name);
                 }
             }
         }, this);
@@ -846,7 +843,7 @@ class ConstraintChecker$1 {
     // Only constraints with |constraintAction| will be checked. If not provided
     // both CASCADE and RESTRICT are checked.
     checkReferringKeys(table, modifications, constraintTiming, constraintAction) {
-        let foreignKeySpecs = Info$1.from(this.schema).getReferencingForeignKeys(table.getName(), constraintAction);
+        let foreignKeySpecs = Info.from(this.schema).getReferencingForeignKeys(table.getName(), constraintAction);
         if (foreignKeySpecs === null) {
             return;
         }
@@ -861,7 +858,7 @@ class ConstraintChecker$1 {
         this.loopThroughReferringRows(foreignKeySpecs, modifications, (foreignKeySpec, childIndex, parentKey) => {
             if (childIndex.containsKey(parentKey)) {
                 // 203: Foreign key constraint violation on constraint {0}.
-                throw new Exception$1(ErrorCode$1.FK_VIOLATION, foreignKeySpec.name);
+                throw new Exception(ErrorCode.FK_VIOLATION, foreignKeySpec.name);
             }
         });
     }
@@ -869,11 +866,11 @@ class ConstraintChecker$1 {
     // if the refer to a modified column. Returns referring row IDs per table.
     findReferringRowIds(table, modifications) {
         // Finding foreign key constraints referring to the affected table.
-        const foreignKeySpecs = Info$1.from(this.schema).getReferencingForeignKeys(table.getName(), ConstraintAction$1.CASCADE);
+        const foreignKeySpecs = Info.from(this.schema).getReferencingForeignKeys(table.getName(), ConstraintAction.CASCADE);
         if (foreignKeySpecs === null) {
             return null;
         }
-        const referringRowIds = new MapSet$1();
+        const referringRowIds = new MapSet();
         this.loopThroughReferringRows(foreignKeySpecs, modifications, (foreignKeySpec, childIndex, parentKey) => {
             const childRowIds = childIndex.get(parentKey);
             if (childRowIds.length > 0) {
@@ -890,7 +887,7 @@ class ConstraintChecker$1 {
             const childIndex = this.indexStore.get(foreignKeySpec.name);
             const parentIndex = this.getParentIndex(foreignKeySpec);
             modifications.forEach((modification) => {
-                const didColumnValueChange = ConstraintChecker$1.didColumnValueChange(modification[0], modification[1], parentIndex.getName());
+                const didColumnValueChange = ConstraintChecker.didColumnValueChange(modification[0], modification[1], parentIndex.getName());
                 if (didColumnValueChange) {
                     const rowBefore = modification[0];
                     const parentKey = rowBefore.keyOfIndex(parentIndex.getName());
@@ -900,7 +897,7 @@ class ConstraintChecker$1 {
         }, this);
     }
 }
-class TableDiff$1 {
+class TableDiff {
     constructor(name) {
         this.name = name;
         this.added = new Map();
@@ -935,7 +932,7 @@ class TableDiff$1 {
     modify(modification) {
         const oldValue = modification[0];
         const newValue = modification[1];
-        assert$1(oldValue.id() === newValue.id(), "Row ID mismatch between old/new values.");
+        assert(oldValue.id() === newValue.id(), "Row ID mismatch between old/new values.");
         const id = oldValue.id();
         if (this.added.has(id)) {
             this.added.set(id, newValue);
@@ -990,7 +987,7 @@ class TableDiff$1 {
     // Reverses this set of changes. Useful for reverting changes after they have
     // been applied.
     getReverse() {
-        const reverseDiff = new TableDiff$1(this.name);
+        const reverseDiff = new TableDiff(this.name);
         this.added.forEach((row) => { reverseDiff.delete(row); });
         this.deleted.forEach((row) => { reverseDiff.add(row); });
         this.modified.forEach((modification) => {
@@ -1008,15 +1005,15 @@ class TableDiff$1 {
 // stores rows changed by this transaction so that they can be merged into the
 // backing store. Caches and indices are updated as soon as a change is
 // recorded in the journal.
-class Journal$1 {
+class Journal {
     constructor(global, txScope) {
         this.scope = new Map();
         txScope.forEach((tableSchema) => this.scope.set(tableSchema.getName(), tableSchema));
-        this.schema = global.getService(Service$1.SCHEMA);
-        this.cache = global.getService(Service$1.CACHE);
-        this.indexStore = global.getService(Service$1.INDEX_STORE);
-        this.constraintChecker = new ConstraintChecker$1(global);
-        this.inMemoryUpdater = new InMemoryUpdater$1(global);
+        this.schema = global.getService(Service.SCHEMA);
+        this.cache = global.getService(Service.CACHE);
+        this.indexStore = global.getService(Service.INDEX_STORE);
+        this.constraintChecker = new ConstraintChecker(global);
+        this.inMemoryUpdater = new InMemoryUpdater(global);
         this.terminated = false;
         this.pendingRollback = false;
         this.tableDiffs = new Map();
@@ -1050,7 +1047,7 @@ class Journal$1 {
         this.assertJournalWritable();
         this.checkScope(table);
         this.constraintChecker.checkNotNullable(table, rows);
-        this.constraintChecker.checkForeignKeysForInsert(table, rows, ConstraintTiming$1.IMMEDIATE);
+        this.constraintChecker.checkForeignKeysForInsert(table, rows, ConstraintTiming.IMMEDIATE);
         rows.forEach((row) => {
             this.modifyRow(table, [null /* rowBefore */, row]);
         }, this);
@@ -1065,7 +1062,7 @@ class Journal$1 {
             return [rowBefore /* rowBefore */, row];
         }, this);
         this.updateByCascade(table, modifications);
-        this.constraintChecker.checkForeignKeysForUpdate(table, modifications, ConstraintTiming$1.IMMEDIATE);
+        this.constraintChecker.checkForeignKeysForUpdate(table, modifications, ConstraintTiming.IMMEDIATE);
         modifications.forEach((modification) => { this.modifyRow(table, modification); });
     }
     insertOrReplace(t, rows) {
@@ -1080,10 +1077,10 @@ class Journal$1 {
                 rowBefore = this.cache.get(existingRowId);
                 rowNow.assignRowId(existingRowId);
                 const modification = [rowBefore, rowNow];
-                this.constraintChecker.checkForeignKeysForUpdate(table, [modification], ConstraintTiming$1.IMMEDIATE);
+                this.constraintChecker.checkForeignKeysForUpdate(table, [modification], ConstraintTiming.IMMEDIATE);
             }
             else {
-                this.constraintChecker.checkForeignKeysForInsert(table, [rowNow], ConstraintTiming$1.IMMEDIATE);
+                this.constraintChecker.checkForeignKeysForInsert(table, [rowNow], ConstraintTiming.IMMEDIATE);
             }
             this.modifyRow(table, [rowBefore, rowNow]);
         }, this);
@@ -1093,7 +1090,7 @@ class Journal$1 {
         this.assertJournalWritable();
         this.checkScope(table);
         this.removeByCascade(table, rows);
-        this.constraintChecker.checkForeignKeysForDelete(table, rows, ConstraintTiming$1.IMMEDIATE);
+        this.constraintChecker.checkForeignKeysForDelete(table, rows, ConstraintTiming.IMMEDIATE);
         rows.forEach((row) => {
             this.modifyRow(table, [row /* rowBefore */, null]);
         }, this);
@@ -1101,9 +1098,9 @@ class Journal$1 {
     checkDeferredConstraints() {
         this.tableDiffs.forEach((tableDiff) => {
             const table = this.scope.get(tableDiff.getName());
-            this.constraintChecker.checkForeignKeysForInsert(table, Array.from(tableDiff.getAdded().values()), ConstraintTiming$1.DEFERRABLE);
-            this.constraintChecker.checkForeignKeysForDelete(table, Array.from(tableDiff.getDeleted().values()), ConstraintTiming$1.DEFERRABLE);
-            this.constraintChecker.checkForeignKeysForUpdate(table, Array.from(tableDiff.getModified().values()), ConstraintTiming$1.DEFERRABLE);
+            this.constraintChecker.checkForeignKeysForInsert(table, Array.from(tableDiff.getAdded().values()), ConstraintTiming.DEFERRABLE);
+            this.constraintChecker.checkForeignKeysForDelete(table, Array.from(tableDiff.getDeleted().values()), ConstraintTiming.DEFERRABLE);
+            this.constraintChecker.checkForeignKeysForUpdate(table, Array.from(tableDiff.getModified().values()), ConstraintTiming.DEFERRABLE);
         }, this);
     }
     // Commits journal changes into cache and indices.
@@ -1114,7 +1111,7 @@ class Journal$1 {
     // Rolls back all the changes that were made in this journal from the cache
     // and indices.
     rollback() {
-        assert$1(!this.terminated, "Attempted to rollback a terminated journal.");
+        assert(!this.terminated, "Attempted to rollback a terminated journal.");
         const reverseDiffs = Array.from(this.tableDiffs.values()).map((tableDiff) => tableDiff.getReverse());
         this.inMemoryUpdater.update(reverseDiffs);
         this.terminated = true;
@@ -1122,21 +1119,21 @@ class Journal$1 {
     }
     // Asserts that this journal can still be used.
     assertJournalWritable() {
-        assert$1(!this.pendingRollback, "Attempted to use journal that needs to be rolled back.");
-        assert$1(!this.terminated, "Attempted to commit a terminated journal.");
+        assert(!this.pendingRollback, "Attempted to use journal that needs to be rolled back.");
+        assert(!this.terminated, "Attempted to commit a terminated journal.");
     }
     // Checks that the given table is within the declared scope.
     checkScope(tableSchema) {
         if (!this.scope.has(tableSchema.getName())) {
             // 106: Attempt to access {0} outside of specified scope.
-            throw new Exception$1(ErrorCode$1.OUT_OF_SCOPE, tableSchema.getName());
+            throw new Exception(ErrorCode.OUT_OF_SCOPE, tableSchema.getName());
         }
     }
     // Updates the journal to reflect a modification (insertion, update, deletion)
     // of a single row.
     modifyRow(table, modification) {
         const tableName = table.getName();
-        const diff = this.tableDiffs.get(tableName) || new TableDiff$1(tableName);
+        const diff = this.tableDiffs.get(tableName) || new TableDiff(tableName);
         this.tableDiffs.set(tableName, diff);
         try {
             this.inMemoryUpdater.updateTableIndicesForRow(table, modification);
@@ -1167,7 +1164,7 @@ class Journal$1 {
     // |table| refers to the table where the update is initiated.
     // |modifications| means the initial modifications.
     updateByCascade(table, modifications) {
-        const foreignKeySpecs = Info$1.from(this.schema).getReferencingForeignKeys(table.getName(), ConstraintAction$1.CASCADE);
+        const foreignKeySpecs = Info.from(this.schema).getReferencingForeignKeys(table.getName(), ConstraintAction.CASCADE);
         if (foreignKeySpecs === null) {
             // The affected table does not appear as the parent in any CASCADE foreign
             // key constraint, therefore no cascading detection is needed.
@@ -1191,7 +1188,7 @@ class Journal$1 {
     // |table| refers to the table where the update is initiated.
     // |rows| means the initial rows to be deleted.
     removeByCascade(table, deletedRows) {
-        const foreignKeySpecs = Info$1.from(this.schema).getReferencingForeignKeys(table.getName(), ConstraintAction$1.CASCADE);
+        const foreignKeySpecs = Info.from(this.schema).getReferencingForeignKeys(table.getName(), ConstraintAction.CASCADE);
         if (foreignKeySpecs === null) {
             // The affected table does not appear as the parent in any CASCADE foreign
             // key constraint, therefore no cascading detection is needed.
@@ -1204,7 +1201,7 @@ class Journal$1 {
             const rows = cascadeRowIds.get(tableName).map((rowId) => {
                 return this.cache.get(rowId);
             }, this);
-            this.constraintChecker.checkForeignKeysForDelete(tbl, rows, ConstraintTiming$1.IMMEDIATE);
+            this.constraintChecker.checkForeignKeysForDelete(tbl, rows, ConstraintTiming.IMMEDIATE);
             rows.forEach((row) => {
                 this.modifyRow(tbl, [row /* rowBefore */, null]);
             }, this);
@@ -1213,7 +1210,7 @@ class Journal$1 {
 }
 // Binder class that instructs the query engine to evaluate bound value at
 // execution time.
-class Binder$1 {
+class Binder {
     constructor(index) {
         this.index = index;
     }
@@ -1221,8 +1218,8 @@ class Binder$1 {
         return this.index;
     }
 }
-var EvalType$1;
-(function(EvalType) {
+var EvalType;
+(function (EvalType) {
     EvalType["BETWEEN"] = "between";
     EvalType["EQ"] = "eq";
     EvalType["GTE"] = "gte";
@@ -1232,8 +1229,8 @@ var EvalType$1;
     EvalType["LT"] = "lt";
     EvalType["MATCH"] = "match";
     EvalType["NEQ"] = "neq";
-})(EvalType$1 || (EvalType$1 = {}));
-function identity$1(value) {
+})(EvalType || (EvalType = {}));
+function identity(value) {
     return value;
 }
 /**
@@ -1242,17 +1239,17 @@ function identity$1(value) {
  * NOTE: lf.eval.Type.BETWEEN, MATCH, GTE, GT, LTE, LT, are not available for
  * boolean objects.
  */
-function buildKeyOfIndexConversionMap$1() {
+function buildKeyOfIndexConversionMap() {
     const map = new Map();
-    map.set(Type$1.BOOLEAN, ((value) => {
+    map.set(Type.BOOLEAN, ((value) => {
         return value === null ? null : value ? 1 : 0;
     }));
-    map.set(Type$1.DATE_TIME, ((value) => {
+    map.set(Type.DATE_TIME, ((value) => {
         return value === null ? null : value.getTime();
     }));
-    map.set(Type$1.INTEGER, identity$1);
-    map.set(Type$1.NUMBER, identity$1);
-    map.set(Type$1.STRING, identity$1);
+    map.set(Type.INTEGER, identity);
+    map.set(Type.NUMBER, identity);
+    map.set(Type.STRING, identity);
     return map;
 }
 /**
@@ -1261,30 +1258,30 @@ function buildKeyOfIndexConversionMap$1() {
  * NOTE: lf.eval.Type.BETWEEN, MATCH, GTE, GT, LTE, LT, are not available for
  * boolean objects.
  */
-function buildBooleanEvaluatorMap$1() {
+function buildBooleanEvaluatorMap() {
     const map = new Map();
-    map.set(EvalType$1.EQ, (a, b) => a === b);
-    map.set(EvalType$1.NEQ, (a, b) => a !== b);
+    map.set(EvalType.EQ, (a, b) => a === b);
+    map.set(EvalType.NEQ, (a, b) => a !== b);
     return map;
 }
-function buildCommonEvaluatorMap$1() {
-    const map = buildBooleanEvaluatorMap$1();
-    map.set(EvalType$1.BETWEEN, (a, range) => {
+function buildCommonEvaluatorMap() {
+    const map = buildBooleanEvaluatorMap();
+    map.set(EvalType.BETWEEN, (a, range) => {
         return a === null || range[0] === null || range[1] === null ? false : a >= range[0] && a <= range[1];
     });
-    map.set(EvalType$1.GTE, (a, b) => {
+    map.set(EvalType.GTE, (a, b) => {
         return a === null || b === null ? false : a >= b;
     });
-    map.set(EvalType$1.GT, (a, b) => {
+    map.set(EvalType.GT, (a, b) => {
         return a === null || b === null ? false : a > b;
     });
-    map.set(EvalType$1.IN, (rowValue, values) => {
+    map.set(EvalType.IN, (rowValue, values) => {
         return values.includes(rowValue);
     });
-    map.set(EvalType$1.LTE, (a, b) => {
+    map.set(EvalType.LTE, (a, b) => {
         return a === null || b === null ? false : a <= b;
     });
-    map.set(EvalType$1.LT, (a, b) => {
+    map.set(EvalType.LT, (a, b) => {
         return a === null || b === null ? false : a < b;
     });
     return map;
@@ -1294,14 +1291,14 @@ function buildCommonEvaluatorMap$1() {
  * the case of a column of type 'number'.
  * NOTE: lf.eval.Type.MATCH is not available for numbers.
  */
-const buildNumberEvaluatorMap$1 = buildCommonEvaluatorMap$1;
+const buildNumberEvaluatorMap = buildCommonEvaluatorMap;
 /**
  * Builds a map associating evaluator types with the evaluator functions, for
  * the case of a column of type 'string'.
  */
-function buildStringEvaluatorMap$1() {
-    const map = buildCommonEvaluatorMap$1();
-    map.set(EvalType$1.MATCH, (value, regex) => {
+function buildStringEvaluatorMap() {
+    const map = buildCommonEvaluatorMap();
+    map.set(EvalType.MATCH, (value, regex) => {
         if (value === null || regex === null) {
             return false;
         }
@@ -1315,20 +1312,20 @@ function buildStringEvaluatorMap$1() {
  * the case of a column of type 'Object'.
  * NOTE: Only lf.eval.Type.EQ and NEQ are available for objects.
  */
-function buildObjectEvaluatorMap$1() {
+function buildObjectEvaluatorMap() {
     const map = new Map();
     const checkNull = (value) => {
         if (value !== null) {
             // 550: where() clause includes an invalid predicate, can't compare
             // lf.Type.OBJECT to anything other than null.
-            throw new Exception$1(ErrorCode$1.INVALID_PREDICATE);
+            throw new Exception(ErrorCode.INVALID_PREDICATE);
         }
     };
-    map.set(EvalType$1.EQ, (a, b) => {
+    map.set(EvalType.EQ, (a, b) => {
         checkNull(b);
         return a === null;
     });
-    map.set(EvalType$1.NEQ, (a, b) => {
+    map.set(EvalType.NEQ, (a, b) => {
         checkNull(b);
         return a !== null;
     });
@@ -1339,66 +1336,66 @@ function buildObjectEvaluatorMap$1() {
  * the case of a column of type 'Date'.
  * NOTE: lf.eval.Type.MATCH is not available for Date objects.
  */
-function buildDateEvaluatorMap$1() {
+function buildDateEvaluatorMap() {
     const map = new Map();
-    map.set(EvalType$1.BETWEEN, (a, range) => {
+    map.set(EvalType.BETWEEN, (a, range) => {
         return a === null || range[0] === null || range[1] === null ? false : a.getTime() >= range[0].getTime() && a.getTime() <= range[1].getTime();
     });
-    map.set(EvalType$1.EQ, (a, b) => {
+    map.set(EvalType.EQ, (a, b) => {
         const aTime = a === null ? -1 : a.getTime();
         const bTime = b === null ? -1 : b.getTime();
         return aTime === bTime;
     });
-    map.set(EvalType$1.GTE, (a, b) => {
+    map.set(EvalType.GTE, (a, b) => {
         return a === null || b === null ? false : a.getTime() >= b.getTime();
     });
-    map.set(EvalType$1.GT, (a, b) => {
+    map.set(EvalType.GT, (a, b) => {
         return a === null || b === null ? false : a.getTime() > b.getTime();
     });
-    map.set(EvalType$1.IN, (targetValue, values) => {
+    map.set(EvalType.IN, (targetValue, values) => {
         return values.some((value) => value.getTime() === targetValue.getTime());
     });
-    map.set(EvalType$1.LTE, (a, b) => {
+    map.set(EvalType.LTE, (a, b) => {
         return a === null || b === null ? false : a.getTime() <= b.getTime();
     });
-    map.set(EvalType$1.LT, (a, b) => {
+    map.set(EvalType.LT, (a, b) => {
         return a === null || b === null ? false : a.getTime() < b.getTime();
     });
-    map.set(EvalType$1.NEQ, (a, b) => {
+    map.set(EvalType.NEQ, (a, b) => {
         const aTime = a === null ? -1 : a.getTime();
         const bTime = b === null ? -1 : b.getTime();
         return aTime !== bTime;
     });
     return map;
 }
-class EvalRegistry$1 {
+class EvalRegistry {
     constructor() {
-        this.keyOfIndexConversionMap = buildKeyOfIndexConversionMap$1();
+        this.keyOfIndexConversionMap = buildKeyOfIndexConversionMap();
         this.evalMaps = new Map();
-        const numberOrIntegerEvalMap = buildNumberEvaluatorMap$1();
-        this.evalMaps.set(Type$1.BOOLEAN, buildBooleanEvaluatorMap$1());
-        this.evalMaps.set(Type$1.DATE_TIME, buildDateEvaluatorMap$1());
-        this.evalMaps.set(Type$1.NUMBER, numberOrIntegerEvalMap);
-        this.evalMaps.set(Type$1.INTEGER, numberOrIntegerEvalMap);
-        this.evalMaps.set(Type$1.STRING, buildStringEvaluatorMap$1());
-        this.evalMaps.set(Type$1.OBJECT, buildObjectEvaluatorMap$1());
+        const numberOrIntegerEvalMap = buildNumberEvaluatorMap();
+        this.evalMaps.set(Type.BOOLEAN, buildBooleanEvaluatorMap());
+        this.evalMaps.set(Type.DATE_TIME, buildDateEvaluatorMap());
+        this.evalMaps.set(Type.NUMBER, numberOrIntegerEvalMap);
+        this.evalMaps.set(Type.INTEGER, numberOrIntegerEvalMap);
+        this.evalMaps.set(Type.STRING, buildStringEvaluatorMap());
+        this.evalMaps.set(Type.OBJECT, buildObjectEvaluatorMap());
     }
     static get() {
-        EvalRegistry$1.instance = EvalRegistry$1.instance || new EvalRegistry$1();
-        return EvalRegistry$1.instance;
+        EvalRegistry.instance = EvalRegistry.instance || new EvalRegistry();
+        return EvalRegistry.instance;
     }
     getEvaluator(columnType, evaluatorType) {
         const evaluationMap = this.evalMaps.get(columnType) || null;
         if (evaluationMap === null) {
             // 550: where() clause includes an invalid predicate. Could not find
             // evaluation map for the given column type.
-            throw new Exception$1(ErrorCode$1.INVALID_PREDICATE);
+            throw new Exception(ErrorCode.INVALID_PREDICATE);
         }
         const evaluatorFn = evaluationMap.get(evaluatorType) || null;
         if (evaluatorFn === null) {
             // 550: where() clause includes an invalid predicate. Could not find
             // evaluation map for the given column type.
-            throw new Exception$1(ErrorCode$1.INVALID_PREDICATE);
+            throw new Exception(ErrorCode.INVALID_PREDICATE);
         }
         return evaluatorFn;
     }
@@ -1406,83 +1403,83 @@ class EvalRegistry$1 {
         const fn = this.keyOfIndexConversionMap.get(columnType) || null;
         if (fn === null) {
             // 300: Not supported
-            throw new Exception$1(ErrorCode$1.NOT_SUPPORTED);
+            throw new Exception(ErrorCode.NOT_SUPPORTED);
         }
         return fn;
     }
 }
 // Unbound is used to denote an unbound key range boundary.
-class UnboundKey$1 {
+class UnboundKey {
 }
 // A SingleKeyRange represents a key range of a single column.
-class SingleKeyRange$1 {
+class SingleKeyRange {
     constructor(from, to, excludeLower, excludeUpper) {
         this.from = from;
         this.to = to;
-        this.excludeLower = !SingleKeyRange$1.isUnbound(this.from) ? excludeLower : false;
-        this.excludeUpper = !SingleKeyRange$1.isUnbound(this.to) ? excludeUpper : false;
+        this.excludeLower = !SingleKeyRange.isUnbound(this.from) ? excludeLower : false;
+        this.excludeUpper = !SingleKeyRange.isUnbound(this.to) ? excludeUpper : false;
     }
     static isUnbound(value) {
-        return value === SingleKeyRange$1.UNBOUND_VALUE;
+        return value === SingleKeyRange.UNBOUND_VALUE;
     }
     static upperBound(key, shouldExclude = false) {
-        return new SingleKeyRange$1(SingleKeyRange$1.UNBOUND_VALUE, key, false, shouldExclude);
+        return new SingleKeyRange(SingleKeyRange.UNBOUND_VALUE, key, false, shouldExclude);
     }
     static lowerBound(key, shouldExclude = false) {
-        return new SingleKeyRange$1(key, SingleKeyRange$1.UNBOUND_VALUE, shouldExclude, false);
+        return new SingleKeyRange(key, SingleKeyRange.UNBOUND_VALUE, shouldExclude, false);
     }
     // Creates a range that includes a single key.
     static only(key) {
-        return new SingleKeyRange$1(key, key, false, false);
+        return new SingleKeyRange(key, key, false, false);
     }
     // Creates a range that includes all keys.
     static all() {
-        return new SingleKeyRange$1(SingleKeyRange$1.UNBOUND_VALUE, SingleKeyRange$1.UNBOUND_VALUE, false, false);
+        return new SingleKeyRange(SingleKeyRange.UNBOUND_VALUE, SingleKeyRange.UNBOUND_VALUE, false, false);
     }
     static xor(a, b) {
         return a ? !b : b;
     }
     // Compares two ranges, meant to be used in Array#sort.
     static compare(lhs, rhs) {
-        let result = SingleKeyRange$1.compareKey(lhs.from, rhs.from, true, lhs.excludeLower, rhs.excludeLower);
-        if (result === Favor$1.TIE) {
-            result = SingleKeyRange$1.compareKey(lhs.to, rhs.to, false, lhs.excludeUpper, rhs.excludeUpper);
+        let result = SingleKeyRange.compareKey(lhs.from, rhs.from, true, lhs.excludeLower, rhs.excludeLower);
+        if (result === Favor.TIE) {
+            result = SingleKeyRange.compareKey(lhs.to, rhs.to, false, lhs.excludeUpper, rhs.excludeUpper);
         }
         return result;
     }
     // Returns a new range that is the minimum range that covers both ranges
     // given.
     static getBoundingRange(r1, r2) {
-        let from = SingleKeyRange$1.UNBOUND_VALUE;
-        let to = SingleKeyRange$1.UNBOUND_VALUE;
+        let from = SingleKeyRange.UNBOUND_VALUE;
+        let to = SingleKeyRange.UNBOUND_VALUE;
         let excludeLower = false;
         let excludeUpper = false;
-        if (!SingleKeyRange$1.isUnbound(r1.from)
-            && !SingleKeyRange$1.isUnbound(r2.from)) {
-            const favor = SingleKeyRange$1.compareKey(r1.from, r2.from, true);
-            if (favor !== Favor$1.LHS) {
+        if (!SingleKeyRange.isUnbound(r1.from)
+            && !SingleKeyRange.isUnbound(r2.from)) {
+            const favor = SingleKeyRange.compareKey(r1.from, r2.from, true);
+            if (favor !== Favor.LHS) {
                 from = r1.from;
                 excludeLower
-                    = favor !== Favor$1.TIE ? r1.excludeLower : r1.excludeLower && r2.excludeLower;
+                    = favor !== Favor.TIE ? r1.excludeLower : r1.excludeLower && r2.excludeLower;
             }
             else {
                 from = r2.from;
                 excludeLower = r2.excludeLower;
             }
         }
-        if (!SingleKeyRange$1.isUnbound(r1.to) && !SingleKeyRange$1.isUnbound(r2.to)) {
-            const favor = SingleKeyRange$1.compareKey(r1.to, r2.to, false);
-            if (favor !== Favor$1.RHS) {
+        if (!SingleKeyRange.isUnbound(r1.to) && !SingleKeyRange.isUnbound(r2.to)) {
+            const favor = SingleKeyRange.compareKey(r1.to, r2.to, false);
+            if (favor !== Favor.RHS) {
                 to = r1.to;
                 excludeUpper
-                    = favor !== Favor$1.TIE ? r1.excludeUpper : r1.excludeUpper && r2.excludeUpper;
+                    = favor !== Favor.TIE ? r1.excludeUpper : r1.excludeUpper && r2.excludeUpper;
             }
             else {
                 to = r2.to;
                 excludeUpper = r2.excludeUpper;
             }
         }
-        return new SingleKeyRange$1(from, to, excludeLower, excludeUpper);
+        return new SingleKeyRange(from, to, excludeLower, excludeUpper);
     }
     // Intersects two ranges and return their intersection.
     // Returns null if intersection is empty.
@@ -1490,54 +1487,54 @@ class SingleKeyRange$1 {
         if (!r1.overlaps(r2)) {
             return null;
         }
-        let favor = SingleKeyRange$1.compareKey(r1.from, r2.from, true);
-        const left = favor === Favor$1.TIE ? r1.excludeLower ? r1 : r2 : favor !== Favor$1.RHS ? r1 : r2;
+        let favor = SingleKeyRange.compareKey(r1.from, r2.from, true);
+        const left = favor === Favor.TIE ? r1.excludeLower ? r1 : r2 : favor !== Favor.RHS ? r1 : r2;
         // right side boundary test is different, null is considered greater.
         let right;
-        if (SingleKeyRange$1.isUnbound(r1.to) || SingleKeyRange$1.isUnbound(r2.to)) {
-            right = SingleKeyRange$1.isUnbound(r1.to) ? r2 : r1;
+        if (SingleKeyRange.isUnbound(r1.to) || SingleKeyRange.isUnbound(r2.to)) {
+            right = SingleKeyRange.isUnbound(r1.to) ? r2 : r1;
         }
         else {
-            favor = SingleKeyRange$1.compareKey(r1.to, r2.to, false);
+            favor = SingleKeyRange.compareKey(r1.to, r2.to, false);
             right
-                = favor === Favor$1.TIE ? r1.excludeUpper ? r1 : r2 : favor === Favor$1.RHS ? r1 : r2;
+                = favor === Favor.TIE ? r1.excludeUpper ? r1 : r2 : favor === Favor.RHS ? r1 : r2;
         }
-        return new SingleKeyRange$1(left.from, right.to, left.excludeLower, right.excludeUpper);
+        return new SingleKeyRange(left.from, right.to, left.excludeLower, right.excludeUpper);
     }
     // Calculates the complement key ranges of the input key ranges.
     // NOTE: The key ranges passed in this method must satisfy "isOnly() == true",
     // and none of from/to should be null.
     static complement(keyRanges) {
         if (keyRanges.length === 0) {
-            return SingleKeyRange$1.EMPTY_RANGE;
+            return SingleKeyRange.EMPTY_RANGE;
         }
-        keyRanges.sort(SingleKeyRange$1.compare);
+        keyRanges.sort(SingleKeyRange.compare);
         const complementKeyRanges = new Array(keyRanges.length + 1);
         for (let i = 0; i < complementKeyRanges.length; i++) {
             if (i === 0) {
-                complementKeyRanges[i] = SingleKeyRange$1.upperBound(keyRanges[i].from, true);
+                complementKeyRanges[i] = SingleKeyRange.upperBound(keyRanges[i].from, true);
             }
             else if (i === complementKeyRanges.length - 1) {
-                complementKeyRanges[i] = SingleKeyRange$1.lowerBound(keyRanges[i - 1].to, true);
+                complementKeyRanges[i] = SingleKeyRange.lowerBound(keyRanges[i - 1].to, true);
             }
             else {
-                complementKeyRanges[i] = new SingleKeyRange$1(keyRanges[i - 1].to, keyRanges[i].from, true, true);
+                complementKeyRanges[i] = new SingleKeyRange(keyRanges[i - 1].to, keyRanges[i].from, true, true);
             }
         }
         return complementKeyRanges;
     }
     static compareKey(l, r, isLeftHandSide, excludeL = false, excludeR = false) {
-        const flip = (favor) => (isLeftHandSide ? favor : favor === Favor$1.LHS ? Favor$1.RHS : Favor$1.LHS);
+        const flip = (favor) => (isLeftHandSide ? favor : favor === Favor.LHS ? Favor.RHS : Favor.LHS);
         // The following logic is implemented for LHS. RHS is achieved using flip().
-        const tieLogic = () => (!SingleKeyRange$1.xor(excludeL, excludeR)
-            ? Favor$1.TIE
+        const tieLogic = () => (!SingleKeyRange.xor(excludeL, excludeR)
+            ? Favor.TIE
             : excludeL
-                ? flip(Favor$1.LHS)
-                : flip(Favor$1.RHS));
-        if (SingleKeyRange$1.isUnbound(l)) {
-            return !SingleKeyRange$1.isUnbound(r) ? flip(Favor$1.RHS) : tieLogic();
+                ? flip(Favor.LHS)
+                : flip(Favor.RHS));
+        if (SingleKeyRange.isUnbound(l)) {
+            return !SingleKeyRange.isUnbound(r) ? flip(Favor.RHS) : tieLogic();
         }
-        return SingleKeyRange$1.isUnbound(r) ? flip(Favor$1.LHS) : l < r ? Favor$1.RHS : l === r ? tieLogic() : Favor$1.LHS;
+        return SingleKeyRange.isUnbound(r) ? flip(Favor.LHS) : l < r ? Favor.RHS : l === r ? tieLogic() : Favor.LHS;
     }
     // A text representation of this key range, useful for tests.
     // Example: [a, b] means from a to b, with both a and b included in the range.
@@ -1547,9 +1544,9 @@ class SingleKeyRange$1 {
     // Example: [a, unbound] means anything greater than a, with a included.
     toString() {
         return ((this.excludeLower ? "(" : "[")
-            + (SingleKeyRange$1.isUnbound(this.from) ? "unbound" : this.from)
+            + (SingleKeyRange.isUnbound(this.from) ? "unbound" : this.from)
             + ", "
-            + (SingleKeyRange$1.isUnbound(this.to) ? "unbound" : this.to)
+            + (SingleKeyRange.isUnbound(this.to) ? "unbound" : this.to)
             + (this.excludeUpper ? ")" : "]"));
     }
     // Finds the complement key range. Note that in some cases the complement is
@@ -1559,15 +1556,15 @@ class SingleKeyRange$1 {
     complement() {
         // Complement of SingleKeyRange.all() is empty.
         if (this.isAll()) {
-            return SingleKeyRange$1.EMPTY_RANGE;
+            return SingleKeyRange.EMPTY_RANGE;
         }
         let keyRangeLow = null;
         let keyRangeHigh = null;
-        if (!SingleKeyRange$1.isUnbound(this.from)) {
-            keyRangeLow = new SingleKeyRange$1(SingleKeyRange$1.UNBOUND_VALUE, this.from, false, !this.excludeLower);
+        if (!SingleKeyRange.isUnbound(this.from)) {
+            keyRangeLow = new SingleKeyRange(SingleKeyRange.UNBOUND_VALUE, this.from, false, !this.excludeLower);
         }
-        if (!SingleKeyRange$1.isUnbound(this.to)) {
-            keyRangeHigh = new SingleKeyRange$1(this.to, SingleKeyRange$1.UNBOUND_VALUE, !this.excludeUpper, false);
+        if (!SingleKeyRange.isUnbound(this.to)) {
+            keyRangeHigh = new SingleKeyRange(this.to, SingleKeyRange.UNBOUND_VALUE, !this.excludeUpper, false);
         }
         return [keyRangeLow, keyRangeHigh].filter((keyRange) => keyRange !== null);
     }
@@ -1575,36 +1572,36 @@ class SingleKeyRange$1 {
     // refers to smaller values. Note: This is different than what complement()
     // does.
     reverse() {
-        return new SingleKeyRange$1(this.to, this.from, this.excludeUpper, this.excludeLower);
+        return new SingleKeyRange(this.to, this.from, this.excludeUpper, this.excludeLower);
     }
     // Determines if this range overlaps with the given one.
     overlaps(range) {
-        const favor = SingleKeyRange$1.compareKey(this.from, range.from, true, this.excludeLower, range.excludeLower);
-        if (favor === Favor$1.TIE) {
+        const favor = SingleKeyRange.compareKey(this.from, range.from, true, this.excludeLower, range.excludeLower);
+        if (favor === Favor.TIE) {
             return true;
         }
-        const left = favor === Favor$1.RHS ? this : range;
-        const right = favor === Favor$1.LHS ? this : range;
-        return (SingleKeyRange$1.isUnbound(left.to)
+        const left = favor === Favor.RHS ? this : range;
+        const right = favor === Favor.LHS ? this : range;
+        return (SingleKeyRange.isUnbound(left.to)
             || left.to > right.from
             || left.to === right.from && !left.excludeUpper && !right.excludeLower);
     }
     // Returns whether the range is all.
     isAll() {
-        return (SingleKeyRange$1.isUnbound(this.from) && SingleKeyRange$1.isUnbound(this.to));
+        return (SingleKeyRange.isUnbound(this.from) && SingleKeyRange.isUnbound(this.to));
     }
     // Returns if the range is only.
     isOnly() {
         return (this.from === this.to
-            && !SingleKeyRange$1.isUnbound(this.from)
+            && !SingleKeyRange.isUnbound(this.from)
             && !this.excludeLower
             && !this.excludeUpper);
     }
     contains(key) {
-        const left = SingleKeyRange$1.isUnbound(this.from)
+        const left = SingleKeyRange.isUnbound(this.from)
             || key > this.from
             || key === this.from && !this.excludeLower;
-        const right = SingleKeyRange$1.isUnbound(this.to)
+        const right = SingleKeyRange.isUnbound(this.to)
             || key < this.to
             || key === this.to && !this.excludeUpper;
         return left && right;
@@ -1614,26 +1611,26 @@ class SingleKeyRange$1 {
     // range/bound is reversed, return null.
     getBounded(min, max) {
         // Eliminate out of range scenarios.
-        if (SingleKeyRange$1.isUnbound(this.from) && !this.contains(min)
-            || SingleKeyRange$1.isUnbound(this.to) && !this.contains(max)) {
+        if (SingleKeyRange.isUnbound(this.from) && !this.contains(min)
+            || SingleKeyRange.isUnbound(this.to) && !this.contains(max)) {
             return null;
         }
         let from = min;
         let to = max;
         let excludeLower = false;
         let excludeUpper = false;
-        if (!SingleKeyRange$1.isUnbound(this.from) && this.from >= min) {
+        if (!SingleKeyRange.isUnbound(this.from) && this.from >= min) {
             from = this.from;
             excludeLower = this.excludeLower;
         }
-        if (!SingleKeyRange$1.isUnbound(this.to) && this.to <= max) {
+        if (!SingleKeyRange.isUnbound(this.to) && this.to <= max) {
             to = this.to;
             excludeUpper = this.excludeUpper;
         }
         if (from > to || from === to && (excludeUpper || excludeLower)) {
             return null;
         }
-        return new SingleKeyRange$1(from, to, excludeLower, excludeUpper);
+        return new SingleKeyRange(from, to, excludeLower, excludeUpper);
     }
     equals(range) {
         return (this.from === range.from
@@ -1642,9 +1639,9 @@ class SingleKeyRange$1 {
             && this.excludeUpper === range.excludeUpper);
     }
 }
-SingleKeyRange$1.UNBOUND_VALUE = new UnboundKey$1();
-SingleKeyRange$1.EMPTY_RANGE = [];
-class SingleKeyRangeSet$1 {
+SingleKeyRange.UNBOUND_VALUE = new UnboundKey();
+SingleKeyRange.EMPTY_RANGE = [];
+class SingleKeyRangeSet {
     constructor(ranges) {
         this.ranges = [];
         if (ranges) {
@@ -1654,11 +1651,11 @@ class SingleKeyRangeSet$1 {
     // Intersection of two range sets.
     static intersect(s0, s1) {
         const ranges = s0.getValues().map((r0) => {
-            return s1.getValues().map((r1) => SingleKeyRange$1.and(r0, r1));
+            return s1.getValues().map((r1) => SingleKeyRange.and(r0, r1));
         });
         let results = [];
         ranges.forEach((dimension) => results = results.concat(dimension));
-        return new SingleKeyRangeSet$1(results.filter((r) => r !== null));
+        return new SingleKeyRangeSet(results.filter((r) => r !== null));
     }
     toString() {
         return this.ranges.map((r) => r.toString()).join(",");
@@ -1678,12 +1675,12 @@ class SingleKeyRangeSet$1 {
             this.ranges = ranges;
             return;
         }
-        ranges.sort(SingleKeyRange$1.compare);
+        ranges.sort(SingleKeyRange.compare);
         const results = [];
         let start = ranges[0];
         for (let i = 1; i < ranges.length; ++i) {
             if (start.overlaps(ranges[i])) {
-                start = SingleKeyRange$1.getBoundingRange(start, ranges[i]);
+                start = SingleKeyRange.getBoundingRange(start, ranges[i]);
             }
             else {
                 results.push(start);
@@ -1706,11 +1703,11 @@ class SingleKeyRangeSet$1 {
             return this.ranges.length === 0 ? null : this.ranges[0];
         }
         const last = this.ranges.length - 1;
-        return SingleKeyRange$1.getBoundingRange(this.ranges[0], this.ranges[last]);
+        return SingleKeyRange.getBoundingRange(this.ranges[0], this.ranges[last]);
     }
 }
 // Whether set2 is a subset of set1
-function isSubset$1(set1, set2) {
+function isSubset(set1, set2) {
     if (set2.size > set1.size) {
         return false;
     }
@@ -1718,18 +1715,18 @@ function isSubset$1(set1, set2) {
     set2.forEach((value) => result = result && set1.has(value));
     return result;
 }
-function setEquals$1(set1, set2) {
-    return set1.size === set2.size && isSubset$1(set1, set2);
+function setEquals(set1, set2) {
+    return set1.size === set2.size && isSubset(set1, set2);
 }
 // The base row class for all rows.
-class Row$1 {
+class Row {
     constructor(id_, payload) {
         this.id_ = id_;
         this.payload_ = payload || this.defaultPayload();
     }
     // Get the next unique row ID to use for creating a new instance.
     static getNextId() {
-        return Row$1.nextId++;
+        return Row.nextId++;
     }
     // Sets the global row id. This is supposed to be called by BackStore
     // instances during initialization only.
@@ -1740,7 +1737,7 @@ class Row$1 {
     // @param nextId The next id should be used. This is typically the max
     //     rowId in database plus 1.
     static setNextId(nextId) {
-        Row$1.nextId = nextId;
+        Row.nextId = nextId;
     }
     // Updates global row id. Guarantees that the |nextId_| value will only be
     // increased. This is supposed to be called by BackStore instances during
@@ -1748,15 +1745,15 @@ class Row$1 {
     // @param nextId The next id should be used. This is typically the max
     //     rowId in database plus 1.
     static setNextIdIfGreater(nextId) {
-        Row$1.nextId = Math.max(Row$1.nextId, nextId);
+        Row.nextId = Math.max(Row.nextId, nextId);
     }
     // Creates a new Row instance from DB data.
     static deserialize(data) {
-        return new Row$1(data.id, data.value);
+        return new Row(data.id, data.value);
     }
     // Creates a new Row instance with an automatically assigned ID.
     static create(payload) {
-        return new Row$1(Row$1.getNextId(), payload || {});
+        return new Row(Row.getNextId(), payload || {});
     }
     // ArrayBuffer to hex string.
     static binToHex(buffer) {
@@ -1816,24 +1813,24 @@ class Row$1 {
 }
 // An ID to be used when a row that does not correspond to a DB entry is
 // created (for example the result of joining two rows).
-Row$1.DUMMY_ID = -1;
+Row.DUMMY_ID = -1;
 // The ID to assign to the next row that will be created.
 // Should be initialized to the appropriate value from the BackStore instance
 // that is being used.
-Row$1.nextId = Row$1.DUMMY_ID + 1;
+Row.nextId = Row.DUMMY_ID + 1;
 /**
  * Each RelationEntry represents a row that is passed from one execution step
  * to another and does not necessarily correspond to a physical row in a DB
  * table (as it can be the result of a cross-product/join operation).
  */
-class RelationEntry$1 {
+class RelationEntry {
     // |isPrefixApplied| Whether the payload in this entry is using prefixes for
     // each attribute. This happens when this entry is the result of a relation
     // join.
     constructor(row, isPrefixApplied) {
         this.row = row;
         this.isPrefixApplied = isPrefixApplied;
-        this.id = RelationEntry$1.getNextId();
+        this.id = RelationEntry.getNextId();
     }
     // Combines two entries into a single entry.
     static combineEntries(leftEntry, leftEntryTables, rightEntry, rightEntryTables) {
@@ -1846,7 +1843,7 @@ class RelationEntry$1 {
                 });
             }
             else {
-                assert$1(!Object.prototype.hasOwnProperty.call(result, entryTables[0]), "Attempted to join table with itself, without using table alias, "
+                assert(!Object.prototype.hasOwnProperty.call(result, entryTables[0]), "Attempted to join table with itself, without using table alias, "
                     + "or same alias "
                     + entryTables[0]
                     + "is reused for multiple tables.");
@@ -1857,11 +1854,11 @@ class RelationEntry$1 {
         };
         mergeEntry(leftEntry, leftEntryTables);
         mergeEntry(rightEntry, rightEntryTables);
-        const row = new Row$1(Row$1.DUMMY_ID, result);
-        return new RelationEntry$1(row, true);
+        const row = new Row(Row.DUMMY_ID, result);
+        return new RelationEntry(row, true);
     }
     static getNextId() {
-        return RelationEntry$1.nextId++;
+        return RelationEntry.nextId++;
     }
     getField(col) {
         // Attempting to get the field from the aliased location first, since it is
@@ -1902,8 +1899,8 @@ class RelationEntry$1 {
     }
 }
 // The ID to assign to the next entry that will be created.
-RelationEntry$1.nextId = 0;
-class Relation$1 {
+RelationEntry.nextId = 0;
+class Relation {
     constructor(entries, tables) {
         this.entries = entries;
         this.tables = new Set(tables);
@@ -1913,18 +1910,18 @@ class Relation$1 {
     // singleton "empty" relation instance is lazily instantiated and returned in
     // all subsequent calls.
     static createEmpty() {
-        if (Relation$1.emptyRelation === null) {
-            Relation$1.emptyRelation = new Relation$1([], []);
+        if (Relation.emptyRelation === null) {
+            Relation.emptyRelation = new Relation([], []);
         }
-        return Relation$1.emptyRelation;
+        return Relation.emptyRelation;
     }
     // Finds the intersection of a given list of relations.
     static intersect(relations) {
         if (relations.length === 0) {
-            return Relation$1.createEmpty();
+            return Relation.createEmpty();
         }
         const totalCount = relations.reduce((soFar, relation) => {
-            Relation$1.assertCompatible(relations[0], relation);
+            Relation.assertCompatible(relations[0], relation);
             return soFar + relation.entries.length;
         }, 0);
         const allEntries = new Array(totalCount);
@@ -1946,35 +1943,35 @@ class Relation$1 {
                 intersection.set(entry.id, entry);
             }
         });
-        return new Relation$1(Array.from(intersection.values()), Array.from(relations[0].tables.values()));
+        return new Relation(Array.from(intersection.values()), Array.from(relations[0].tables.values()));
     }
     // Finds the union of a given list of relations.
     static union(relations) {
         if (relations.length === 0) {
-            return Relation$1.createEmpty();
+            return Relation.createEmpty();
         }
         const union = new Map();
         relations.forEach((relation) => {
-            Relation$1.assertCompatible(relations[0], relation);
+            Relation.assertCompatible(relations[0], relation);
             relation.entries.forEach((entry) => union.set(entry.id, entry));
         });
-        return new Relation$1(Array.from(union.values()), Array.from(relations[0].tables.values()));
+        return new Relation(Array.from(union.values()), Array.from(relations[0].tables.values()));
     }
     // Creates an lf.proc.Relation instance from a set of lf.Row instances.
     static fromRows(rows, tables) {
         const isPrefixApplied = tables.length > 1;
-        const entries = rows.map((row) => new RelationEntry$1(row, isPrefixApplied));
-        return new Relation$1(entries, tables);
+        const entries = rows.map((row) => new RelationEntry(row, isPrefixApplied));
+        return new Relation(entries, tables);
     }
     // Asserts that two relations are compatible with regards to
     // union/intersection operations.
     static assertCompatible(lhs, rhs) {
-        assert$1(lhs.isCompatible(rhs), "Intersection/union operations only apply to compatible relations.");
+        assert(lhs.isCompatible(rhs), "Intersection/union operations only apply to compatible relations.");
     }
     // Whether this is compatible with given relation in terms of calculating
     // union/intersection.
     isCompatible(relation) {
-        return setEquals$1(this.tables, relation.tables);
+        return setEquals(this.tables, relation.tables);
     }
     // Returns the names of all source tables of this relation.
     getTables() {
@@ -1999,10 +1996,10 @@ class Relation$1 {
     }
     // Gets an already calculated aggregated result for this relation.
     getAggregationResult(column) {
-        assert$1(this.aggregationResults !== null, "getAggregationResult called before any results have been calculated.");
+        assert(this.aggregationResults !== null, "getAggregationResult called before any results have been calculated.");
         const colName = column.getNormalizedName();
         const result = this.aggregationResults.get(colName);
-        assert$1(result !== undefined, `Could not find result for ${colName}`);
+        assert(result !== undefined, `Could not find result for ${colName}`);
         return result;
     }
     // Whether an aggregation result for the given aggregated column has been
@@ -2012,8 +2009,8 @@ class Relation$1 {
             && this.aggregationResults.has(column.getNormalizedName()));
     }
 }
-Relation$1.emptyRelation = null;
-class TreeNode$1 {
+Relation.emptyRelation = null;
+class TreeNode {
     constructor() {
         this.parent = null;
         this.children = null;
@@ -2044,7 +2041,7 @@ class TreeNode$1 {
         return this.children === null;
     }
     getChildren() {
-        return this.children || TreeNode$1.EMPTY_ARRAY;
+        return this.children || TreeNode.EMPTY_ARRAY;
     }
     getChildAt(index) {
         return this.children && index >= 0 && index < this.children.length ? this.getChildren()[index] : null;
@@ -2053,19 +2050,19 @@ class TreeNode$1 {
         return this.getChildren().length;
     }
     addChildAt(child, index) {
-        assert$1(child.parent === null);
+        assert(child.parent === null);
         child.parent = this;
         if (this.children === null) {
             // assert(index == 0);
             this.children = [child];
         }
         else {
-            assert$1(index >= 0 && index <= this.children.length);
+            assert(index >= 0 && index <= this.children.length);
             this.children.splice(index, 0, child);
         }
     }
     addChild(child) {
-        assert$1(child.parent === null);
+        assert(child.parent === null);
         child.parent = this;
         if (this.children === null) {
             this.children = [child];
@@ -2095,7 +2092,7 @@ class TreeNode$1 {
     }
     // Returns original node, if any.
     replaceChildAt(newChild, index) {
-        assert$1(newChild.parent === null);
+        assert(newChild.parent === null);
         if (this.children) {
             const oldChild = this.getChildAt(index);
             if (oldChild) {
@@ -2115,11 +2112,11 @@ class TreeNode$1 {
         }
     }
 }
-TreeNode$1.EMPTY_ARRAY = [];
-class PredicateNode$1 extends TreeNode$1 {
+TreeNode.EMPTY_ARRAY = [];
+class PredicateNode extends TreeNode {
     constructor() {
         super();
-        this.id = PredicateNode$1.nextId++;
+        this.id = PredicateNode.nextId++;
     }
     setId(id) {
         this.id = id;
@@ -2131,14 +2128,14 @@ class PredicateNode$1 extends TreeNode$1 {
 // The ID to assign to the next predicate that will be created. Note that
 // predicates are constructed with unique IDs, but when a predicate is cloned
 //  the ID is also purposefully cloned.
-PredicateNode$1.nextId = 0;
-class ValuePredicate$1 extends PredicateNode$1 {
+PredicateNode.nextId = 0;
+class ValuePredicate extends PredicateNode {
     constructor(column, value, evaluatorType) {
         super();
         this.column = column;
         this.value = value;
         this.evaluatorType = evaluatorType;
-        this.evaluatorFn = EvalRegistry$1.get().getEvaluator(this.column.getType(), this.evaluatorType);
+        this.evaluatorFn = EvalRegistry.get().getEvaluator(this.column.getType(), this.evaluatorType);
         this.isComplement = false;
         this.binder = value;
     }
@@ -2146,20 +2143,20 @@ class ValuePredicate$1 extends PredicateNode$1 {
         this.checkBinding();
         // Ignoring this.evaluatorFn_() for the case of the IN, in favor of a faster
         // evaluation implementation.
-        if (this.evaluatorType === EvalType$1.IN) {
+        if (this.evaluatorType === EvalType.IN) {
             return this.evalAsIn(relation);
         }
         const entries = relation.entries.filter((entry) => {
             return (this.evaluatorFn(entry.getField(this.column), this.value)
                 !== this.isComplement);
         });
-        return new Relation$1(entries, relation.getTables());
+        return new Relation(entries, relation.getTables());
     }
     setComplement(isComplement) {
         this.isComplement = isComplement;
     }
     copy() {
-        const clone = new ValuePredicate$1(this.column, this.value, this.evaluatorType);
+        const clone = new ValuePredicate(this.column, this.value, this.evaluatorType);
         clone.binder = this.binder;
         clone.isComplement = this.isComplement;
         clone.setId(this.getId());
@@ -2184,10 +2181,10 @@ class ValuePredicate$1 extends PredicateNode$1 {
         const checkIndexWithinRange = (index) => {
             if (values.length <= index) {
                 // 510: Cannot bind to given array: out of range.
-                throw new Exception$1(ErrorCode$1.BIND_ARRAY_OUT_OF_RANGE);
+                throw new Exception(ErrorCode.BIND_ARRAY_OUT_OF_RANGE);
             }
         };
-        if (this.binder instanceof Binder$1) {
+        if (this.binder instanceof Binder) {
             const index = this.binder.index;
             checkIndexWithinRange(index);
             this.value = values[index];
@@ -2195,7 +2192,7 @@ class ValuePredicate$1 extends PredicateNode$1 {
         else if (Array.isArray(this.binder)) {
             const array = this.binder;
             this.value = array.map((val) => {
-                if (val instanceof Binder$1) {
+                if (val instanceof Binder) {
                     checkIndexWithinRange(val.index);
                     return values[val.index];
                 }
@@ -2223,56 +2220,56 @@ class ValuePredicate$1 extends PredicateNode$1 {
     isKeyRangeCompatible() {
         this.checkBinding();
         return (this.value !== null
-            && (this.evaluatorType === EvalType$1.BETWEEN
-                || this.evaluatorType === EvalType$1.IN
-                || this.evaluatorType === EvalType$1.EQ
-                || this.evaluatorType === EvalType$1.GT
-                || this.evaluatorType === EvalType$1.GTE
-                || this.evaluatorType === EvalType$1.LT
-                || this.evaluatorType === EvalType$1.LTE));
+            && (this.evaluatorType === EvalType.BETWEEN
+                || this.evaluatorType === EvalType.IN
+                || this.evaluatorType === EvalType.EQ
+                || this.evaluatorType === EvalType.GT
+                || this.evaluatorType === EvalType.GTE
+                || this.evaluatorType === EvalType.LT
+                || this.evaluatorType === EvalType.LTE));
     }
     // Converts this predicate to a key range.
     // NOTE: Not all predicates can be converted to a key range, callers must call
     // isKeyRangeCompatible() before calling this method.
     toKeyRange() {
-        assert$1(this.isKeyRangeCompatible(), "Could not convert predicate to key range.");
+        assert(this.isKeyRangeCompatible(), "Could not convert predicate to key range.");
         let keyRange = null;
-        if (this.evaluatorType === EvalType$1.BETWEEN) {
+        if (this.evaluatorType === EvalType.BETWEEN) {
             const val = this.value;
-            keyRange = new SingleKeyRange$1(this.getValueAsKey(val[0]), this.getValueAsKey(val[1]), false, false);
+            keyRange = new SingleKeyRange(this.getValueAsKey(val[0]), this.getValueAsKey(val[1]), false, false);
         }
-        else if (this.evaluatorType === EvalType$1.IN) {
+        else if (this.evaluatorType === EvalType.IN) {
             const val = this.value;
-            const keyRanges = val.map((v) => SingleKeyRange$1.only(v));
-            return new SingleKeyRangeSet$1(this.isComplement ? SingleKeyRange$1.complement(keyRanges) : keyRanges);
+            const keyRanges = val.map((v) => SingleKeyRange.only(v));
+            return new SingleKeyRangeSet(this.isComplement ? SingleKeyRange.complement(keyRanges) : keyRanges);
         }
         else {
             const value = this.getValueAsKey(this.value);
-            if (this.evaluatorType === EvalType$1.EQ) {
-                keyRange = SingleKeyRange$1.only(value);
+            if (this.evaluatorType === EvalType.EQ) {
+                keyRange = SingleKeyRange.only(value);
             }
-            else if (this.evaluatorType === EvalType$1.GTE) {
-                keyRange = SingleKeyRange$1.lowerBound(value);
+            else if (this.evaluatorType === EvalType.GTE) {
+                keyRange = SingleKeyRange.lowerBound(value);
             }
-            else if (this.evaluatorType === EvalType$1.GT) {
-                keyRange = SingleKeyRange$1.lowerBound(value, true);
+            else if (this.evaluatorType === EvalType.GT) {
+                keyRange = SingleKeyRange.lowerBound(value, true);
             }
-            else if (this.evaluatorType === EvalType$1.LTE) {
-                keyRange = SingleKeyRange$1.upperBound(value);
+            else if (this.evaluatorType === EvalType.LTE) {
+                keyRange = SingleKeyRange.upperBound(value);
             }
             else {
                 // Must be this.evaluatorType === EvalType.LT.
-                keyRange = SingleKeyRange$1.upperBound(value, true);
+                keyRange = SingleKeyRange.upperBound(value, true);
             }
         }
-        return new SingleKeyRangeSet$1(this.isComplement ? keyRange.complement() : [keyRange]);
+        return new SingleKeyRangeSet(this.isComplement ? keyRange.complement() : [keyRange]);
     }
     checkBinding() {
         let bound = false;
-        if (!(this.value instanceof Binder$1)) {
+        if (!(this.value instanceof Binder)) {
             if (Array.isArray(this.value)) {
                 const array = this.value;
-                bound = !array.some((val) => val instanceof Binder$1);
+                bound = !array.some((val) => val instanceof Binder);
             }
             else {
                 bound = true;
@@ -2280,28 +2277,28 @@ class ValuePredicate$1 extends PredicateNode$1 {
         }
         if (!bound) {
             // 501: Value is not bounded.
-            throw new Exception$1(ErrorCode$1.UNBOUND_VALUE);
+            throw new Exception(ErrorCode.UNBOUND_VALUE);
         }
     }
     evalAsIn(relation) {
-        assert$1(this.evaluatorType === EvalType$1.IN, "ValuePredicate#evalAsIn_() called for wrong predicate type.");
+        assert(this.evaluatorType === EvalType.IN, "ValuePredicate#evalAsIn_() called for wrong predicate type.");
         const valueSet = new Set(this.value);
         const evaluatorFn = (rowValue) => {
             return rowValue === null ? false : valueSet.has(rowValue) !== this.isComplement;
         };
         const entries = relation.entries.filter((entry) => evaluatorFn(entry.getField(this.column)));
-        return new Relation$1(entries, relation.getTables());
+        return new Relation(entries, relation.getTables());
     }
     // Converts value in this predicate to index key.
     getValueAsKey(value) {
-        if (this.column.getType() === Type$1.DATE_TIME) {
+        if (this.column.getType() === Type.DATE_TIME) {
             return value.getTime();
         }
         return value;
     }
 }
 // Base context for all query types.
-class Context$1 extends UniqueId$1 {
+class Context extends UniqueId {
     constructor(schema) {
         super();
         this.schema = schema;
@@ -2320,21 +2317,21 @@ class Context$1 extends UniqueId$1 {
     }
     getPredicate(id) {
         if (this.predicateMap === null && this.where !== null) {
-            this.predicateMap = Context$1.buildPredicateMap(this.where);
+            this.predicateMap = Context.buildPredicateMap(this.where);
         }
         const predicate = this.predicateMap.get(id);
-        assert$1(predicate !== undefined);
+        assert(predicate !== undefined);
         return predicate;
     }
     bind(values) {
-        assert$1(this.clonedFrom === null);
+        assert(this.clonedFrom === null);
         return this;
     }
     bindValuesInSearchCondition(values) {
         const searchCondition = this.where;
         if (searchCondition !== null) {
             searchCondition.traverse((node) => {
-                if (node instanceof ValuePredicate$1) {
+                if (node instanceof ValuePredicate) {
                     node.bind(values);
                 }
             });
@@ -2348,7 +2345,7 @@ class Context$1 extends UniqueId$1 {
     }
 }
 // Internal representation of SELECT query.
-class SelectContext$1 extends Context$1 {
+class SelectContext extends Context {
     constructor(dbSchema) {
         super(dbSchema);
     }
@@ -2356,7 +2353,7 @@ class SelectContext$1 extends Context$1 {
         let out = "";
         orderBy.forEach((orderByEl, index) => {
             out += orderByEl.column.getNormalizedName() + " ";
-            out += orderByEl.order === Order$1.ASC ? "ASC" : "DESC";
+            out += orderByEl.order === Order.ASC ? "ASC" : "DESC";
             if (index < orderBy.length - 1) {
                 out += ", ";
             }
@@ -2367,7 +2364,7 @@ class SelectContext$1 extends Context$1 {
         return new Set(this.from);
     }
     clone() {
-        const context = new SelectContext$1(this.schema);
+        const context = new SelectContext(this.schema);
         context.cloneBase(this);
         if (this.columns) {
             context.columns = this.columns.slice();
@@ -2404,7 +2401,7 @@ class SelectContext$1 extends Context$1 {
         return this;
     }
 }
-class PhysicalQueryPlan$1 {
+class PhysicalQueryPlan {
     constructor(rootNode, scope) {
         this.rootNode = rootNode;
         this.scope = scope;
@@ -2427,19 +2424,19 @@ class PhysicalQueryPlan$1 {
 }
 // A QueryTask represents a collection of queries that should be executed as
 // part of a single transaction.
-class QueryTask$1 extends UniqueId$1 {
+class QueryTask extends UniqueId {
     constructor(global, items) {
         super();
         this.global = global;
-        this.backStore = global.getService(Service$1.BACK_STORE);
+        this.backStore = global.getService(Service.BACK_STORE);
         this.queries = items.map((item) => item.context);
         this.plans = items.map((item) => item.plan);
-        this.combinedScope = PhysicalQueryPlan$1.getCombinedScope(this.plans);
+        this.combinedScope = PhysicalQueryPlan.getCombinedScope(this.plans);
         this.txType = this.detectType();
-        this.resolver = new Resolver$1();
+        this.resolver = new Resolver();
     }
     exec() {
-        const journal = this.txType === TransactionType$1.READ_ONLY ? undefined : new Journal$1(this.global, this.combinedScope);
+        const journal = this.txType === TransactionType.READ_ONLY ? undefined : new Journal(this.global, this.combinedScope);
         const results = [];
         const remainingPlans = this.plans.slice();
         const queries = this.queries;
@@ -2451,26 +2448,26 @@ class QueryTask$1 extends UniqueId$1 {
                     .getRoot()
                     .exec(journal, queryContext)
                     .then((relations) => {
-                        results.push(relations[0]);
-                        return sequentiallyExec();
-                    });
+                    results.push(relations[0]);
+                    return sequentiallyExec();
+                });
             }
             return Promise.resolve(results);
         };
         return sequentiallyExec()
             .then(() => {
-                this.tx = this.backStore.createTx(this.txType, Array.from(this.combinedScope.values()), journal);
-                return this.tx.commit();
-            })
+            this.tx = this.backStore.createTx(this.txType, Array.from(this.combinedScope.values()), journal);
+            return this.tx.commit();
+        })
             .then(() => {
-                this.onSuccess(results);
-                return results;
-            }, (e) => {
-                if (journal) {
-                    journal.rollback();
-                }
-                throw e;
-            });
+            this.onSuccess(results);
+            return results;
+        }, (e) => {
+            if (journal) {
+                journal.rollback();
+            }
+            throw e;
+        });
     }
     getType() {
         return this.txType;
@@ -2490,7 +2487,7 @@ class QueryTask$1 extends UniqueId$1 {
         if (this.tx) {
             results = this.tx.stats();
         }
-        return results === null ? TransactionStatsImpl$1.getDefault() : results;
+        return results === null ? TransactionStatsImpl.getDefault() : results;
     }
     // Executes after all queries have finished successfully. Default
     // implementation is a no-op. Subclasses should override this method as
@@ -2499,10 +2496,10 @@ class QueryTask$1 extends UniqueId$1 {
         // Default implementation is a no-op.
     }
     detectType() {
-        return this.queries.some((query) => !(query instanceof SelectContext$1)) ? TransactionType$1.READ_WRITE : TransactionType$1.READ_ONLY;
+        return this.queries.some((query) => !(query instanceof SelectContext)) ? TransactionType.READ_WRITE : TransactionType.READ_ONLY;
     }
 }
-class MemoryTable$1 {
+class MemoryTable {
     constructor() {
         this.data = new Map();
     }
@@ -2556,11 +2553,11 @@ class MemoryTable$1 {
     }
 }
 // A base class for all native DB transactions wrappers to subclass.
-class BaseTx$1 {
+class BaseTx {
     constructor(txType, journal) {
         this.txType = txType;
         this.journal = journal || null;
-        this.resolver = new Resolver$1();
+        this.resolver = new Resolver();
         this.success = false;
         this.statsObject = null;
     }
@@ -2568,7 +2565,7 @@ class BaseTx$1 {
         return this.journal;
     }
     commit() {
-        const promise = this.txType === TransactionType$1.READ_ONLY ? this.commitInternal() : this.commitReadWrite();
+        const promise = this.txType === TransactionType.READ_ONLY ? this.commitInternal() : this.commitReadWrite();
         return promise.then((results) => {
             this.success = true;
             return results;
@@ -2577,10 +2574,10 @@ class BaseTx$1 {
     stats() {
         if (this.statsObject === null) {
             if (!this.success) {
-                this.statsObject = TransactionStatsImpl$1.getDefault();
+                this.statsObject = TransactionStatsImpl.getDefault();
             }
-            else if (this.txType === TransactionType$1.READ_ONLY) {
-                this.statsObject = new TransactionStatsImpl$1(true, 0, 0, 0, 0);
+            else if (this.txType === TransactionType.READ_ONLY) {
+                this.statsObject = new TransactionStatsImpl(true, 0, 0, 0, 0);
             }
             else {
                 const diff = this.journal.getDiff();
@@ -2594,7 +2591,7 @@ class BaseTx$1 {
                     updatedRows += tableDiff.getModified().size;
                     deletedRows += tableDiff.getDeleted().size;
                 });
-                this.statsObject = new TransactionStatsImpl$1(true, insertedRows, updatedRows, deletedRows, tablesChanged);
+                this.statsObject = new TransactionStatsImpl(true, insertedRows, updatedRows, deletedRows, tablesChanged);
             }
         }
         return this.statsObject;
@@ -2627,7 +2624,7 @@ class BaseTx$1 {
         const diff = journal.getDiff();
         diff.forEach((tableDiff, tableName) => {
             const tableSchema = journal.getScope().get(tableName);
-            const table = this.getTable(tableSchema.getName(), tableSchema.deserializeRow.bind(tableSchema), TableType$1.DATA);
+            const table = this.getTable(tableSchema.getName(), tableSchema.deserializeRow.bind(tableSchema), TableType.DATA);
             const toDeleteRowIds = Array.from(tableDiff.getDeleted().values()).map((row) => row.id());
             const toPut = Array.from(tableDiff.getModified().values())
                 .map((modification) => modification[1])
@@ -2648,7 +2645,7 @@ class BaseTx$1 {
     mergeIndexChanges() {
         const indices = this.journal.getIndexDiff();
         indices.forEach((index) => {
-            const indexTable = this.getTable(index.getName(), Row$1.deserialize, TableType$1.INDEX);
+            const indexTable = this.getTable(index.getName(), Row.deserialize, TableType.INDEX);
             // Since there is no index diff implemented yet, the entire index needs
             // to be overwritten on disk.
             indexTable.remove([]);
@@ -2656,11 +2653,11 @@ class BaseTx$1 {
         }, this);
     }
 }
-class MemoryTx$1 extends BaseTx$1 {
+class MemoryTx extends BaseTx {
     constructor(store, type, journal) {
         super(type, journal);
         this.store = store;
-        if (type === TransactionType$1.READ_ONLY) {
+        if (type === TransactionType.READ_ONLY) {
             this.resolver.resolve();
         }
     }
@@ -2675,13 +2672,12 @@ class MemoryTx$1 extends BaseTx$1 {
         return this.resolver.promise;
     }
 }
-class Memory$1 {
+class Memory {
     constructor(schema) {
         this.schema = schema;
         this.tables = new Map();
     }
-    init(onUpgrade) {
-        // Memory does not uses raw back store, just ignore the onUpgrade function.
+    init() {
         this.schema.tables().forEach((table) => { this.initTable(table); }, this);
         return Promise.resolve();
     }
@@ -2689,19 +2685,15 @@ class Memory$1 {
         const table = this.tables.get(tableName) || null;
         if (table === null) {
             // 101: Table {0} not found.
-            throw new Exception$1(ErrorCode$1.TABLE_NOT_FOUND, tableName);
+            throw new Exception(ErrorCode.TABLE_NOT_FOUND, tableName);
         }
         return table;
     }
     createTx(type, scope, journal) {
-        return new MemoryTx$1(this, type, journal);
+        return new MemoryTx(this, type, journal);
     }
     close() {
         // No op.
-    }
-    // Notifies registered observers with table diffs.
-    notify(changes) {
-        // Not supported.
     }
     supportsImport() {
         return true;
@@ -2714,7 +2706,7 @@ class Memory$1 {
     // NOTE: the return value is not ported because it's not used.
     createTable(tableName) {
         if (!this.tables.has(tableName)) {
-            this.tables.set(tableName, new MemoryTable$1());
+            this.tables.set(tableName, new MemoryTable());
         }
     }
     initTable(tableSchema) {
@@ -2729,7 +2721,7 @@ class Memory$1 {
     }
 }
 // Port of goog.math methods used by Lovefield.
-class MathHelper$1 {
+class MathHelper {
     static longestCommonSubsequence(array1, array2, comparator, collector) {
         const defaultComparator = (a, b) => a === b;
         const defaultCollector = (i1, i2) => array1[i1];
@@ -2775,19 +2767,19 @@ class MathHelper$1 {
         return args.reduce((sum, value) => sum + value, 0);
     }
     static average(...args) {
-        return MathHelper$1.sum.apply(null, args) / args.length;
+        return MathHelper.sum.apply(null, args) / args.length;
     }
     static standardDeviation(...args) {
         if (!args || args.length < 2) {
             return 0;
         }
-        const mean = MathHelper$1.average.apply(null, args);
-        const sampleVariance = MathHelper$1.sum.apply(null, args.map((val) => (val - mean) ** 2))
+        const mean = MathHelper.average.apply(null, args);
+        const sampleVariance = MathHelper.sum.apply(null, args.map((val) => (val - mean) ** 2))
             / (args.length - 1);
         return Math.sqrt(sampleVariance);
     }
 }
-class DefaultCache$1 {
+class DefaultCache {
     constructor(dbSchema) {
         this.map = new Map();
         this.tableRows = new Map();
@@ -2822,7 +2814,7 @@ class DefaultCache$1 {
             tableSet.forEach((key) => {
                 if (key >= min && key <= max) {
                     const value = this.map.get(key);
-                    assert$1(value !== null && value !== undefined, "Inconsistent cache 1");
+                    assert(value !== null && value !== undefined, "Inconsistent cache 1");
                     data.push(value);
                 }
             }, this);
@@ -2833,7 +2825,7 @@ class DefaultCache$1 {
                     continue;
                 }
                 const value = this.map.get(i);
-                assert$1(value !== null && value !== undefined, "Inconsistent cache 2");
+                assert(value !== null && value !== undefined, "Inconsistent cache 2");
                 data.push(value);
             }
         }
@@ -2862,10 +2854,10 @@ class DefaultCache$1 {
         return ret;
     }
 }
-class ArrayHelper$1 {
+class ArrayHelper {
     // Returns true if the value were inserted, false otherwise.
     static binaryInsert(arr, value, comparator) {
-        const index = ArrayHelper$1.binarySearch(arr, value, comparator);
+        const index = ArrayHelper.binarySearch(arr, value, comparator);
         if (index < 0) {
             arr.splice(-(index + 1), 0, value);
             return true;
@@ -2874,7 +2866,7 @@ class ArrayHelper$1 {
     }
     // Returns true if the value were inserted, false otherwise.
     static binaryRemove(arr, value, comparator) {
-        const index = ArrayHelper$1.binarySearch(arr, value, comparator);
+        const index = ArrayHelper.binarySearch(arr, value, comparator);
         if (index < 0) {
             return false;
         }
@@ -2909,7 +2901,7 @@ class ArrayHelper$1 {
             if (Array.isArray(element)) {
                 for (let c = 0; c < element.length; c += CHUNK_SIZE) {
                     const chunk = element.slice(c, c + CHUNK_SIZE);
-                    const recurseResult = ArrayHelper$1.flatten.apply(null, chunk);
+                    const recurseResult = ArrayHelper.flatten.apply(null, chunk);
                     recurseResult.forEach((r) => result.push(r));
                 }
             }
@@ -2937,7 +2929,7 @@ class ArrayHelper$1 {
             // rightmost (like carry-over addition).
             for (let i = indices.length - 1; i >= 0; i--) {
                 // Assertion prevents compiler warning below.
-                assert$1(indices !== null);
+                assert(indices !== null);
                 if (indices[i] < arrays[i].length - 1) {
                     indices[i]++;
                     break;
@@ -2975,7 +2967,7 @@ class ArrayHelper$1 {
         let left = 0;
         let right = arr.length;
         const comp = comparator
-            || ArrayHelper$1.defaultComparator;
+            || ArrayHelper.defaultComparator;
         while (left < right) {
             const middle = left + right >> 1;
             if (comp(arr[middle], value) < 0) {
@@ -2995,7 +2987,7 @@ class ArrayHelper$1 {
     }
 }
 // Helper functions for index structures.
-class IndexHelper$1 {
+class IndexHelper {
     // Java's String.hashCode method.
     //
     // for each character c in string
@@ -3011,7 +3003,7 @@ class IndexHelper$1 {
     // Compute hash key for an array.
     static hashArray(values) {
         const keys = values.map((value) => {
-            return value !== undefined && value !== null ? IndexHelper$1.hashCode(value.toString()).toString(32) : "";
+            return value !== undefined && value !== null ? IndexHelper.hashCode(value.toString()).toString(32) : "";
         });
         return keys.join("_");
     }
@@ -3037,7 +3029,7 @@ class IndexHelper$1 {
         return array.slice(actualSkip, actualSkip + actualLimit);
     }
 }
-class IndexStats$1 {
+class IndexStats {
     constructor() {
         this.totalRows = 0;
         this.maxKeyEncountered = 0;
@@ -3064,15 +3056,15 @@ class IndexStats$1 {
     }
 }
 // Wrapper of the BTree.
-class BTree$1 {
+class BTree {
     constructor(name, comparatorObj, uniqueKeyOnly, data) {
         this.name = name;
         this.comparatorObj = comparatorObj;
         this.uniqueKeyOnly = uniqueKeyOnly;
         this.root = undefined;
-        this.statsObj = new IndexStats$1();
+        this.statsObj = new IndexStats();
         if (data) {
-            this.root = BTreeNode$1.fromData(this, data);
+            this.root = BTreeNode.fromData(this, data);
         }
         else {
             this.clear();
@@ -3080,8 +3072,8 @@ class BTree$1 {
     }
     // Creates tree from serialized leaves.
     static deserialize(comparator, name, uniqueKeyOnly, rows) {
-        const tree = new BTree$1(name, comparator, uniqueKeyOnly);
-        const newRoot = BTreeNode$1.deserialize(rows, tree);
+        const tree = new BTree(name, comparator, uniqueKeyOnly);
+        const newRoot = BTreeNode.deserialize(rows, tree);
         tree.root = newRoot;
         return tree;
     }
@@ -3107,7 +3099,7 @@ class BTree$1 {
         if (keyRange === undefined || keyRange === null) {
             return this.stats().totalRows;
         }
-        if (keyRange instanceof SingleKeyRange$1) {
+        if (keyRange instanceof SingleKeyRange) {
             if (keyRange.isAll()) {
                 return this.stats().totalRows;
             }
@@ -3126,19 +3118,19 @@ class BTree$1 {
         const leftMostKey = this.root.getLeftMostNode().keys[0];
         if (leftMostKey === undefined || rawLimit === 0) {
             // Tree is empty or fake fetch to make query plan cached.
-            return BTree$1.EMPTY;
+            return BTree.EMPTY;
         }
         const reverse = reverseOrder || false;
         const limit = rawLimit !== undefined && rawLimit !== null ? Math.min(rawLimit, this.stats().totalRows) : this.stats().totalRows;
         const skip = rawSkip || 0;
         const maxCount = Math.min(Math.max(this.stats().totalRows - skip, 0), limit);
         if (maxCount === 0) {
-            return BTree$1.EMPTY;
+            return BTree.EMPTY;
         }
         if (keyRanges === undefined
             || keyRanges.length === 1
-            && keyRanges[0] instanceof SingleKeyRange$1
-            && keyRanges[0].isAll()) {
+                && keyRanges[0] instanceof SingleKeyRange
+                && keyRanges[0].isAll()) {
             return this.getAll(maxCount, reverse, limit, skip);
         }
         const sortedKeyRanges = this.comparator().sortKeyRanges(keyRanges);
@@ -3184,10 +3176,10 @@ class BTree$1 {
             // There are extra elements in results, truncate them.
             results.splice(params.count, results.length - params.count);
         }
-        return reverse ? IndexHelper$1.slice(results, reverse, limit, skip) : results;
+        return reverse ? IndexHelper.slice(results, reverse, limit, skip) : results;
     }
     clear() {
-        this.root = BTreeNode$1.create(this);
+        this.root = BTreeNode.create(this);
         this.stats().clear();
     }
     containsKey(key) {
@@ -3207,14 +3199,14 @@ class BTree$1 {
     }
     eq(lhs, rhs) {
         if (lhs !== undefined && lhs !== null) {
-            return this.comparator().compare(lhs, rhs) === Favor$1.TIE;
+            return this.comparator().compare(lhs, rhs) === Favor.TIE;
         }
         return false;
     }
     // Converts the tree leaves into serializable rows that can be written into
     // persistent stores. Each leaf node is one row.
     serialize() {
-        return BTreeNode$1.serialize(this.root.getLeftMostNode());
+        return BTreeNode.serialize(this.root.getLeftMostNode());
     }
     // Special optimization for get all values.
     // |maxCount|: max possible number of rows
@@ -3288,11 +3280,11 @@ class BTree$1 {
         if (leftMost === null || rightMost === null) {
             return null;
         }
-        return compareFn(leftMost[0], rightMost[0]) === Favor$1.LHS ? leftMost : rightMost;
+        return compareFn(leftMost[0], rightMost[0]) === Favor.LHS ? leftMost : rightMost;
     }
 }
-BTree$1.EMPTY = [];
-class BTreeNode$1 {
+BTree.EMPTY = [];
+class BTreeNode {
     constructor(id, tree) {
         this.id = id;
         this.tree = tree;
@@ -3309,7 +3301,7 @@ class BTreeNode$1 {
     static create(tree) {
         // TODO(arthurhsu): Should distinguish internal nodes from leaf nodes to
         // avoid unnecessary row id wasting.
-        return new BTreeNode$1(Row$1.getNextId(), tree);
+        return new BTreeNode(Row.getNextId(), tree);
     }
     static serialize(start) {
         const rows = [];
@@ -3319,12883 +3311,6 @@ class BTreeNode$1 {
                 "k": node.keys,
                 "v": node.values
             };
-            rows.push(new Row$1(node.id, payload));
-            node = node.next;
-        }
-        return rows;
-    }
-    // Returns new root node.
-    static deserialize(rows, tree) {
-        const stats = tree.stats();
-        const leaves = rows.map((row) => {
-            const node = new BTreeNode$1(row.id(), tree);
-            node.keys = row.payload()["k"];
-            node.values = row.payload()["v"];
-            node.keys.forEach((key, index) => {
-                stats.add(key, tree.isUniqueKey() ? 1 : node.values[index].length);
-            });
-            return node;
-        });
-        for (let i = 0; i < leaves.length - 1; ++i) {
-            BTreeNode$1.associate(leaves[i], leaves[i + 1]);
-        }
-        return leaves.length > 1 ? BTreeNode$1.createInternals(leaves[0]) : leaves[0];
-    }
-    // Create B-Tree from sorted array of key-value pairs
-    static fromData(tree, data) {
-        let max = BTreeNode$1.MAX_KEY_LEN;
-        max = max * max * max;
-        if (data.length >= max) {
-            // Tree has more than three levels, need to use a bigger N!
-            // 6: Too many rows: B-Tree implementation supports at most {0} rows.
-            throw new Exception$1(ErrorCode$1.TOO_MANY_ROWS, max.toString());
-        }
-        let node = BTreeNode$1.createLeaves(tree, data);
-        node = BTreeNode$1.createInternals(node);
-        return node;
-    }
-    // Dump the contents of node of the same depth.
-    // |node| is the left-most in the level.
-    // Returns key and contents string in pair.
-    static dumpLevel(node) {
-        let key = `${node.id}[${node.keys.join("|")}]`;
-        const children = node.children.map((n) => n.id).join("|");
-        const values = node.values.join("/");
-        const getNodeId = (n) => {
-            return n !== null && n !== undefined ? n.id.toString() : "_";
-        };
-        let contents = getNodeId(node.prev) + "{";
-        contents += node.isLeaf() ? values : children;
-        contents = contents + "}" + getNodeId(node.parent);
-        if (node.next) {
-            const next = BTreeNode$1.dumpLevel(node.next);
-            key = key + "  " + next[0];
-            contents = contents + "  " + next[1];
-        }
-        return [key, contents];
-    }
-    static associate(left, right) {
-        if (right) {
-            right.prev = left;
-        }
-        if (left) {
-            left.next = right;
-        }
-    }
-    // Returns appropriate node length for direct construction.
-    static calcNodeLen(remaining) {
-        const maxLen = BTreeNode$1.MAX_KEY_LEN;
-        const minLen = BTreeNode$1.MIN_KEY_LEN + 1;
-        return remaining >= maxLen + minLen ? maxLen : remaining >= minLen && remaining <= maxLen ? remaining : minLen;
-    }
-    // Create leaf nodes from given data.
-    static createLeaves(tree, data) {
-        let remaining = data.length;
-        let dataIndex = 0;
-        let curNode = BTreeNode$1.create(tree);
-        const node = curNode;
-        while (remaining > 0) {
-            const nodeLen = BTreeNode$1.calcNodeLen(remaining);
-            const target = data.slice(dataIndex, dataIndex + nodeLen);
-            curNode.keys = target.map((e) => e.key);
-            curNode.values = target.map((e) => e.value);
-            dataIndex += nodeLen;
-            remaining -= nodeLen;
-            if (remaining > 0) {
-                const newNode = BTreeNode$1.create(curNode.tree);
-                BTreeNode$1.associate(curNode, newNode);
-                curNode = newNode;
-            }
-        }
-        return node;
-    }
-    // Create parent node from children nodes.
-    static createParent(nodes) {
-        const node = nodes[0];
-        const root = BTreeNode$1.create(node.tree);
-        root.height = node.height + 1;
-        root.children = nodes;
-        nodes.forEach((n, i) => {
-            n.parent = root;
-            if (i > 0) {
-                root.keys.push(n.keys[0]);
-            }
-        });
-        return root;
-    }
-    // Create BTree from left-most leaf node.
-    static createInternals(node) {
-        let curNode = node;
-        const data = [];
-        do {
-            data.push(curNode);
-            curNode = curNode.next;
-        } while (curNode);
-        let root;
-        if (data.length <= BTreeNode$1.MAX_KEY_LEN + 1) {
-            // Create a root node and return.
-            root = BTreeNode$1.createParent(data);
-        }
-        else {
-            let remaining = data.length;
-            let dataIndex = 0;
-            root = BTreeNode$1.create(node.tree);
-            root.height = node.height + 2;
-            while (remaining > 0) {
-                const nodeLen = BTreeNode$1.calcNodeLen(remaining);
-                const target = data.slice(dataIndex, dataIndex + nodeLen);
-                const newNode = BTreeNode$1.createParent(target);
-                newNode.parent = root;
-                if (root.children.length) {
-                    root.keys.push(target[0].keys[0]);
-                    BTreeNode$1.associate(root.children[root.children.length - 1], newNode);
-                }
-                root.children.push(newNode);
-                dataIndex += nodeLen;
-                remaining -= nodeLen;
-            }
-        }
-        return root;
-    }
-    // Returns left most key of the subtree.
-    static leftMostKey(node) {
-        return node.isLeaf() ? node.keys[0] : BTreeNode$1.leftMostKey(node.children[0]);
-    }
-    // Dump the tree as string. For example, if the tree is
-    //
-    //                     15
-    //          /                      \
-    //        9|13                   27|31
-    //  /      |       \        /      |      \
-    // 1|3  9|10|11  13|14    15|16  27|29  31|38|45
-    //
-    // and the values of the tree are identical to the keys, then the output will
-    // be
-    //
-    // 11[15]
-    // {2|12}
-    // 2[9|13]  12[27|31]
-    // {0|15|1}11  2{17|5|7}11
-    // 0[1|3]  15[9|10|11]  1[13|14]  17[15|16]  5[27|29]  7[31|38|45]
-    // {1/3}2  0{9/10/11}2  15{13/14}2  1{15/16}12  17{27/29}12  5{31/38/45}12
-    //
-    // Each tree level contains two lines, the first line is the key line
-    // containing keys of each node in the format of
-    // <node_id>[<key0>|<key1>|...|<keyN-1>]. The second line is the value line
-    // containing values of each node in the format of
-    // <left_node_id>[<value0>|<value1>|...|<valueN>]<parent_node_id>. The root
-    // node does not have parent so its parent node id is denoted as underscore.
-    //
-    // Nodes in each level is a doubly-linked list therefore BFS traversal from
-    // left-most to right-most is used. As a result, if the right link is
-    // broken, the result will be partial.
-    toString() {
-        let result = "";
-        const level = BTreeNode$1.dumpLevel(this);
-        result += level[0] + "\n" + level[1] + "\n";
-        if (this.children.length) {
-            result += this.children[0].toString();
-        }
-        return result;
-    }
-    getLeftMostNode() {
-        return this.isLeaf() ? this : this.children[0].getLeftMostNode();
-    }
-    getRightMostNode() {
-        return this.isLeaf() ? this : this.children[this.children.length - 1].getRightMostNode();
-    }
-    get(key) {
-        let pos = this.searchKey(key);
-        if (this.isLeaf()) {
-            let results = BTree$1.EMPTY;
-            if (this.tree.eq(this.keys[pos], key)) {
-                // Use concat here because this.values[pos] can be number or array.
-                results = results.concat(this.values[pos]);
-            }
-            return results;
-        }
-        else {
-            pos = this.tree.eq(this.keys[pos], key) ? pos + 1 : pos;
-            return this.children[pos].get(key);
-        }
-    }
-    containsKey(key) {
-        const pos = this.searchKey(key);
-        if (this.tree.eq(this.keys[pos], key)) {
-            return true;
-        }
-        return this.isLeaf() ? false : this.children[pos].containsKey(key);
-    }
-    // Deletes a node and returns (new) root node after deletion.
-    remove(key, value) {
-        this.delete(key, -1, value);
-        if (this.isRoot()) {
-            let root = this;
-            if (this.children.length === 1) {
-                root = this.children[0];
-                root.parent = null;
-            }
-            return root;
-        }
-        return this;
-    }
-    // Insert node into this subtree. Returns new root if any.
-    // |replace| means to replace the value if key existed.
-    insert(key, value, replace = false) {
-        let pos = this.searchKey(key);
-        if (this.isLeaf()) {
-            if (this.tree.eq(this.keys[pos], key)) {
-                if (replace) {
-                    this.tree
-                        .stats()
-                        .remove(key, this.tree.isUniqueKey() ? 1 : this.values[pos].length);
-                    this.values[pos] = this.tree.isUniqueKey() ? value : [value];
-                }
-                else if (this.tree.isUniqueKey()) {
-                    // 201: Duplicate keys are not allowed.
-                    throw new Exception$1(ErrorCode$1.DUPLICATE_KEYS, this.tree.getName(), JSON.stringify(key));
-                }
-                else {
-                    // Non-unique key that already existed.
-                    if (!ArrayHelper$1.binaryInsert(this.values[pos], value)) {
-                        // 109: Attempt to insert a row number that already existed.
-                        throw new Exception$1(ErrorCode$1.ROW_ID_EXISTED);
-                    }
-                }
-                this.tree.stats().add(key, 1);
-                return this;
-            }
-            this.keys.splice(pos, 0, key);
-            this.values.splice(pos, 0, this.tree.isUniqueKey() ? value : [value]);
-            this.tree.stats().add(key, 1);
-            return this.keys.length === BTreeNode$1.MAX_COUNT ? this.splitLeaf() : this;
-        }
-        else {
-            pos = this.tree.eq(this.keys[pos], key) ? pos + 1 : pos;
-            const node = this.children[pos].insert(key, value, replace);
-            if (!node.isLeaf() && node.keys.length === 1) {
-                // Merge the internal to se
-                this.keys.splice(pos, 0, node.keys[0]);
-                node.children[1].parent = this;
-                node.children[0].parent = this;
-                this.children.splice(pos, 1, node.children[1]);
-                this.children.splice(pos, 0, node.children[0]);
-            }
-            return this.keys.length === BTreeNode$1.MAX_COUNT ? this.splitInternal() : this;
-        }
-    }
-    // The API signature of this function is specially crafted for performance
-    // optimization. Perf results showed that creation of empty array erodes the
-    // benefit of indexing significantly (in some cases >50%). As a result, it
-    // is required to pass in the results array.
-    getRange(keyRange, params, results) {
-        const c = this.tree.comparator();
-        let left = 0;
-        let right = this.keys.length - 1;
-        // Position of range relative to the key.
-        const compare = (coverage) => {
-            return coverage[0] ? coverage[1] ? Favor$1.TIE : Favor$1.LHS : Favor$1.RHS;
-        };
-        const keys = this.keys; // Used to avoid binding this for recursive functions.
-        const favorLeft = compare(c.compareRange(keys[left], keyRange));
-        const favorRight = compare(c.compareRange(keys[right], keyRange));
-        // Range is on the left of left most key or right of right most key.
-        if (favorLeft === Favor$1.LHS
-            || favorLeft === Favor$1.RHS && favorRight === Favor$1.RHS) {
-            return;
-        }
-        const getMidPoint = (l, r) => {
-            const mid = l + r >> 1;
-            return mid === l ? mid + 1 : mid;
-        };
-        // Find the first key that is in range. Returns index of the key, -1 if
-        // not found. |favorR| is Favor of right.
-        const findFirstKey = (l, r, favorR) => {
-            if (l >= r) {
-                return favorR === Favor$1.TIE ? r : -1;
-            }
-            const favorL = compare(c.compareRange(keys[l], keyRange));
-            if (favorL === Favor$1.TIE) {
-                return l;
-            }
-            else if (favorL === Favor$1.LHS) {
-                return -1; // Shall not be here.
-            }
-            const mid = getMidPoint(l, r);
-            if (mid === r) {
-                return favorR === Favor$1.TIE ? r : -1;
-            }
-            const favorM = compare(c.compareRange(keys[mid], keyRange));
-            if (favorM === Favor$1.TIE) {
-                return findFirstKey(l, mid, favorM);
-            }
-            else if (favorM === Favor$1.RHS) {
-                return findFirstKey(mid + 1, r, favorR);
-            }
-            else {
-                return findFirstKey(l + 1, mid, favorM);
-            }
-        };
-        // Find the last key that is in range. Returns index of the key, -1 if
-        // not found.
-        const findLastKey = (l, r) => {
-            if (l >= r) {
-                return l;
-            }
-            const favorR = compare(c.compareRange(keys[r], keyRange));
-            if (favorR === Favor$1.TIE) {
-                return r;
-            }
-            else if (favorR === Favor$1.RHS) {
-                return l;
-            }
-            const mid = getMidPoint(l, r);
-            if (mid === r) {
-                return l;
-            }
-            const favorM = compare(c.compareRange(keys[mid], keyRange));
-            if (favorM === Favor$1.TIE) {
-                return findLastKey(mid, r);
-            }
-            else if (favorM === Favor$1.LHS) {
-                return findLastKey(l, mid - 1);
-            }
-            else {
-                return -1; // Shall not be here.
-            }
-        };
-        if (favorLeft !== Favor$1.TIE) {
-            left = findFirstKey(left + 1, right, favorRight);
-        }
-        if (left !== -1) {
-            right = findLastKey(left, right);
-            if (right !== -1 && right >= left) {
-                this.appendResults(params, results, left, right + 1);
-            }
-        }
-    }
-    // Loops through all keys and check if key is in the given range. If so push
-    // the values into results. This method is slower than the getRange() by
-    // design and should be used only in the case of cross-column nullable
-    // indices.
-    // TODO(arthurhsu): remove this method when GridFile is implemented.
-    //
-    // |results| can be an empty array, or an array holding any results from
-    // previous calls to getRangeWithFilter().
-    getRangeWithFilter(keyRange, params, results) {
-        const c = this.tree.comparator();
-        let start = -1;
-        // Find initial pos
-        for (let i = 0; i < this.keys.length; ++i) {
-            if (c.isInRange(this.keys[i], keyRange)) {
-                start = i;
-                break;
-            }
-        }
-        if (start === -1) {
-            return;
-        }
-        for (let i = start; i < this.keys.length && params.count < params.limit; ++i) {
-            if (!c.isInRange(this.keys[i], keyRange)) {
-                continue;
-            }
-            this.appendResultsAt(params, results, i);
-        }
-    }
-    // Special optimization for appending results. For performance reasons, the
-    // parameters of this function are passed by reference.
-    // |params| offset means number of rows to skip, count means remaining number
-    // of rows to fill, and startIndex is the start index of results for filling.
-    fill(params, results) {
-        if (this.isLeaf()) {
-            for (let i = 0; i < this.values.length && params.count > 0; ++i) {
-                const val = this.values[i];
-                if (params.offset > 0) {
-                    params.offset -= !this.tree.isUniqueKey() ? val.length : 1;
-                    if (params.offset < 0) {
-                        for (let j = val.length + params.offset; j < val.length && params.count > 0; ++j) {
-                            results[params.startIndex++] = val[j];
-                            params.count--;
-                        }
-                    }
-                    continue;
-                }
-                if (this.tree.isUniqueKey()) {
-                    results[params.startIndex++] = this.values[i];
-                    params.count--;
-                }
-                else {
-                    for (let j = 0; j < val.length && params.count > 0; ++j) {
-                        results[params.startIndex++] = val[j];
-                        params.count--;
-                    }
-                }
-            }
-        }
-        else {
-            for (let i = 0; i < this.children.length && params.count > 0; ++i) {
-                this.children[i].fill(params, results);
-            }
-        }
-    }
-    isFirstKeyInRange(range) {
-        return this.tree.comparator().isFirstKeyInRange(this.keys[0], range);
-    }
-    isLeaf() {
-        return this.height === 0;
-    }
-    isRoot() {
-        return this.parent === null;
-    }
-    // Reconstructs internal node keys.
-    fix() {
-        this.keys = [];
-        for (let i = 1; i < this.children.length; ++i) {
-            this.keys.push(BTreeNode$1.leftMostKey(this.children[i]));
-        }
-    }
-    // Deletes a key from a given node. If the key length is smaller than
-    // required, execute the following operations according to order:
-    // 1. Steal a key from right sibling, if there is one with key > N/2
-    // 2. Steal a key from left sibling, if there is one with key > N/2
-    // 3. Merge to right sibling, if any
-    // 4. Merge to left sibling, if any
-    //
-    // When stealing and merging happens on internal nodes, the key array of that
-    // node will be obsolete and need to be reconstructed by fix().
-    //
-    // @param {!index.Index.Key} key
-    // @param {number} parentPos Position of this node in parent's children.
-    // @param {number=} value Match the value to delete.
-    // @return {boolean} Whether a fix is needed or not.
-    // @private
-    delete(key, parentPos, value) {
-        const pos = this.searchKey(key);
-        const isLeaf = this.isLeaf();
-        if (!isLeaf) {
-            const index = this.tree.eq(this.keys[pos], key) ? pos + 1 : pos;
-            if (this.children[index].delete(key, index, value)) {
-                this.fix();
-            }
-            else {
-                return false;
-            }
-        }
-        else if (!this.tree.eq(this.keys[pos], key)) {
-            return false;
-        }
-        if (this.keys.length > pos && this.tree.eq(this.keys[pos], key)) {
-            if (value !== undefined && !this.tree.isUniqueKey() && isLeaf) {
-                if (ArrayHelper$1.binaryRemove(this.values[pos], value)) {
-                    this.tree.stats().remove(key, 1);
-                }
-                const len = this.values[pos].length;
-                if (len) {
-                    return false; // No need to fix.
-                }
-            }
-            this.keys.splice(pos, 1);
-            if (isLeaf) {
-                const removedLength = this.tree.isUniqueKey() ? 1 : this.values[pos].length;
-                this.values.splice(pos, 1);
-                this.tree.stats().remove(key, removedLength);
-            }
-        }
-        if (this.keys.length < BTreeNode$1.MIN_KEY_LEN && !this.isRoot()) {
-            if (!this.steal()) {
-                this.merge(parentPos);
-            }
-            return true;
-        }
-        return true;
-    }
-    // Steals key from adjacent nodes.
-    steal() {
-        let from = null;
-        let fromIndex;
-        let fromChildIndex;
-        let toIndex;
-        if (this.next && this.next.keys.length > BTreeNode$1.MIN_KEY_LEN) {
-            from = this.next;
-            fromIndex = 0;
-            fromChildIndex = 0;
-            toIndex = this.keys.length + 1;
-        }
-        else if (this.prev && this.prev.keys.length > BTreeNode$1.MIN_KEY_LEN) {
-            from = this.prev;
-            fromIndex = this.prev.keys.length - 1;
-            fromChildIndex = this.isLeaf() ? fromIndex : fromIndex + 1;
-            toIndex = 0;
-        }
-        else {
-            return false;
-        }
-        this.keys.splice(toIndex, 0, from.keys[fromIndex]);
-        from.keys.splice(fromIndex, 1);
-        const child = this.isLeaf() ? this.values : this.children;
-        let fromChild = null;
-        if (this.isLeaf()) {
-            fromChild = from.values;
-        }
-        else {
-            fromChild = from.children;
-            fromChild[fromChildIndex].parent = this;
-        }
-        child.splice(toIndex, 0, fromChild[fromChildIndex]);
-        fromChild.splice(fromChildIndex, 1);
-        if (!from.isLeaf()) {
-            from.fix();
-            this.fix();
-        }
-        return true;
-    }
-    // Merges with adjacent nodes.
-    // |parentPos| indicates this node's position in parent's children.
-    merge(parentPos) {
-        let mergeTo;
-        let keyOffset;
-        let childOffset;
-        if (this.next && this.next.keys.length < BTreeNode$1.MAX_KEY_LEN) {
-            mergeTo = this.next;
-            keyOffset = 0;
-            childOffset = 0;
-        }
-        else if (this.prev) {
-            mergeTo = this.prev;
-            keyOffset = mergeTo.keys.length;
-            childOffset = mergeTo.isLeaf() ? mergeTo.values.length : mergeTo.children.length;
-        }
-        else {
-            throw new Exception$1(ErrorCode$1.ASSERTION);
-        }
-        mergeTo.keys.splice(keyOffset, 0, ...this.keys);
-        let myChildren = null;
-        if (this.isLeaf()) {
-            myChildren = this.values;
-        }
-        else {
-            myChildren = this.children;
-            myChildren.forEach((node) => node.parent = mergeTo);
-        }
-        if (mergeTo.isLeaf()) {
-            mergeTo.values.splice(childOffset, 0, ...myChildren);
-        }
-        else {
-            mergeTo.children.splice(childOffset, 0, ...myChildren);
-        }
-        BTreeNode$1.associate(this.prev, this.next);
-        if (!mergeTo.isLeaf()) {
-            mergeTo.fix();
-        }
-        if (parentPos !== -1) {
-            this.parent.keys.splice(parentPos, 1);
-            this.parent.children.splice(parentPos, 1);
-        }
-    }
-    // Split leaf node into two nodes, returns the split internal node.
-    splitLeaf() {
-        const half = BTreeNode$1.MIN_KEY_LEN;
-        const right = BTreeNode$1.create(this.tree);
-        const root = BTreeNode$1.create(this.tree);
-        root.height = 1;
-        root.keys = [this.keys[half]];
-        root.children = [this, right];
-        root.parent = this.parent;
-        this.parent = root;
-        right.keys = this.keys.splice(half);
-        right.values = this.values.splice(half);
-        right.parent = root;
-        BTreeNode$1.associate(right, this.next);
-        BTreeNode$1.associate(this, right);
-        return root;
-    }
-    // Split internal node into two nodes, returns the split internal node.
-    splitInternal() {
-        const half = BTreeNode$1.MIN_KEY_LEN;
-        const root = BTreeNode$1.create(this.tree);
-        const right = BTreeNode$1.create(this.tree);
-        root.parent = this.parent;
-        root.height = this.height + 1;
-        root.keys = [this.keys[half]];
-        root.children = [this, right];
-        this.keys.splice(half, 1);
-        right.parent = root;
-        right.height = this.height;
-        right.keys = this.keys.splice(half);
-        right.children = this.children.splice(half + 1);
-        right.children.forEach((node) => node.parent = right);
-        this.parent = root;
-        BTreeNode$1.associate(right, this.next);
-        BTreeNode$1.associate(this, right);
-        return root;
-    }
-    // Returns the position where the key is the closest smaller or equals to.
-    searchKey(key) {
-        // Binary search.
-        let left = 0;
-        let right = this.keys.length;
-        const c = this.tree.comparator();
-        while (left < right) {
-            const middle = left + right >> 1;
-            if (c.compare(this.keys[middle], key) === Favor$1.RHS) {
-                left = middle + 1;
-            }
-            else {
-                right = middle;
-            }
-        }
-        return left;
-    }
-    getContainingLeafSingleKey(key) {
-        if (!this.isLeaf()) {
-            let pos = this.searchKey(key);
-            if (this.tree.eq(this.keys[pos], key)) {
-                pos++;
-            }
-            return this.children[pos].getContainingLeaf(key);
-        }
-        return this;
-    }
-    getContainingLeafMultiKey(key) {
-        if (!this.isLeaf()) {
-            let pos = this.searchKey(key);
-            if (this.tree.eq(this.keys[pos], key)) {
-                // Note the multi-key comparator will return TIE if compared with an
-                // unbounded key. As a result, we need to check if any dimension of the
-                // key contains unbound.
-                const hasUnbound = key.some((dimension) => dimension === SingleKeyRange$1.UNBOUND_VALUE);
-                if (!hasUnbound) {
-                    pos++;
-                }
-            }
-            return this.children[pos].getContainingLeafMultiKey(key);
-        }
-        return this;
-    }
-    // Appends newly found results to an existing bag of results. For performance
-    // reasons, parameters are passed by reference.
-    // |params| count is number of filled elements in the results array; limit
-    // means max number to fill in the results; reverse means the request is
-    // for reverse ordering; skip means remaining skip count.
-    appendResultsAt(params, results, i) {
-        if (this.tree.isUniqueKey()) {
-            if (!params.reverse && params.skip) {
-                params.skip--;
-                return;
-            }
-            results[params.count++] = this.values[i];
-        }
-        else {
-            const val = this.values[i];
-            for (let j = 0; j < val.length && params.count < results.length; ++j) {
-                if (!params.reverse && params.skip) {
-                    params.skip--;
-                    continue;
-                }
-                results[params.count++] = val[j];
-            }
-        }
-    }
-    // Appends newly found results to an existing bag of results. For performance
-    // reasons, parameters are passed by reference.
-    // |params| count is number of filled elements in the results array; limit
-    // means max number to fill in the results; reverse means the request is
-    // for reverse ordering; skip means remaining skip count.
-    appendResults(params, results, from, to) {
-        for (let i = from; i < to; ++i) {
-            if (!params.reverse && params.count >= params.limit) {
-                return;
-            }
-            this.appendResultsAt(params, results, i);
-        }
-    }
-}
-// Maximum number of children a node can have (i.e. order of the B-Tree,
-// denoted as N in the following comments). This number must be greater or
-// equals to 4 for the implemented deletion algorithm to function correctly.
-BTreeNode$1.MAX_COUNT = 512;
-BTreeNode$1.MAX_KEY_LEN = BTreeNode$1.MAX_COUNT - 1;
-BTreeNode$1.MIN_KEY_LEN = BTreeNode$1.MAX_COUNT >> 1;
-class SimpleComparator$1 {
-    constructor(order) {
-        this.compareFn
-            = order === Order$1.DESC ? SimpleComparator$1.compareDescending : SimpleComparator$1.compareAscending;
-        this.normalizeKeyRange
-            = order === Order$1.DESC ? (keyRange) => {
-                return keyRange !== undefined && keyRange !== null ? keyRange.reverse() : null;
-            } : (keyRange) => keyRange || null;
-        this.orderRange
-            = order === Order$1.DESC ? SimpleComparator$1.orderRangeDescending : SimpleComparator$1.orderRangeAscending;
-    }
-    static compareAscending(lhs, rhs) {
-        return lhs > rhs ? Favor$1.LHS : lhs < rhs ? Favor$1.RHS : Favor$1.TIE;
-    }
-    static compareDescending(lhs, rhs) {
-        return SimpleComparator$1.compareAscending(rhs, lhs);
-    }
-    static orderRangeAscending(lhs, rhs) {
-        return SingleKeyRange$1.compare(lhs, rhs);
-    }
-    static orderRangeDescending(lhs, rhs) {
-        return SingleKeyRange$1.compare(rhs, lhs);
-    }
-    // Checks if the range covers "left" or "right" of the key (inclusive).
-    // For example:
-    //
-    // key is 2, comparator ASC
-    //
-    // |-----|-----X-----|-----|
-    // 0     1     2     3     4
-    //
-    // range [0, 4] and [2, 2] cover both left and right, so return [true, true].
-    // range [0, 2) covers only left, return [true, false].
-    // range (2, 0] covers only right, return [false, true].
-    compareRange(key, naturalRange) {
-        const LEFT = 0;
-        const RIGHT = 1;
-        const range = this.normalizeKeyRange(naturalRange);
-        const results = [
-            SingleKeyRange$1.isUnbound(range.from),
-            SingleKeyRange$1.isUnbound(range.to)
-        ];
-        if (!results[LEFT]) {
-            const favor = this.compareFn(key, range.from);
-            results[LEFT] = range.excludeLower ? favor === Favor$1.LHS : favor !== Favor$1.RHS;
-        }
-        if (!results[RIGHT]) {
-            const favor = this.compareFn(key, range.to);
-            results[RIGHT] = range.excludeUpper ? favor === Favor$1.RHS : favor !== Favor$1.LHS;
-        }
-        return results;
-    }
-    compare(lhs, rhs) {
-        return this.compareFn(lhs, rhs);
-    }
-    min(lhs, rhs) {
-        return lhs < rhs ? Favor$1.LHS : lhs === rhs ? Favor$1.TIE : Favor$1.RHS;
-    }
-    max(lhs, rhs) {
-        return lhs > rhs ? Favor$1.LHS : lhs === rhs ? Favor$1.TIE : Favor$1.RHS;
-    }
-    isInRange(key, range) {
-        const results = this.compareRange(key, range);
-        return results[0] && results[1];
-    }
-    isFirstKeyInRange(key, range) {
-        return this.isInRange(key, range);
-    }
-    getAllRange() {
-        return SingleKeyRange$1.all();
-    }
-    orderKeyRange(lhs, rhs) {
-        return this.orderRange(lhs, rhs);
-    }
-    sortKeyRanges(keyRanges) {
-        return keyRanges
-            .filter((range) => range !== null)
-            .sort((lhs, rhs) => this.orderKeyRange(lhs, rhs));
-    }
-    isLeftOpen(range) {
-        return SingleKeyRange$1.isUnbound(this.normalizeKeyRange(range).from);
-    }
-    rangeToKeys(naturalRange) {
-        const range = this.normalizeKeyRange(naturalRange);
-        return [range.from, range.to];
-    }
-    comparable(key) {
-        return key !== null;
-    }
-    keyDimensions() {
-        return 1;
-    }
-    toString() {
-        return this.compare === SimpleComparator$1.compareDescending ? "SimpleComparator_DESC" : "SimpleComparator_ASC";
-    }
-}
-class MultiKeyComparator$1 {
-    constructor(orders) {
-        this.comparators = orders.map((order) => new SimpleComparator$1(order));
-    }
-    static createOrders(numKeys, order) {
-        const orders = new Array(numKeys);
-        for (let i = 0; i < numKeys; ++i) {
-            orders[i] = order;
-        }
-        return orders;
-    }
-    compare(lk, rk) {
-        const lhs = lk;
-        const rhs = rk;
-        return this.forEach(lhs, rhs, (c, l, r) => {
-            return l === SingleKeyRange$1.UNBOUND_VALUE
-                || r === SingleKeyRange$1.UNBOUND_VALUE ? Favor$1.TIE : c.compare(l, r);
-        });
-    }
-    min(lk, rk) {
-        const lhs = lk;
-        const rhs = rk;
-        return this.forEach(lhs, rhs, (c, l, r) => c.min(l, r));
-    }
-    max(lk, rk) {
-        const lhs = lk;
-        const rhs = rk;
-        return this.forEach(lhs, rhs, (c, l, r) => c.max(l, r));
-    }
-    compareRange(k, range) {
-        const key = k;
-        const results = [true, true];
-        for (let i = 0; i < this.comparators.length && (results[0] || results[1]); ++i) {
-            const dimensionResults = this.comparators[i].compareRange(key[i], range[i]);
-            results[0] = results[0] && dimensionResults[0];
-            results[1] = results[1] && dimensionResults[1];
-        }
-        return results;
-    }
-    isInRange(k, range) {
-        const key = k;
-        let isInRange = true;
-        for (let i = 0; i < this.comparators.length && isInRange; ++i) {
-            isInRange = this.comparators[i].isInRange(key[i], range[i]);
-        }
-        return isInRange;
-    }
-    isFirstKeyInRange(k, range) {
-        const key = k;
-        return this.comparators[0].isInRange(key[0], range[0]);
-    }
-    getAllRange() {
-        return this.comparators.map((c) => c.getAllRange());
-    }
-    sortKeyRanges(keyRanges) {
-        const outputKeyRanges = keyRanges.filter((range) => {
-            return range.every((r) => r !== undefined && r !== null);
-        });
-        // Ranges are in the format of
-        // [[dim0_range0, dim1_range0, ...], [dim0_range1, dim1_range1, ...], ...]
-        // Reorganize the array to
-        // [[dim0_range0, dim0_range1, ...], [dim1_range0, dim1_range1, ...], ...]
-        const keysPerDimensions = new Array(this.comparators.length);
-        for (let i = 0; i < keysPerDimensions.length; i++) {
-            keysPerDimensions[i] = outputKeyRanges.map((range) => range[i]);
-        }
-        // Sort ranges per dimension.
-        keysPerDimensions.forEach((keys, i) => {
-            keys.sort((lhs, rhs) => {
-                return this.comparators[i].orderKeyRange(lhs, rhs);
-            });
-        }, this);
-        // Swapping back to original key range format. This time the new ranges
-        // are properly aligned from left to right in each dimension.
-        const finalKeyRanges = new Array(outputKeyRanges.length);
-        for (let i = 0; i < finalKeyRanges.length; i++) {
-            finalKeyRanges[i] = keysPerDimensions.map((keys) => keys[i]);
-        }
-        // Perform another sorting to properly arrange order of ranges with either
-        // excludeLower or excludeUpper.
-        return finalKeyRanges.sort((lhs, rhs) => {
-            let favor = Favor$1.TIE;
-            for (let i = 0; i < this.comparators.length && favor === Favor$1.TIE; ++i) {
-                favor = this.comparators[i].orderKeyRange(lhs[i], rhs[i]);
-            }
-            return favor;
-        });
-    }
-    isLeftOpen(range) {
-        return this.comparators[0].isLeftOpen(range[0]);
-    }
-    rangeToKeys(keyRange) {
-        const startKey = keyRange.map((range, i) => this.comparators[i].rangeToKeys(range)[0]);
-        const endKey = keyRange.map((range, i) => this.comparators[i].rangeToKeys(range)[1]);
-        return [startKey, endKey];
-    }
-    comparable(key) {
-        return key.every((keyDimension, i) => this.comparators[i].comparable(keyDimension));
-    }
-    keyDimensions() {
-        return this.comparators.length;
-    }
-    forEach(lhs, rhs, fn) {
-        let favor = Favor$1.TIE;
-        for (let i = 0; i < this.comparators.length && favor === Favor$1.TIE; ++i) {
-            favor = fn(this.comparators[i], lhs[i], rhs[i]);
-        }
-        return favor;
-    }
-}
-// This comparator is not used to replace existing NullableIndex wrapper
-// because of its compareAscending function requires extra null key
-// checking every time, where the wrapper does it only once. This resulted in
-// performance difference and therefore the NullableIndex is kept.
-class SimpleComparatorWithNull$1 extends SimpleComparator$1 {
-    static compareAscending(lhs, rhs) {
-        if (lhs === null) {
-            return rhs === null ? Favor$1.TIE : Favor$1.RHS;
-        }
-        return rhs === null ? Favor$1.LHS : SimpleComparator$1.compareAscending(lhs, rhs);
-    }
-    static compareDescending(lhs, rhs) {
-        return SimpleComparatorWithNull$1.compareAscending(rhs, lhs);
-    }
-    constructor(order) {
-        super(order);
-        this.compareFn
-            = order === Order$1.DESC ? SimpleComparatorWithNull$1.compareDescending : SimpleComparatorWithNull$1.compareAscending;
-    }
-    isInRange(key, range) {
-        return key === null ? range.isAll() : super.isInRange(key, range);
-    }
-    min(lhs, rhs) {
-        const results = this.minMax(lhs, rhs);
-        return results === null ? super.min(lhs, rhs) : results;
-    }
-    max(lhs, rhs) {
-        const results = this.minMax(lhs, rhs);
-        return results === null ? super.max(lhs, rhs) : results;
-    }
-    minMax(lhs, rhs) {
-        if (lhs === null) {
-            return rhs === null ? Favor$1.TIE : Favor$1.RHS;
-        }
-        return rhs === null ? Favor$1.LHS : null;
-    }
-}
-class MultiKeyComparatorWithNull$1 extends MultiKeyComparator$1 {
-    constructor(orders) {
-        super(orders);
-        this.comparators = orders.map((order) => {
-            return new SimpleComparatorWithNull$1(order);
-        });
-    }
-}
-class ComparatorFactory$1 {
-    static create(indexSchema) {
-        if (indexSchema.columns.length === 1) {
-            return new SimpleComparator$1(indexSchema.columns[0].order);
-        }
-        const orders = indexSchema.columns.map((col) => col.order);
-        const nullable = indexSchema.columns.some((col) => col.schema.isNullable());
-        return nullable ? new MultiKeyComparatorWithNull$1(orders) : new MultiKeyComparator$1(orders);
-    }
-}
-// Wraps another index which does not support NULL to accept NULL values.
-class NullableIndex$1 {
-    constructor(index) {
-        this.index = index;
-        this.nulls = new Set();
-        this.statsNull = new IndexStats$1();
-        this.statsObj = new IndexStats$1();
-    }
-    static deserialize(deserializeFn, rows) {
-        // Ideally, the special row should be the first one, and we can short cut.
-        let index = -1;
-        for (let i = 0; i < rows.length; ++i) {
-            if (rows[i].id() === NullableIndex$1.NULL_ROW_ID) {
-                index = i;
-                break;
-            }
-        }
-        if (index === -1) {
-            // 102: Data corruption detected.
-            throw new Exception$1(ErrorCode$1.DATA_CORRUPTION);
-        }
-        const nulls = rows[index].payload()["v"];
-        const newRows = rows.slice(0);
-        newRows.splice(index, 1);
-        const tree = deserializeFn(newRows);
-        const nullableIndex = new NullableIndex$1(tree);
-        nulls.forEach((rowId) => nullableIndex.nulls.add(rowId));
-        return nullableIndex;
-    }
-    getName() {
-        return this.index.getName();
-    }
-    add(key, value) {
-        if (key === null) {
-            // Note: Nullable index allows multiple nullable keys even if it is marked
-            // as unique. This is matching the behavior of other SQL engines.
-            this.nulls.add(value);
-            this.statsNull.add(key, 1);
-        }
-        else {
-            this.index.add(key, value);
-        }
-    }
-    set(key, value) {
-        if (key === null) {
-            this.nulls.clear();
-            this.statsNull.clear();
-            this.add(key, value);
-        }
-        else {
-            this.index.set(key, value);
-        }
-    }
-    remove(key, rowId) {
-        if (key === null) {
-            if (rowId) {
-                this.nulls.delete(rowId);
-                this.statsNull.remove(key, 1);
-            }
-            else {
-                this.nulls.clear();
-                this.statsNull.clear();
-            }
-        }
-        else {
-            this.index.remove(key, rowId);
-        }
-    }
-    get(key) {
-        if (key === null) {
-            return Array.from(this.nulls.values());
-        }
-        else {
-            return this.index.get(key);
-        }
-    }
-    min() {
-        return this.index.min();
-    }
-    max() {
-        return this.index.max();
-    }
-    cost(keyRange) {
-        return this.index.cost(keyRange);
-    }
-    getRange(range, reverseOrder, limit, skip) {
-        const results = this.index.getRange(range, reverseOrder, limit, skip);
-        if (range !== undefined && range !== null) {
-            return results;
-        }
-        return results.concat(Array.from(this.nulls.values()));
-    }
-    clear() {
-        this.nulls.clear();
-        this.index.clear();
-    }
-    containsKey(key) {
-        return key === null ? this.nulls.size !== 0 : this.index.containsKey(key);
-    }
-    serialize() {
-        const rows = [
-            new Row$1(NullableIndex$1.NULL_ROW_ID, {
-                "v": Array.from(this.nulls.values())
-            })
-        ];
-        return rows.concat(this.index.serialize());
-    }
-    comparator() {
-        return this.index.comparator();
-    }
-    isUniqueKey() {
-        return this.index.isUniqueKey();
-    }
-    stats() {
-        this.statsObj.updateFromList([this.index.stats(), this.statsNull]);
-        return this.statsObj;
-    }
-}
-NullableIndex$1.NULL_ROW_ID = -2;
-// This is actually the row id set for a given table, but in the form of
-// RuntimeIndex.
-class RowId$1 {
-    constructor(name) {
-        this.name = name;
-        this.rows = new Set();
-        this.comparatorObj = new SimpleComparator$1(Order$1.ASC);
-    }
-    static deserialize(name, rows) {
-        const index = new RowId$1(name);
-        const rowIds = rows[0].payload()["v"];
-        rowIds.forEach((rowId) => { index.add(rowId, rowId); });
-        return index;
-    }
-    getName() {
-        return this.name;
-    }
-    add(key, value) {
-        if (typeof key !== "number") {
-            // 103: Row id must be numbers.
-            throw new Exception$1(ErrorCode$1.INVALID_ROW_ID);
-        }
-        this.rows.add(key);
-    }
-    set(key, value) {
-        this.add(key, value);
-    }
-    remove(key, rowId) {
-        this.rows.delete(key);
-    }
-    get(key) {
-        return this.containsKey(key) ? [key] : RowId$1.EMPTY_ARRAY;
-    }
-    min() {
-        return this.minMax(this.comparatorObj.min.bind(this.comparatorObj));
-    }
-    max() {
-        return this.minMax(this.comparatorObj.max.bind(this.comparatorObj));
-    }
-    cost(keyRange) {
-        // Give the worst case so that this index is not used unless necessary.
-        return this.rows.size;
-    }
-    getRange(range, reverseOrder, limit, skip) {
-        const keyRanges = range || [
-            SingleKeyRange$1.all()
-        ];
-        const values = Array.from(this.rows.values()).filter((value) => {
-            return keyRanges.some((r) => this.comparatorObj.isInRange(value, r));
-        }, this);
-        return IndexHelper$1.slice(values, reverseOrder, limit, skip);
-    }
-    clear() {
-        this.rows.clear();
-    }
-    containsKey(key) {
-        return this.rows.has(key);
-    }
-    serialize() {
-        return [new Row$1(RowId$1.ROW_ID, { "v": Array.from(this.rows.values()) })];
-    }
-    comparator() {
-        return this.comparatorObj;
-    }
-    isUniqueKey() {
-        return true;
-    }
-    stats() {
-        const stats = new IndexStats$1();
-        stats.totalRows = this.rows.size;
-        return stats;
-    }
-    minMax(compareFn) {
-        if (this.rows.size === 0) {
-            return null;
-        }
-        const keys = Array.from(this.rows.values()).reduce((keySoFar, key) => {
-            return keySoFar === null || compareFn(key, keySoFar) === Favor$1.LHS ? key : keySoFar;
-        });
-        return [keys, [keys]];
-    }
-}
-// The Row ID to use when serializing this index to disk. Currently the entire
-// index is serialized to a single lf.Row instance with rowId set to ROW_ID.
-RowId$1.ROW_ID = 0;
-RowId$1.EMPTY_ARRAY = [];
-// In-memory index store that builds all indices at the time of init.
-class MemoryIndexStore$1 {
-    constructor() {
-        this.store = new Map();
-        this.tableIndices = new Map();
-    }
-    init(schema) {
-        const tables = schema.tables();
-        tables.forEach((table) => {
-            const tableIndices = [];
-            this.tableIndices.set(table.getName(), tableIndices);
-            const rowIdIndexName = table.getRowIdIndexName();
-            const rowIdIndex = this.get(rowIdIndexName);
-            if (rowIdIndex === null) {
-                const index = new RowId$1(rowIdIndexName);
-                tableIndices.push(index);
-                this.store.set(rowIdIndexName, index);
-            }
-            table.getIndices().forEach((indexSchema) => {
-                const index = this.createIndex(indexSchema);
-                tableIndices.push(index);
-                this.store.set(indexSchema.getNormalizedName(), index);
-            }, this);
-        }, this);
-        return Promise.resolve();
-    }
-    get(name) {
-        return this.store.get(name) || null;
-    }
-    set(tableName, index) {
-        let tableIndices = this.tableIndices.get(tableName) || null;
-        if (tableIndices === null) {
-            tableIndices = [];
-            this.tableIndices.set(tableName, tableIndices);
-        }
-        // Replace the index in-place in the array if such index already exists.
-        let existsAt = -1;
-        for (let i = 0; i < tableIndices.length; i++) {
-            if (tableIndices[i].getName() === index.getName()) {
-                existsAt = i;
-                break;
-            }
-        }
-        if (existsAt >= 0 && tableIndices.length > 0) {
-            tableIndices.splice(existsAt, 1, index);
-        }
-        else {
-            tableIndices.push(index);
-        }
-        this.store.set(index.getName(), index);
-    }
-    getTableIndices(tableName) {
-        return this.tableIndices.get(tableName) || [];
-    }
-    createIndex(indexSchema) {
-        const comparator = ComparatorFactory$1.create(indexSchema);
-        const index = new BTree$1(indexSchema.getNormalizedName(), comparator, indexSchema.isUnique);
-        return indexSchema.hasNullableColumn() && indexSchema.columns.length === 1 ? new NullableIndex$1(index) : index;
-    }
-}
-class UserQueryTask$1 extends QueryTask$1 {
-    constructor(global, items) {
-        super(global, items);
-        this.runner = global.getService(Service$1.RUNNER);
-    }
-    getPriority() {
-        return TaskPriority$1.USER_QUERY_TASK;
-    }
-}
-class TreeHelper$1 {
-    // Creates a new tree with the exact same structure, where every node in the
-    // tree has been replaced by a new node according to the mapping function.
-    // This is equivalent to Array#map, but for a tree data structure.
-    // Note: T1 and T2 are expected to be either lf.structs.TreeNode or subtypes
-    // but there is no way to currently express that in JS compiler annotations.
-    static map(origTree, mapFn) {
-        // A stack storing nodes that will be used as parents later in the
-        // traversal.
-        const copyParentStack = [];
-        // Removes a node from the parent stack, if that node has already reached
-        // its target number of children.
-        const cleanUpParentStack = (original, clone) => {
-            if (original === null) {
-                return;
-            }
-            const cloneFull = original.getChildCount() === clone.getChildCount();
-            if (cloneFull) {
-                const cloneIndex = copyParentStack.indexOf(clone);
-                if (cloneIndex !== -1) {
-                    copyParentStack.splice(cloneIndex, 1);
-                }
-            }
-        };
-        // The node that should become the parent of the next traversed node.
-        let nextParent = null;
-        let copyRoot = null;
-        origTree.traverse((node) => {
-            const newNode = mapFn(node);
-            if (node.getParent() === null) {
-                copyRoot = newNode;
-            }
-            else {
-                nextParent.addChild(newNode);
-            }
-            cleanUpParentStack(node.getParent(), nextParent);
-            if (node.getChildCount() > 1) {
-                copyParentStack.push(newNode);
-            }
-            nextParent = node.isLeaf() ? copyParentStack[copyParentStack.length - 1] : newNode;
-        });
-        return copyRoot;
-    }
-    // Finds all leafs node existing in the subtree that starts at the given node.
-    static getLeafNodes(node) {
-        return TreeHelper$1.find(node, (n) => n.isLeaf());
-    }
-    // Removes a node from a tree. It takes care of re-parenting the children of
-    // the removed node with its parent (if any).
-    // Returns an object holding the parent of the node prior to removal (if any),
-    // and the children of the node prior to removal.
-    static removeNode(node) {
-        const parentNode = node.getParent();
-        let originalIndex = 0;
-        if (parentNode !== null) {
-            originalIndex = parentNode.getChildren().indexOf(node);
-            parentNode.removeChild(node);
-        }
-        const children = node.getChildren().slice();
-        children.forEach((child, index) => {
-            node.removeChild(child);
-            if (parentNode !== null) {
-                parentNode.addChildAt(child, originalIndex + index);
-            }
-        });
-        return {
-            "children": children,
-            "parent": parentNode
-        };
-    }
-    // Inserts a new node under an existing node. The new node inherits all
-    // children of the existing node, and the existing node ends up having only
-    // the new node as a child. Example: Calling insertNodeAt(n2, n6) would result
-    // in the following transformation.
-    //
-    //        n1              n1
-    //       /  \            /  \
-    //      n2  n5          n2  n5
-    //     /  \      =>    /
-    //    n3  n4          n6
-    //                   /  \
-    //                  n3  n4
-    static insertNodeAt(existingNode, newNode) {
-        const children = existingNode.getChildren().slice();
-        children.forEach((child) => {
-            existingNode.removeChild(child);
-            newNode.addChild(child);
-        });
-        existingNode.addChild(newNode);
-    }
-    // Swaps a node with its only child. The child also needs to have exactly one
-    // child.
-    // Example: Calling swapNodeWithChild(n2) would result in the following
-    // transformation.
-    //
-    //        n1              n1
-    //       /  \            /  \
-    //      n2   n6         n3  n6
-    //     /         =>    /
-    //    n3              n2
-    //   /  \            /  \
-    //  n4  n5          n4  n5
-    //
-    // Returns the new root of the subtree that used to start where "node" was
-    // before swapping.
-    static swapNodeWithChild(node) {
-        assert$1(node.getChildCount() === 1);
-        const child = node.getChildAt(0);
-        assert$1(child.getChildCount() === 1);
-        TreeHelper$1.removeNode(node);
-        TreeHelper$1.insertNodeAt(child, node);
-        return child;
-    }
-    // Pushes a node below its only child. It takes care of replicating the node
-    // only for those branches where it makes sense.
-    // Example: Calling
-    //   pushNodeBelowChild(
-    //       n2,
-    //       function(grandChild) {return true;},
-    //       function(node) {return node.clone();})
-    //  would result in the following transformation.
-    //
-    //        n1              n1
-    //       /  \            /  \
-    //      n2   n6         n3  n6
-    //     /         =>    /  \
-    //    n3             n2'  n2''
-    //   /  \            /      \
-    //  n4  n5          n4      n5
-    //
-    //  where n2 has been pushed below n3, on both branches. n2'and n2'' denote
-    //  that copies of the original node were made.
-    //
-    // |shouldPushDownFn| is a function that is called on every grandchild to
-    // determine whether the node can be pushed down on that branch.
-    // |cloneFn| is a function used to clone the node that is being pushed down.
-    //
-    // Returns the new parent of the subtree that used to start at "node" or
-    // "node" itself if it could not be pushed down at all.
-    static pushNodeBelowChild(node, shouldPushDownFn, cloneFn) {
-        assert$1(node.getChildCount() === 1);
-        const child = node.getChildAt(0);
-        assert$1(child.getChildCount() > 1);
-        const grandChildren = child.getChildren().slice();
-        const canPushDown = grandChildren.some((grandChild) => shouldPushDownFn(grandChild));
-        if (!canPushDown) {
-            return node;
-        }
-        TreeHelper$1.removeNode(node);
-        grandChildren.forEach((grandChild, index) => {
-            if (shouldPushDownFn(grandChild)) {
-                const newNode = cloneFn(node);
-                child.removeChildAt(index);
-                newNode.addChild(grandChild);
-                child.addChildAt(newNode, index);
-            }
-        });
-        return child;
-    }
-    // Replaces a chain of nodes with a new chain of nodes.
-    // Example: Calling replaceChainWithChain(n2, n3, n7, n8) would result in the
-    // following transformation.
-    //
-    //        n1              n1
-    //       /  \            /  \
-    //      n2   n6         n7   n6
-    //     /         =>    /
-    //    n3              n8
-    //   /  \            /  \
-    //  n4  n5          n4  n5
-    //
-    // Returns the new root of the subtree that used to start at "old head".
-    // Effectively the new root is always equal to "newHead".
-    static replaceChainWithChain(oldHead, oldTail, newHead, newTail) {
-        const parentNode = oldHead.getParent();
-        if (parentNode !== null) {
-            const oldHeadIndex = parentNode.getChildren().indexOf(oldHead);
-            parentNode.removeChildAt(oldHeadIndex);
-            parentNode.addChildAt(newHead, oldHeadIndex);
-        }
-        oldTail
-            .getChildren()
-            .slice()
-            .forEach((child) => {
-                oldTail.removeChild(child);
-                newTail.addChild(child);
-            });
-        return newHead;
-    }
-    // Removes a node from the tree, and replaces it with a chain of nodes where
-    // each node in the chain (excluding the tail) has exactly one child.
-    // Example: Calling replaceNodeWithChain(n6, n10, n12), where the chain
-    // consists of n7->n8->n9, would result in the following transformation.
-    //
-    //        n1               n1
-    //       /  \             /  \
-    //      n2   n6          n2  n10
-    //     /    /  \    =>  /      \
-    //    n3   n7  n8      n3      n11
-    //   /  \             /  \       \
-    //  n4  n5          n4   n5      n12
-    //                               /  \
-    //                              n7  n8
-    //
-    // Returns the new root of the subtree that used to start at "node".
-    // Effectively the new root is always equal to "head".
-    static replaceNodeWithChain(node, head, tail) {
-        return TreeHelper$1.replaceChainWithChain(node, node, head, tail);
-    }
-    // Replaces a chain of nodes with a new node.
-    // Example: Calling replaceChainWithNode(n2, n3, n7) would result in the
-    // following transformation.
-    //
-    //        n1              n1
-    //       /  \            /  \
-    //      n2   n6         n7   n6
-    //     /         =>    /  \
-    //    n3              n4  n5
-    //   /  \
-    //  n4  n5
-    //
-    // Returns the new root of the subtree that used to start at "head".
-    // Effectively the new root is always equal to "node".
-    static replaceChainWithNode(head, tail, node) {
-        return TreeHelper$1.replaceChainWithChain(head, tail, node, node);
-    }
-    // Finds all nodes in the given tree that satisfy a given condition.
-    // |root| is the root of the tree to search.
-    // |filterFn| is the filter function. It will be called on every node of
-    // the tree.
-    // |stopFn| is a function that indicates whether searching should be stopped.
-    // It will be called on every visited node on the tree. If false is returned
-    // searching will stop for nodes below that node. If such a function were not
-    // provided the entire tree is searched.
-    static find(root, filterFn, stopFn) {
-        const results = [];
-        /** @param {!lf.structs.TreeNode} node */
-        const filterRec = (node) => {
-            if (filterFn(node)) {
-                results.push(node);
-            }
-            if (stopFn === undefined || stopFn === null || !stopFn(node)) {
-                node.getChildren().forEach(filterRec);
-            }
-        };
-        filterRec(root);
-        return results;
-    }
-    // Returns a string representation of a tree. Useful for testing/debugging.
-    // |stringFunc| is the function to use for converting a single node to a
-    // string. If not provided a default function will be used.
-    static toString(rootNode, stringFunc) {
-        const defaultStringFn = (node) => {
-            return node.toString() + "\n";
-        };
-        const stringFn = stringFunc || defaultStringFn;
-        let out = "";
-        rootNode.traverse((node) => {
-            for (let i = 0; i < node.getDepth(); i++) {
-                out += "-";
-            }
-            out += stringFn(node);
-        });
-        return out;
-    }
-}
-class CombinedPredicate$1 extends PredicateNode$1 {
-    constructor(operator) {
-        super();
-        this.operator = operator;
-        // Whether this predicate has been reversed. This is necessary only for
-        // handling the case where setComplement() is called twice with the same
-        // value.
-        this.isComplement = false;
-    }
-    eval(relation) {
-        const results = this.getChildren().map((condition) => condition.eval(relation));
-        return this.combineResults(results);
-    }
-    setComplement(isComplement) {
-        if (this.isComplement === isComplement) {
-            // Nothing to do.
-            return;
-        }
-        this.isComplement = isComplement;
-        // NOT(AND(c1, c2)) becomes OR(NOT(c1), NOT(c2)).
-        // NOT(OR(c1, c2)) becomes AND(NOT(c1), NOT(c2)).
-        // Toggling AND/OR.
-        this.operator = this.operator === Operator$1.AND ? Operator$1.OR : Operator$1.AND;
-        // Toggling children conditions.
-        this.getChildren().forEach((condition) => { condition.setComplement(isComplement); });
-    }
-    copy() {
-        const copy = TreeHelper$1.map(this, (node) => {
-            if (node instanceof CombinedPredicate$1) {
-                const tempCopy = new CombinedPredicate$1(node.operator);
-                tempCopy.isComplement = node.isComplement;
-                tempCopy.setId(node.getId());
-                return tempCopy;
-            }
-            else {
-                return node.copy();
-            }
-        });
-        return copy;
-    }
-    getColumns(results) {
-        const columns = results || [];
-        this.traverse((child) => {
-            if (child === this) {
-                return;
-            }
-            child.getColumns(columns);
-        });
-        const columnSet = new Set(columns);
-        return Array.from(columnSet.values());
-    }
-    getTables(results) {
-        const tables = results ? results : new Set();
-        this.traverse((child) => {
-            if (child === this) {
-                return;
-            }
-            child.getTables(tables);
-        });
-        return tables;
-    }
-    toString() {
-        return `combined_pred_${this.operator.toString()}`;
-    }
-    // Converts this predicate to a key range.
-    // NOTE: Not all predicates can be converted to a key range, callers must call
-    // isKeyRangeCompatible() before calling this method.
-    toKeyRange() {
-        assert$1(this.isKeyRangeCompatible(), "Could not convert combined predicate to key range.");
-        if (this.operator === Operator$1.OR) {
-            const keyRangeSet = new SingleKeyRangeSet$1();
-            this.getChildren().forEach((child) => {
-                const childKeyRanges = child
-                    .toKeyRange()
-                    .getValues();
-                keyRangeSet.add(childKeyRanges);
-            });
-            return keyRangeSet;
-        }
-        else {
-            // this.operator.lf.pred.Operator.OR
-            // Unreachable code, because the assertion above should have already
-            // thrown an error if this predicate is of type AND.
-            assert$1(false, "toKeyRange() called for an AND predicate.");
-            return new SingleKeyRangeSet$1();
-        }
-    }
-    // Returns whether this predicate can be converted to a set of key ranges.
-    isKeyRangeCompatible() {
-        if (this.operator === Operator$1.OR) {
-            return this.isKeyRangeCompatibleOr();
-        }
-        // AND predicates are broken down to individual predicates by the optimizer,
-        // and therefore there is no need to convert an AND predicate to a key
-        // range, because such predicates do not exist in the tree during query
-        // execution.
-        return false;
-    }
-    // Combines the results of all the children predicates.
-    combineResults(results) {
-        if (this.operator === Operator$1.AND) {
-            return Relation$1.intersect(results);
-        }
-        else {
-            // Must be the case where this.operator === Operator.OR.
-            return Relation$1.union(results);
-        }
-    }
-    // Checks if this OR predicate can be converted to a set of key ranges.
-    // Currently only OR predicates that satisfy all of the following criteria can
-    // be converted.
-    //  1) Every child is a ValuePredicate
-    //  2) All children refer to the same table and column.
-    //  3) All children are key range compatible.
-    isKeyRangeCompatibleOr() {
-        let predicateColumn = null;
-        return this.getChildren().every((child) => {
-            const isCandidate = child instanceof ValuePredicate$1 && child.isKeyRangeCompatible();
-            if (!isCandidate) {
-                return false;
-            }
-            if (predicateColumn === null) {
-                predicateColumn = child.column;
-            }
-            return (predicateColumn.getNormalizedName()
-                === child.column.getNormalizedName());
-        });
-    }
-}
-class JoinPredicate$1 extends PredicateNode$1 {
-    constructor(leftColumn, rightColumn, evaluatorType) {
-        super();
-        this.leftColumn = leftColumn;
-        this.rightColumn = rightColumn;
-        this.evaluatorType = evaluatorType;
-        this.nullPayload = null;
-        const registry = EvalRegistry$1.get();
-        this.evaluatorFn = registry.getEvaluator(this.leftColumn.getType(), this.evaluatorType);
-        this.keyOfIndexFn = registry.getKeyOfIndexEvaluator(this.leftColumn.getType());
-    }
-    copy() {
-        const clone = new JoinPredicate$1(this.leftColumn, this.rightColumn, this.evaluatorType);
-        clone.setId(this.getId());
-        return clone;
-    }
-    getColumns(results) {
-        if (results !== undefined && results !== null) {
-            results.push(this.leftColumn);
-            results.push(this.rightColumn);
-            return results;
-        }
-        return [this.leftColumn, this.rightColumn];
-    }
-    getTables(results) {
-        const tables = results !== undefined && results !== null ? results : new Set();
-        tables.add(this.leftColumn.getTable());
-        tables.add(this.rightColumn.getTable());
-        return tables;
-    }
-    // Creates a new predicate with the  left and right columns swapped and
-    // operator changed (if necessary).
-    reverse() {
-        let evaluatorType = this.evaluatorType;
-        switch (this.evaluatorType) {
-            case EvalType$1.GT:
-                evaluatorType = EvalType$1.LT;
-                break;
-            case EvalType$1.LT:
-                evaluatorType = EvalType$1.GT;
-                break;
-            case EvalType$1.GTE:
-                evaluatorType = EvalType$1.LTE;
-                break;
-            case EvalType$1.LTE:
-                evaluatorType = EvalType$1.GTE;
-                break;
-        }
-        const newPredicate = new JoinPredicate$1(this.rightColumn, this.leftColumn, evaluatorType);
-        return newPredicate;
-    }
-    eval(relation) {
-        const entries = relation.entries.filter((entry) => {
-            const leftValue = entry.getField(this.leftColumn);
-            const rightValue = entry.getField(this.rightColumn);
-            return this.evaluatorFn(leftValue, rightValue);
-        }, this);
-        return new Relation$1(entries, relation.getTables());
-    }
-    toString() {
-        return ("join_pred("
-            + this.leftColumn.getNormalizedName()
-            + " "
-            + this.evaluatorType
-            + " "
-            + this.rightColumn.getNormalizedName()
-            + ")");
-    }
-    // Calculates the join between the input relations using a Nested-Loop-Join
-    // algorithm.
-    // Nulls cannot be matched. Hence Inner join does not return null matches
-    // at all and Outer join retains each null entry of the left table.
-    evalRelationsNestedLoopJoin(leftRelation, rightRelation, isOuterJoin) {
-        let leftRightRelations = [leftRelation, rightRelation];
-        // For outer join, left and right are not interchangeable.
-        if (!isOuterJoin) {
-            leftRightRelations = this.detectLeftRight(leftRelation, rightRelation);
-        }
-        leftRelation = leftRightRelations[0];
-        rightRelation = leftRightRelations[1];
-        const combinedEntries = [];
-        const leftRelationTables = leftRelation.getTables();
-        const rightRelationTables = rightRelation.getTables();
-        const leftEntriesLength = leftRelation.entries.length;
-        const rightEntriesLength = rightRelation.entries.length;
-        // Since block size is a power of two, we can use bitwise operators.
-        const blockNumBits = JoinPredicate$1.BLOCK_SIZE_EXPONENT;
-        // This is equivalent to Math.ceil(rightEntriesLength/blockSize).
-        const blockCount = rightEntriesLength + (1 << blockNumBits) - 1 >> blockNumBits;
-        let currentBlock = 0;
-        // The inner loop is executed in blocks. Blocking helps in pre-fetching
-        // the next contents by CPU and also reduces cache misses as long as a block
-        // is close to the size of cache.
-        while (currentBlock < blockCount) {
-            for (let i = 0; i < leftEntriesLength; i++) {
-                let matchFound = false;
-                const leftValue = leftRelation.entries[i].getField(this.leftColumn);
-                if (leftValue !== null) {
-                    const rightLimit = Math.min(currentBlock + 1 << blockNumBits, rightEntriesLength);
-                    for (let j = currentBlock << blockNumBits; j < rightLimit; j++) {
-                        // Evaluating before combining the rows, since combining is fairly
-                        // expensive.
-                        const predicateResult = this.evaluatorFn(leftValue, rightRelation.entries[j].getField(this.rightColumn));
-                        if (predicateResult) {
-                            matchFound = true;
-                            const combinedEntry = RelationEntry$1.combineEntries(leftRelation.entries[i], leftRelationTables, rightRelation.entries[j], rightRelationTables);
-                            combinedEntries.push(combinedEntry);
-                        }
-                    }
-                }
-                if (isOuterJoin && !matchFound) {
-                    combinedEntries.push(this.createCombinedEntryForUnmatched(leftRelation.entries[i], leftRelationTables));
-                }
-            }
-            currentBlock++;
-        }
-        const srcTables = leftRelation
-            .getTables()
-            .concat(rightRelation.getTables());
-        return new Relation$1(combinedEntries, srcTables);
-    }
-    // Calculates the join between the input relations using a Hash-Join
-    // algorithm. Such a join implementation can only be used if the join
-    // conditions is the "equals" operator.
-    // Nulls cannot be matched. Hence Inner join does not return null matches
-    // at all and Outer join retains each null entry of the left table.
-    evalRelationsHashJoin(leftRelation, rightRelation, isOuterJoin) {
-        let leftRightRelations = [leftRelation, rightRelation];
-        // For outer join, left and right are not interchangeable.
-        if (!isOuterJoin) {
-            leftRightRelations = this.detectLeftRight(leftRelation, rightRelation);
-        }
-        leftRelation = leftRightRelations[0];
-        rightRelation = leftRightRelations[1];
-        // If it is an outer join, then swap to make sure that the right table is
-        // used for the "build" phase of the hash-join algorithm. If it is inner
-        // join, choose the smaller of the two relations to be used for the "build"
-        // phase.
-        let minRelation = leftRelation;
-        let maxRelation = rightRelation;
-        let minColumn = this.leftColumn;
-        let maxColumn = this.rightColumn;
-        if (isOuterJoin) {
-            minRelation = rightRelation;
-            maxRelation = leftRelation;
-            minColumn = this.rightColumn;
-            maxColumn = this.leftColumn;
-        }
-        const map = new MapSet$1();
-        const combinedEntries = [];
-        minRelation.entries.forEach((entry) => {
-            const key = String(entry.getField(minColumn));
-            map.set(key, entry);
-        });
-        const minRelationTableNames = minRelation.getTables();
-        const maxRelationTableNames = maxRelation.getTables();
-        maxRelation.entries.forEach((entry) => {
-            const value = entry.getField(maxColumn);
-            const key = String(value);
-            if (value !== null && map.has(key)) {
-                map.get(key).forEach((innerEntry) => {
-                    const combinedEntry = RelationEntry$1.combineEntries(entry, maxRelationTableNames, innerEntry, minRelationTableNames);
-                    combinedEntries.push(combinedEntry);
-                });
-            }
-            else if (isOuterJoin) {
-                combinedEntries.push(this.createCombinedEntryForUnmatched(entry, maxRelationTableNames));
-            }
-        }, this);
-        const srcTables = leftRelation
-            .getTables()
-            .concat(rightRelation.getTables());
-        return new Relation$1(combinedEntries, srcTables);
-    }
-    evalRelationsIndexNestedLoopJoin(leftRelation, rightRelation, indexJoinInfo, cache) {
-        assert$1(this.evaluatorType === EvalType$1.EQ, "For now, index nested loop join can only be leveraged for EQ.");
-        // Detecting which relation should be used as outer (non-indexed) and which
-        // as inner (indexed).
-        const indexedTable = indexJoinInfo.indexedColumn.getTable();
-        let outerRelation = leftRelation;
-        let innerRelation = rightRelation;
-        if (leftRelation.getTables().includes(indexedTable.getEffectiveName())) {
-            outerRelation = rightRelation;
-            innerRelation = leftRelation;
-        }
-        const combinedEntries = [];
-        const innerRelationTables = innerRelation.getTables();
-        const outerRelationTables = outerRelation.getTables();
-        // Generates and pushes a new combined entry to the results.
-        // |row| is The row corresponding to the inner entry.
-        function pushCombinedEntry(outerEntry, row) {
-            const innerEntry = new RelationEntry$1(row, innerRelationTables.length > 1);
-            const combinedEntry = RelationEntry$1.combineEntries(outerEntry, outerRelationTables, innerEntry, innerRelationTables);
-            combinedEntries.push(combinedEntry);
-        }
-        outerRelation.entries.forEach((entry) => {
-            const keyOfIndex = this.keyOfIndexFn(entry.getField(indexJoinInfo.nonIndexedColumn));
-            const matchingRowIds = indexJoinInfo.index.get(keyOfIndex);
-            if (matchingRowIds.length === 0) {
-                return;
-            }
-            if (indexJoinInfo.index.isUniqueKey()) {
-                // Since the index has only unique keys, expecting only one rowId.
-                // Using Cache#get, instead of Cache#getMany, since it has better
-                // performance (no unnecessary array allocations).
-                pushCombinedEntry(entry, cache.get(matchingRowIds[0]));
-            }
-            else {
-                const rows = cache.getMany(matchingRowIds);
-                rows.forEach((r) => { pushCombinedEntry(entry, r); });
-            }
-        }, this);
-        const srcTables = outerRelation
-            .getTables()
-            .concat(innerRelation.getTables());
-        return new Relation$1(combinedEntries, srcTables);
-    }
-    setComplement(isComplement) {
-        throw new Exception$1(ErrorCode$1.ASSERTION, "Join predicate has no complement");
-    }
-    // Swaps left and right columns and changes operator (if necessary).
-    reverseSelf() {
-        const temp = this.leftColumn;
-        this.leftColumn = this.rightColumn;
-        this.rightColumn = temp;
-        let evaluatorType = this.evaluatorType;
-        switch (this.evaluatorType) {
-            case EvalType$1.GT:
-                evaluatorType = EvalType$1.LT;
-                break;
-            case EvalType$1.LT:
-                evaluatorType = EvalType$1.GT;
-                break;
-            case EvalType$1.GTE:
-                evaluatorType = EvalType$1.LTE;
-                break;
-            case EvalType$1.LTE:
-                evaluatorType = EvalType$1.GTE;
-                break;
-            default:
-                return;
-        }
-        this.evaluatorType = evaluatorType;
-        this.evaluatorFn = EvalRegistry$1.get().getEvaluator(this.leftColumn.getType(), this.evaluatorType);
-    }
-    // Returns whether the given relation can be used as the "left" parameter of
-    // this predicate.
-    appliesToLeft(relation) {
-        return (relation
-            .getTables()
-            .includes(this.leftColumn.getTable().getEffectiveName()));
-    }
-    // Returns whether the given relation can be used as the "right" parameter of
-    // this predicate.
-    appliesToRight(relation) {
-        return (relation
-            .getTables()
-            .includes(this.rightColumn.getTable().getEffectiveName()));
-    }
-    // Asserts that the given relations are applicable to this join predicate.
-    // Example of non-applicable relations:
-    //   - join predicate: photoTable.albumId == albumTable.id
-    //   leftRelation.getTables() does not include photoTable, or
-    //   rightRelation.getTables() does not include albumTable.
-    assertRelationsApply(left, right) {
-        assert$1(this.appliesToLeft(left), "Mismatch between join predicate left operand and right relation.");
-        assert$1(this.appliesToRight(right), "Mismatch between join predicate right operand and right relation.");
-    }
-    // Detects which input relation should be used as left/right. If predicate
-    // order does not match with the left and right relations, left and right are
-    // reversed. If the right table has larger size, then the left, right and
-    // evaluation type are reversed (This is done to make it more cache
-    // efficient).
-    // Returns an array holding the two input relations in the order of
-    // [left, right].
-    detectLeftRight(relation1, relation2) {
-        let left = null;
-        let right = null;
-        if (this.appliesToLeft(relation1)) {
-            this.assertRelationsApply(relation1, relation2);
-            left = relation1;
-            right = relation2;
-        }
-        else {
-            this.assertRelationsApply(relation2, relation1);
-            left = relation2;
-            right = relation1;
-        }
-        if (left.entries.length > right.entries.length) {
-            this.reverseSelf();
-            this.assertRelationsApply(right, left);
-            return [right, left];
-        }
-        return [left, right];
-    }
-    // Creates a row with null columns with column names obtained from the table.
-    createNullPayload(table) {
-        const payload = {};
-        table.getColumns().forEach((column) => payload[column.getName()] = null);
-        return payload;
-    }
-    // Creates a combined entry with an unmatched left entry from outer join
-    // algorithm and a null entry.
-    createCombinedEntryForUnmatched(entry, leftRelationTables) {
-        if (this.nullPayload === null) {
-            this.nullPayload = this.createNullPayload(this.rightColumn.getTable());
-        }
-        // The right relation is guaranteed to never be the result
-        // of a previous join.
-        const nullEntry = new RelationEntry$1(new Row$1(Row$1.DUMMY_ID, this.nullPayload), false);
-        const combinedEntry = RelationEntry$1.combineEntries(entry, leftRelationTables, nullEntry, [this.rightColumn.getTable().getEffectiveName()]);
-        return combinedEntry;
-    }
-}
-// Exponent of block size, so the block size is 2^(BLOCK_SIZE_EXPONENT).
-JoinPredicate$1.BLOCK_SIZE_EXPONENT = 8;
-// Internal representation of DELETE query.
-class DeleteContext$1 extends Context$1 {
-    constructor(dbSchema) {
-        super(dbSchema);
-    }
-    getScope() {
-        const scope = new Set();
-        scope.add(this.from);
-        this.expandTableScope(this.from.getName(), scope);
-        return scope;
-    }
-    clone() {
-        const context = new DeleteContext$1(this.schema);
-        context.cloneBase(this);
-        context.from = this.from;
-        return context;
-    }
-    bind(values) {
-        super.bind(values);
-        this.bindValuesInSearchCondition(values);
-        return this;
-    }
-    // Expands the scope of the given table recursively. It takes into account
-    // CASCADE foreign key constraints.
-    expandTableScope(tableName, scopeSoFar) {
-        const cascadeChildTables = Info$1.from(this.schema).getChildTables(tableName, ConstraintAction$1.CASCADE);
-        const childTables = Info$1.from(this.schema).getChildTables(tableName);
-        childTables.forEach(scopeSoFar.add.bind(scopeSoFar));
-        cascadeChildTables.forEach((childTable) => {
-            this.expandTableScope(childTable.getName(), scopeSoFar);
-        }, this);
-    }
-}
-// Internal representation of INSERT and INSERT_OR_REPLACE queries.
-class InsertContext$1 extends Context$1 {
-    constructor(dbSchema) {
-        super(dbSchema);
-    }
-    getScope() {
-        const scope = new Set();
-        scope.add(this.into);
-        const info = Info$1.from(this.schema);
-        info.getParentTables(this.into.getName()).forEach(scope.add.bind(scope));
-        if (this.allowReplace) {
-            info.getChildTables(this.into.getName()).forEach(scope.add.bind(scope));
-        }
-        return scope;
-    }
-    clone() {
-        const context = new InsertContext$1(this.schema);
-        context.cloneBase(this);
-        context.into = this.into;
-        if (this.values) {
-            context.values
-                = this.values instanceof Binder$1 ? this.values : this.values.slice();
-        }
-        context.allowReplace = this.allowReplace;
-        context.binder = this.binder;
-        return context;
-    }
-    bind(values) {
-        super.bind(values);
-        if (this.binder) {
-            if (this.binder instanceof Binder$1) {
-                this.values = values[this.binder.index];
-            }
-            else {
-                this.values = this.binder.map((val) => {
-                    return (val instanceof Binder$1 ? values[val.index] : val);
-                });
-            }
-        }
-        return this;
-    }
-}
-// Internal representation of UPDATE query.
-class UpdateContext$1 extends Context$1 {
-    constructor(dbSchema) {
-        super(dbSchema);
-    }
-    getScope() {
-        const scope = new Set();
-        scope.add(this.table);
-        const columns = this.set.map((col) => col.column.getNormalizedName());
-        const info = Info$1.from(this.schema);
-        info.getParentTablesByColumns(columns).forEach(scope.add.bind(scope));
-        info.getChildTablesByColumns(columns).forEach(scope.add.bind(scope));
-        return scope;
-    }
-    clone() {
-        const context = new UpdateContext$1(this.schema);
-        context.cloneBase(this);
-        context.table = this.table;
-        context.set = this.set ? this.cloneSet(this.set) : this.set;
-        return context;
-    }
-    bind(values) {
-        super.bind(values);
-        this.set.forEach((set) => {
-            if (set.binding !== undefined && set.binding !== -1) {
-                set.value = values[set.binding];
-            }
-        });
-        this.bindValuesInSearchCondition(values);
-        return this;
-    }
-    cloneSet(set) {
-        return set.map((src) => {
-            const clone = { ...src };
-            return clone;
-        });
-    }
-}
-class SqlHelper$1 {
-    static toSql(builder, stripValueInfo = false) {
-        const query = builder.getQuery();
-        if (query instanceof InsertContext$1) {
-            return SqlHelper$1.insertToSql(query, stripValueInfo);
-        }
-        if (query instanceof DeleteContext$1) {
-            return SqlHelper$1.deleteToSql(query, stripValueInfo);
-        }
-        if (query instanceof UpdateContext$1) {
-            return SqlHelper$1.updateToSql(query, stripValueInfo);
-        }
-        if (query instanceof SelectContext$1) {
-            return SqlHelper$1.selectToSql(query, stripValueInfo);
-        }
-        // 358: toSql() is not implemented for {0}.
-        throw new Exception$1(ErrorCode$1.NOT_IMPL_IN_TOSQL, typeof query);
-    }
-    static escapeSqlValue(type, val) {
-        const value = val;
-        if (value === undefined || value === null) {
-            return "NULL";
-        }
-        switch (type) {
-            case Type$1.BOOLEAN:
-                return value ? 1 : 0;
-            case Type$1.INTEGER:
-            case Type$1.NUMBER:
-                return value;
-            case Type$1.ARRAY_BUFFER:
-                // Note: Oracle format is used here.
-                return `'${Row$1.binToHex(value)}'`;
-            default:
-                // datetime, string
-                return `'${value.toString()}'`;
-        }
-    }
-    static insertToSql(query, stripValueInfo) {
-        let prefix = query.allowReplace ? "INSERT OR REPLACE" : "INSERT";
-        const columns = query.into.getColumns();
-        prefix += " INTO " + query.into.getName() + "(";
-        prefix += columns.map((col) => col.getName()).join(", ");
-        prefix += ") VALUES (";
-        const sqls = query.values.map((row) => {
-            const values = columns.map((col) => {
-                const rawVal = row.payload()[col.getName()];
-                return stripValueInfo ? rawVal !== undefined && rawVal !== null ? "#" : "NULL" : SqlHelper$1.escapeSqlValue(col.getType(), rawVal);
-            });
-            return prefix + values.join(", ") + ");";
-        });
-        return sqls.join("\n");
-    }
-    static evaluatorToSql(op) {
-        switch (op) {
-            case EvalType$1.BETWEEN:
-                return "BETWEEN";
-            case EvalType$1.EQ:
-                return "=";
-            case EvalType$1.GTE:
-                return ">=";
-            case EvalType$1.GT:
-                return ">";
-            case EvalType$1.IN:
-                return "IN";
-            case EvalType$1.LTE:
-                return "<=";
-            case EvalType$1.LT:
-                return "<";
-            case EvalType$1.MATCH:
-                return "LIKE";
-            case EvalType$1.NEQ:
-                return "<>";
-            default:
-                return "UNKNOWN";
-        }
-    }
-    static valueToSql(value, op, type, stripValueInfo) {
-        if (value instanceof Binder$1) {
-            return "?" + value.getIndex().toString();
-        }
-        if (stripValueInfo) {
-            return value !== undefined && value !== null ? "#" : "NULL";
-        }
-        else if (op === EvalType$1.MATCH) {
-            return `'${value.toString()}'`;
-        }
-        else if (op === EvalType$1.IN) {
-            const array = value;
-            const vals = array.map((e) => SqlHelper$1.escapeSqlValue(type, e));
-            return `(${vals.join(", ")})`;
-        }
-        else if (op === EvalType$1.BETWEEN) {
-            return (SqlHelper$1.escapeSqlValue(type, value[0])
-                + " AND "
-                + SqlHelper$1.escapeSqlValue(type, value[1]));
-        }
-        return SqlHelper$1.escapeSqlValue(type, value).toString();
-    }
-    static valuePredicateToSql(pred, stripValueInfo) {
-        const column = pred.column.getNormalizedName();
-        const op = SqlHelper$1.evaluatorToSql(pred.evaluatorType);
-        const value = SqlHelper$1.valueToSql(pred.peek(), pred.evaluatorType, pred.column.getType(), stripValueInfo);
-        if (op === "=" && value === "NULL") {
-            return [column, "IS NULL"].join(" ");
-        }
-        else if (op === "<>" && value === "NULL") {
-            return [column, "IS NOT NULL"].join(" ");
-        }
-        else {
-            return [column, op, value].join(" ");
-        }
-    }
-    static combinedPredicateToSql(pred, stripValueInfo) {
-        const children = pred.getChildren().map((childNode) => {
-            return ("("
-                + SqlHelper$1.parseSearchCondition(childNode, stripValueInfo)
-                + ")");
-        });
-        const joinToken = pred.operator === Operator$1.AND ? " AND " : " OR ";
-        return children.join(joinToken);
-    }
-    static joinPredicateToSql(pred) {
-        return [
-            pred.leftColumn.getNormalizedName(),
-            SqlHelper$1.evaluatorToSql(pred.evaluatorType),
-            pred.rightColumn.getNormalizedName()
-        ].join(" ");
-    }
-    static parseSearchCondition(pred, stripValueInfo) {
-        if (pred instanceof ValuePredicate$1) {
-            return SqlHelper$1.valuePredicateToSql(pred, stripValueInfo);
-        }
-        else if (pred instanceof CombinedPredicate$1) {
-            return SqlHelper$1.combinedPredicateToSql(pred, stripValueInfo);
-        }
-        else if (pred instanceof JoinPredicate$1) {
-            return SqlHelper$1.joinPredicateToSql(pred);
-        }
-        // 357: toSql() does not support predicate type: {0}.
-        throw new Exception$1(357, typeof pred);
-    }
-    static predicateToSql(pred, stripValueInfo) {
-        const whereClause = SqlHelper$1.parseSearchCondition(pred, stripValueInfo);
-        if (whereClause) {
-            return " WHERE " + whereClause;
-        }
-        return "";
-    }
-    static deleteToSql(query, stripValueInfo) {
-        let sql = "DELETE FROM " + query.from.getName();
-        if (query.where) {
-            sql += SqlHelper$1.predicateToSql(query.where, stripValueInfo);
-        }
-        sql += ";";
-        return sql;
-    }
-    static updateToSql(query, stripValueInfo) {
-        let sql = "UPDATE " + query.table.getName() + " SET ";
-        sql += query.set
-            .map((set) => {
-                const c = set.column;
-                const setter = c.getNormalizedName() + " = ";
-                if (set.binding !== -1) {
-                    return setter + "?" + set.binding.toString();
-                }
-                return (setter + SqlHelper$1.escapeSqlValue(c.getType(), set.value).toString());
-            })
-            .join(", ");
-        if (query.where) {
-            sql += SqlHelper$1.predicateToSql(query.where, stripValueInfo);
-        }
-        sql += ";";
-        return sql;
-    }
-    static selectToSql(query, stripValueInfo) {
-        let colList = "*";
-        if (query.columns.length) {
-            colList = query.columns
-                .map((c) => {
-                    const col = c;
-                    if (col.getAlias()) {
-                        return col.getNormalizedName() + " AS " + col.getAlias();
-                    }
-                    else {
-                        return col.getNormalizedName();
-                    }
-                })
-                .join(", ");
-        }
-        let sql = "SELECT " + colList + " FROM ";
-        if (query.outerJoinPredicates && query.outerJoinPredicates.size !== 0) {
-            sql += SqlHelper$1.getFromListForOuterJoin(query, stripValueInfo);
-        }
-        else {
-            sql += SqlHelper$1.getFromListForInnerJoin(query, stripValueInfo);
-            if (query.where) {
-                sql += SqlHelper$1.predicateToSql(query.where, stripValueInfo);
-            }
-        }
-        if (query.orderBy) {
-            const orderBy = query.orderBy
-                .map((order) => {
-                    return (order.column.getNormalizedName()
-                        + (order.order === Order$1.DESC ? " DESC" : " ASC"));
-                })
-                .join(", ");
-            sql += " ORDER BY " + orderBy;
-        }
-        if (query.groupBy) {
-            const groupBy = query.groupBy
-                .map((col) => col.getNormalizedName())
-                .join(", ");
-            sql += " GROUP BY " + groupBy;
-        }
-        if (query.limit) {
-            sql += " LIMIT " + query.limit.toString();
-        }
-        if (query.skip) {
-            sql += " SKIP " + query.skip.toString();
-        }
-        sql += ";";
-        return sql;
-    }
-    static getTableNameToSql(t) {
-        const table = t;
-        return table.getEffectiveName() !== table.getName() ? table.getName() + " AS " + table.getEffectiveName() : table.getName();
-    }
-    // Handles Sql queries that have left outer join.
-    static getFromListForOuterJoin(query, stripValueInfo) {
-        // Retrieves all JoinPredicates.
-        const retrievedNodes = TreeHelper$1.find(query.where, (n) => n instanceof JoinPredicate$1);
-        const predicateString = retrievedNodes.map((n) => SqlHelper$1.joinPredicateToSql(n));
-        let fromList = SqlHelper$1.getTableNameToSql(query.from[0]);
-        for (let i = 1; i < query.from.length; i++) {
-            const fromName = SqlHelper$1.getTableNameToSql(query.from[i]);
-            if (query.outerJoinPredicates.has(retrievedNodes[predicateString.length - i].getId())) {
-                fromList += " LEFT OUTER JOIN " + fromName;
-            }
-            else {
-                fromList += " INNER JOIN " + fromName;
-            }
-            fromList += " ON (" + predicateString[predicateString.length - i] + ")";
-        }
-        const node = query.where;
-        const leftChild = node.getChildCount() > 0 ? node.getChildAt(0) : node;
-        // The following condition checks that where has been called in the query.
-        if (!(leftChild instanceof JoinPredicate$1)) {
-            fromList
-                += " WHERE "
-                + SqlHelper$1.parseSearchCondition(leftChild, stripValueInfo);
-        }
-        return fromList;
-    }
-    static getFromListForInnerJoin(query, stripValueInfo) {
-        return query.from.map(SqlHelper$1.getTableNameToSql).join(", ");
-    }
-}
-class BaseBuilder$1 {
-    constructor(global, context) {
-        this.global = global;
-        this.queryEngine = global.getService(Service$1.QUERY_ENGINE);
-        this.runner = global.getService(Service$1.RUNNER);
-        this.query = context;
-    }
-    exec() {
-        try {
-            this.assertExecPreconditions();
-        }
-        catch (e) {
-            return Promise.reject(e);
-        }
-        return new Promise((resolve, reject) => {
-            const queryTask = new UserQueryTask$1(this.global, [this.getTaskItem()]);
-            this.runner
-                .scheduleTask(queryTask)
-                .then((results) => { resolve(results[0].getPayloads()); }, reject);
-        });
-    }
-    explain() {
-        const stringFn = (node) => `${node.toContextString(this.query)}\n`;
-        return TreeHelper$1.toString(this.getPlan().getRoot(), stringFn);
-    }
-    bind(values) {
-        this.query.bind(values);
-        return this;
-    }
-    toSql(stripValueInfo = false) {
-        return SqlHelper$1.toSql(this, stripValueInfo);
-    }
-    // Asserts whether the preconditions for executing this query are met. Should
-    // be overridden by subclasses.
-    assertExecPreconditions() {
-        // No-op default implementation.
-    }
-    getQuery() {
-        return this.query.clone();
-    }
-    getObservableQuery() {
-        return this.query;
-    }
-    getTaskItem() {
-        return {
-            "context": this.getQuery(),
-            "plan": this.getPlan()
-        };
-    }
-    getObservableTaskItem() {
-        return {
-            "context": this.getObservableQuery(),
-            "plan": this.getPlan()
-        };
-    }
-    getPlan() {
-        if (this.plan === undefined || this.plan === null) {
-            this.plan = this.queryEngine.getPlan(this.query);
-        }
-        return this.plan;
-    }
-}
-class DeleteBuilder$1 extends BaseBuilder$1 {
-    constructor(global) {
-        super(global, new DeleteContext$1(global.getService(Service$1.SCHEMA)));
-    }
-    from(table) {
-        this.assertFromPreconditions();
-        this.query.from = table;
-        return this;
-    }
-    where(predicate) {
-        this.assertWherePreconditions();
-        this.query.where = predicate;
-        return this;
-    }
-    assertExecPreconditions() {
-        super.assertExecPreconditions();
-        if (this.query.from === undefined || this.query.from === null) {
-            // 517: Invalid usage of delete().
-            throw new Exception$1(ErrorCode$1.INVALID_DELETE);
-        }
-    }
-    assertFromPreconditions() {
-        if (this.query.from) {
-            // 515: from() has already been called.
-            throw new Exception$1(ErrorCode$1.DUPLICATE_FROM);
-        }
-    }
-    assertWherePreconditions() {
-        if (this.query.from === undefined || this.query.from === null) {
-            // 548: from() has to be called before where().
-            throw new Exception$1(ErrorCode$1.FROM_AFTER_WHERE);
-        }
-        if (this.query.where) {
-            // 516: where() has already been called.
-            throw new Exception$1(ErrorCode$1.DUPLICATE_WHERE);
-        }
-    }
-}
-class InsertBuilder$1 extends BaseBuilder$1 {
-    constructor(global, allowReplace = false) {
-        super(global, new InsertContext$1(global.getService(Service$1.SCHEMA)));
-        this.query.allowReplace = allowReplace;
-    }
-    assertExecPreconditions() {
-        super.assertExecPreconditions();
-        const context = this.query;
-        if (context.into === undefined
-            || context.into === null
-            || context.values === undefined
-            || context.values === null) {
-            // 518: Invalid usage of insert().
-            throw new Exception$1(ErrorCode$1.INVALID_INSERT);
-        }
-        // "Insert or replace" makes no sense for tables that do not have a primary
-        // key.
-        if (context.allowReplace
-            && context.into.getConstraint().getPrimaryKey() === null) {
-            // 519: Attempted to insert or replace in a table with no primary key.
-            throw new Exception$1(ErrorCode$1.INVALID_INSERT_OR_REPLACE);
-        }
-    }
-    into(table) {
-        this.assertIntoPreconditions();
-        this.query.into = table;
-        return this;
-    }
-    values(rows) {
-        this.assertValuesPreconditions();
-        if (rows instanceof Binder$1
-            || rows.some((r) => r instanceof Binder$1)) {
-            this.query.binder = rows;
-        }
-        else {
-            this.query.values = rows;
-        }
-        return this;
-    }
-    // Asserts whether the preconditions for calling the into() method are met.
-    assertIntoPreconditions() {
-        if (this.query.into !== undefined && this.query.into !== null) {
-            // 520: into() has already been called.
-            throw new Exception$1(ErrorCode$1.DUPLICATE_INTO);
-        }
-    }
-    // Asserts whether the preconditions for calling the values() method are met.
-    assertValuesPreconditions() {
-        if (this.query.values !== undefined && this.query.values !== null) {
-            // 521: values() has already been called.
-            throw new Exception$1(ErrorCode$1.DUPLICATE_VALUES);
-        }
-    }
-}
-// Base class for AggregateColumn and StarColumn which does not support
-// PredicateProvider interface.
-class NonPredicateProvider$1 {
-    eq(operand) {
-        throw new Exception$1(ErrorCode$1.SYNTAX_ERROR);
-    }
-    neq(operand) {
-        throw new Exception$1(ErrorCode$1.SYNTAX_ERROR);
-    }
-    lt(operand) {
-        throw new Exception$1(ErrorCode$1.SYNTAX_ERROR);
-    }
-    lte(operand) {
-        throw new Exception$1(ErrorCode$1.SYNTAX_ERROR);
-    }
-    gt(operand) {
-        throw new Exception$1(ErrorCode$1.SYNTAX_ERROR);
-    }
-    gte(operand) {
-        throw new Exception$1(ErrorCode$1.SYNTAX_ERROR);
-    }
-    match(operand) {
-        throw new Exception$1(ErrorCode$1.SYNTAX_ERROR);
-    }
-    between(from, to) {
-        throw new Exception$1(ErrorCode$1.SYNTAX_ERROR);
-    }
-    in(values) {
-        throw new Exception$1(ErrorCode$1.SYNTAX_ERROR);
-    }
-    isNull() {
-        throw new Exception$1(ErrorCode$1.SYNTAX_ERROR);
-    }
-    isNotNull() {
-        throw new Exception$1(ErrorCode$1.SYNTAX_ERROR);
-    }
-}
-class AggregatedColumn$1 extends NonPredicateProvider$1 {
-    constructor(child, aggregatorType) {
-        super();
-        this.child = child;
-        this.aggregatorType = aggregatorType;
-        this.alias = null;
-    }
-    getName() {
-        return `${this.aggregatorType}(${this.child.getName()})`;
-    }
-    getNormalizedName() {
-        return `${this.aggregatorType}(${this.child.getNormalizedName()})`;
-    }
-    getTable() {
-        return this.child.getTable();
-    }
-    toString() {
-        return this.getNormalizedName();
-    }
-    getType() {
-        return this.child.getType();
-    }
-    getAlias() {
-        return this.alias;
-    }
-    getIndices() {
-        return [];
-    }
-    getIndex() {
-        return null;
-    }
-    isNullable() {
-        return false;
-    }
-    isUnique() {
-        return false;
-    }
-    as(name) {
-        this.alias = name;
-        return this;
-    }
-    // Returns The chain of columns that starts from this column. All columns
-    // are of type AggregatedColumn except for the last column.
-    getColumnChain() {
-        const columnChain = [this];
-        let currentColumn = this;
-        while (currentColumn instanceof AggregatedColumn$1) {
-            columnChain.push(currentColumn.child);
-            currentColumn = currentColumn.child;
-        }
-        return columnChain;
-    }
-}
-// Keep lower case class name for compatibility with Lovefield API.
-// TODO(arthurhsu): FIXME: use public interface.
-class op$1 {
-    static and(...predicates) {
-        return op$1.createPredicate(Operator$1.AND, predicates);
-    }
-    static or(...predicates) {
-        return op$1.createPredicate(Operator$1.OR, predicates);
-    }
-    static not(operand) {
-        operand.setComplement(true);
-        return operand;
-    }
-    static createPredicate(operator, predicates) {
-        const condition = new CombinedPredicate$1(operator);
-        predicates.forEach((predicate) => { condition.addChild(predicate); });
-        return condition;
-    }
-}
-class SelectBuilder$1 extends BaseBuilder$1 {
-    constructor(global, columns) {
-        super(global, new SelectContext$1(global.getService(Service$1.SCHEMA)));
-        this.fromAlreadyCalled = false;
-        this.whereAlreadyCalled = false;
-        this.query.columns = columns;
-        this.checkDistinctColumn();
-        this.checkAggregations();
-    }
-    assertExecPreconditions() {
-        super.assertExecPreconditions();
-        const context = this.query;
-        if (context.from === undefined || context.from === null) {
-            // 522: Invalid usage of select().
-            throw new Exception$1(ErrorCode$1.INVALID_SELECT);
-        }
-        if (context.limitBinder && context.limit === undefined
-            || context.skipBinder && context.skip === undefined) {
-            // 523: Binding parameters of limit/skip without providing values.
-            throw new Exception$1(ErrorCode$1.UNBOUND_LIMIT_SKIP);
-        }
-        this.checkProjectionList();
-    }
-    from(...tables) {
-        if (this.fromAlreadyCalled) {
-            // 515: from() has already been called.
-            throw new Exception$1(ErrorCode$1.DUPLICATE_FROM);
-        }
-        this.fromAlreadyCalled = true;
-        if (this.query.from === undefined || this.query.from === null) {
-            this.query.from = [];
-        }
-        this.query.from.push(...tables);
-        return this;
-    }
-    where(predicate) {
-        // 548: from() has to be called before where().
-        this.checkFrom(ErrorCode$1.FROM_AFTER_WHERE);
-        if (this.whereAlreadyCalled) {
-            // 516: where() has already been called.
-            throw new Exception$1(ErrorCode$1.DUPLICATE_WHERE);
-        }
-        this.whereAlreadyCalled = true;
-        this.augmentWhereClause(predicate);
-        return this;
-    }
-    innerJoin(table, predicate) {
-        // 542: from() has to be called before innerJoin() or leftOuterJoin().
-        this.checkFrom(ErrorCode$1.MISSING_FROM_BEFORE_JOIN);
-        if (this.whereAlreadyCalled) {
-            // 547: where() cannot be called before innerJoin() or leftOuterJoin().
-            throw new Exception$1(ErrorCode$1.INVALID_WHERE);
-        }
-        this.query.from.push(table);
-        this.augmentWhereClause(predicate);
-        return this;
-    }
-    leftOuterJoin(table, predicate) {
-        // 542: from() has to be called before innerJoin() or leftOuterJoin().
-        this.checkFrom(ErrorCode$1.MISSING_FROM_BEFORE_JOIN);
-        if (!(predicate instanceof JoinPredicate$1)) {
-            // 541: Outer join accepts only join predicate.
-            throw new Exception$1(ErrorCode$1.INVALID_OUTER_JOIN);
-        }
-        if (this.whereAlreadyCalled) {
-            // 547: where() cannot be called before innerJoin() or leftOuterJoin().
-            throw new Exception$1(ErrorCode$1.INVALID_WHERE);
-        }
-        this.query.from.push(table);
-        if (this.query.outerJoinPredicates === null
-            || this.query.outerJoinPredicates === undefined) {
-            this.query.outerJoinPredicates = new Set();
-        }
-        let normalizedPredicate = predicate;
-        if (table.getEffectiveName()
-            !== predicate.rightColumn.getTable().getEffectiveName()) {
-            normalizedPredicate = predicate.reverse();
-        }
-        this.query.outerJoinPredicates.add(normalizedPredicate.getId());
-        this.augmentWhereClause(normalizedPredicate);
-        return this;
-    }
-    limit(numberOfRows) {
-        if (this.query.limit !== undefined || this.query.limitBinder) {
-            // 528: limit() has already been called.
-            throw new Exception$1(ErrorCode$1.DUPLICATE_LIMIT);
-        }
-        if (numberOfRows instanceof Binder$1) {
-            this.query.limitBinder = numberOfRows;
-        }
-        else {
-            if (numberOfRows < 0) {
-                // 531: Number of rows must not be negative for limit/skip.
-                throw new Exception$1(ErrorCode$1.NEGATIVE_LIMIT_SKIP);
-            }
-            this.query.limit = numberOfRows;
-        }
-        return this;
-    }
-    skip(numberOfRows) {
-        if (this.query.skip !== undefined || this.query.skipBinder) {
-            // 529: skip() has already been called.
-            throw new Exception$1(ErrorCode$1.DUPLICATE_SKIP);
-        }
-        if (numberOfRows instanceof Binder$1) {
-            this.query.skipBinder = numberOfRows;
-        }
-        else {
-            if (numberOfRows < 0) {
-                // 531: Number of rows must not be negative for limit/skip.
-                throw new Exception$1(ErrorCode$1.NEGATIVE_LIMIT_SKIP);
-            }
-            this.query.skip = numberOfRows;
-        }
-        return this;
-    }
-    orderBy(column, order) {
-        // 549: from() has to be called before orderBy() or groupBy().
-        this.checkFrom(ErrorCode$1.FROM_AFTER_ORDER_GROUPBY);
-        if (this.query.orderBy === undefined) {
-            this.query.orderBy = [];
-        }
-        this.query.orderBy.push({
-            "column": column,
-            "order": order !== undefined && order !== null ? order : Order$1.ASC
-        });
-        return this;
-    }
-    groupBy(...columns) {
-        // 549: from() has to be called before orderBy() or groupBy().
-        this.checkFrom(ErrorCode$1.FROM_AFTER_ORDER_GROUPBY);
-        if (this.query.groupBy) {
-            // 530: groupBy() has already been called.
-            throw new Exception$1(ErrorCode$1.DUPLICATE_GROUPBY);
-        }
-        if (this.query.groupBy === undefined) {
-            this.query.groupBy = [];
-        }
-        this.query.groupBy.push(...columns);
-        return this;
-    }
-    // Provides a clone of this select builder. This is useful when the user needs
-    // to observe the same query with different parameter bindings.
-    clone() {
-        const builder = new SelectBuilder$1(this.global, this.query.columns);
-        builder.query = this.query.clone();
-        builder.query.clonedFrom = null; // The two builders are not related.
-        return builder;
-    }
-    // Checks that usage of lf.fn.distinct() is correct. Specifically if an
-    // lf.fn.distinct() column is requested, then it can't be combined with any
-    // other column.
-    checkDistinctColumn() {
-        const distinctColumns = this.query.columns.filter((column) => column instanceof AggregatedColumn$1
-            && column.aggregatorType === FnType$1.DISTINCT);
-        const isValidCombination = distinctColumns.length === 0
-            || distinctColumns.length === 1 && this.query.columns.length === 1;
-        if (!isValidCombination) {
-            // 524: Invalid usage of lf.fn.distinct().
-            throw new Exception$1(ErrorCode$1.INVALID_DISTINCT);
-        }
-    }
-    // Checks that the combination of projection list is valid.
-    // Specifically:
-    // 1) If GROUP_BY is specified: grouped columns must be indexable.
-    // 2) If GROUP_BY is not specified: Aggregate and non-aggregated columns can't
-    //    be mixed (result does not make sense).
-    checkProjectionList() {
-        this.query.groupBy ? this.checkGroupByColumns() : this.checkProjectionListNotMixed();
-    }
-    // Checks that grouped columns are indexable.
-    checkGroupByColumns() {
-        const isInvalid = this.query.groupBy.some((column) => {
-            const type = column.getType();
-            return type === Type$1.OBJECT || type === Type$1.ARRAY_BUFFER;
-        });
-        if (isInvalid) {
-            // 525: Invalid projection list or groupBy columns.
-            throw new Exception$1(ErrorCode$1.INVALID_GROUPBY);
-        }
-    }
-    // Checks that the projection list contains either only non-aggregated
-    // columns, or only aggregated columns. See checkProjectionList_ for details.
-    checkProjectionListNotMixed() {
-        const aggregatedColumnsExist = this.query.columns.some((column) => column instanceof AggregatedColumn$1);
-        const nonAggregatedColumnsExist = this.query.columns.some((column) => !(column instanceof AggregatedColumn$1)) || this.query.columns.length === 0;
-        if (aggregatedColumnsExist && nonAggregatedColumnsExist) {
-            // 526: Invalid projection list: mixing aggregated with non-aggregated
-            throw new Exception$1(ErrorCode$1.INVALID_PROJECTION);
-        }
-    }
-    // Checks that the specified aggregations are valid, in terms of aggregation
-    // type and column type.
-    checkAggregations() {
-        this.query.columns.forEach((column) => {
-            const isValidAggregation = !(column instanceof AggregatedColumn$1)
-                || this.isAggregationValid(column.aggregatorType, column.getType());
-            if (!isValidAggregation) {
-                // 527: Invalid aggregation detected: {0}.
-                throw new Exception$1(ErrorCode$1.INVALID_AGGREGATION, column.getNormalizedName());
-            }
-        }, this);
-    }
-    // Checks if from() has already called.
-    checkFrom(code) {
-        if (this.query.from === undefined || this.query.from === null) {
-            throw new Exception$1(code);
-        }
-    }
-    // Augments the where clause by AND with the given predicate.
-    augmentWhereClause(predicate) {
-        if (this.query.where) {
-            const newPredicate = op$1.and(predicate, this.query.where);
-            this.query.where = newPredicate;
-        }
-        else {
-            this.query.where = predicate;
-        }
-    }
-    // Checks whether the user specified aggregations are valid.
-    isAggregationValid(aggregatorType, columnType) {
-        switch (aggregatorType) {
-            case FnType$1.COUNT:
-            case FnType$1.DISTINCT:
-                return true;
-            case FnType$1.AVG:
-            case FnType$1.GEOMEAN:
-            case FnType$1.STDDEV:
-            case FnType$1.SUM:
-                return columnType === Type$1.NUMBER || columnType === Type$1.INTEGER;
-            case FnType$1.MAX:
-            case FnType$1.MIN:
-                return (columnType === Type$1.NUMBER
-                    || columnType === Type$1.INTEGER
-                    || columnType === Type$1.STRING
-                    || columnType === Type$1.DATE_TIME);
-            // NOT REACHED
-        }
-        return false;
-    }
-}
-class UpdateBuilder$1 extends BaseBuilder$1 {
-    constructor(global, table) {
-        super(global, new UpdateContext$1(global.getService(Service$1.SCHEMA)));
-        this.query.table = table;
-    }
-    set(column, value) {
-        const set = {
-            "binding": value instanceof Binder$1 ? value.index : -1,
-            "column": column,
-            "value": value
-        };
-        if (this.query.set) {
-            this.query.set.push(set);
-        }
-        else {
-            this.query.set = [set];
-        }
-        return this;
-    }
-    where(predicate) {
-        this.assertWherePreconditions();
-        this.query.where = predicate;
-        return this;
-    }
-    assertExecPreconditions() {
-        super.assertExecPreconditions();
-        if (this.query.set === undefined || this.query.set === null) {
-            // 532: Invalid usage of update().
-            throw new Exception$1(ErrorCode$1.INVALID_UPDATE);
-        }
-        const notBound = this.query.set.some((set) => set.value instanceof Binder$1);
-        if (notBound) {
-            // 501: Value is not bounded.
-            throw new Exception$1(ErrorCode$1.UNBOUND_VALUE);
-        }
-    }
-    assertWherePreconditions() {
-        if (this.query.where) {
-            // 516: where() has already been called.
-            throw new Exception$1(ErrorCode$1.DUPLICATE_WHERE);
-        }
-    }
-}
-class RewritePass$1 {
-}
-class LogicalQueryPlanNode$1 extends TreeNode$1 {
-    constructor() {
-        super();
-    }
-}
-class SelectNode$1 extends LogicalQueryPlanNode$1 {
-    constructor(predicate) {
-        super();
-        this.predicate = predicate;
-    }
-    toString() {
-        return `select(${this.predicate.toString()})`;
-    }
-}
-class AndPredicatePass$1 extends RewritePass$1 {
-    constructor() {
-        super();
-    }
-    rewrite(rootNode, context) {
-        this.rootNode = rootNode;
-        this.traverse(this.rootNode);
-        return this.rootNode;
-    }
-    // Traverses the subtree that starts at the given node and rewrites it such
-    // that all AND predicates are broken down to separate SelectNode instances.
-    traverse(rootNode) {
-        if (rootNode instanceof SelectNode$1) {
-            assert$1(rootNode.getChildCount() === 1, "SelectNode must have exactly one child.");
-            const predicates = this.breakAndPredicate(rootNode.predicate);
-            const newNodes = this.createSelectNodeChain(predicates);
-            TreeHelper$1.replaceNodeWithChain(rootNode, newNodes[0], newNodes[1]);
-            if (rootNode === this.rootNode) {
-                this.rootNode = newNodes[0];
-            }
-            rootNode = newNodes[0];
-        }
-        rootNode.getChildren().forEach((child) => { this.traverse(child); });
-    }
-    // Recursively breaks down an AND predicate to its components.
-    // OR predicates are unaffected, as well as other types of predicates
-    // (value/join).
-    // Example: (a0 AND (a1 AND a2)) AND (b OR c) becomes
-    //           a0 AND a1 AND a2 AND (b OR c) -> [a0, a1, a2, (b OR c)]
-    breakAndPredicate(predicate) {
-        if (predicate.getChildCount() === 0) {
-            return [predicate];
-        }
-        const combinedPredicate = predicate;
-        if (combinedPredicate.operator !== Operator$1.AND) {
-            return [predicate];
-        }
-        const predicates = combinedPredicate
-            .getChildren()
-            .slice()
-            .map((childPredicate) => {
-                combinedPredicate.removeChild(childPredicate);
-                return this.breakAndPredicate(childPredicate);
-            });
-        return ArrayHelper$1.flatten(predicates);
-    }
-    createSelectNodeChain(predicates) {
-        let parentNode = null;
-        let lastNode = null;
-        predicates.map((predicate, index) => {
-            const node = new SelectNode$1(predicate);
-            if (index === 0) {
-                parentNode = node;
-            }
-            else {
-                lastNode.addChild(node);
-            }
-            lastNode = node;
-        }, this);
-        return [
-            parentNode,
-            lastNode
-        ];
-    }
-}
-class CrossProductNode$1 extends LogicalQueryPlanNode$1 {
-    constructor() {
-        super();
-    }
-    toString() {
-        return "cross_product";
-    }
-}
-class CrossProductPass$1 extends RewritePass$1 {
-    constructor() {
-        super();
-    }
-    rewrite(rootNode, queryContext) {
-        if (queryContext.from.length < 3) {
-            return rootNode;
-        }
-        this.rootNode = rootNode;
-        this.traverse(this.rootNode);
-        return this.rootNode;
-    }
-    traverse(rootNode) {
-        // If rootNode is a CrossProduct and has more than 2 children, break it down.
-        // TODO(dpapad): This needs optimization, since the order chosen here
-        // affects whether subsequent steps will be able to convert the
-        // cross-product to a join.
-        if (rootNode instanceof CrossProductNode$1) {
-            while (rootNode.getChildCount() > 2) {
-                const crossProduct = new CrossProductNode$1();
-                for (let i = 0; i < 2; i++) {
-                    const child = rootNode.removeChildAt(0);
-                    crossProduct.addChild(child);
-                }
-                rootNode.addChildAt(crossProduct, 0);
-            }
-        }
-        rootNode.getChildren().forEach((child) => { this.traverse(child); });
-    }
-}
-// TODO(arthurhsu): this abstract base class is not necessary. Refactor to
-// remove and simplify code structure.
-class BaseLogicalPlanGenerator$1 {
-    constructor(query) {
-        this.query = query;
-        this.rootNode = null;
-    }
-    generate() {
-        if (this.rootNode === null) {
-            this.rootNode = this.generateInternal();
-        }
-        return this.rootNode;
-    }
-}
-class DeleteNode$1 extends LogicalQueryPlanNode$1 {
-    constructor(table) {
-        super();
-        this.table = table;
-    }
-    toString() {
-        return `delete(${this.table.getName()})`;
-    }
-}
-// Rewrites the logical query plan such that the resulting logical query plan is
-// faster to execute than the original "naive" plan.
-class LogicalPlanRewriter$1 {
-    constructor(rootNode, queryContext, rewritePasses) {
-        this.rootNode = rootNode;
-        this.queryContext = queryContext;
-        this.rewritePasses = rewritePasses;
-    }
-    generate() {
-        this.rewritePasses.forEach((rewritePass) => {
-            this.rootNode = rewritePass.rewrite(this.rootNode, this.queryContext);
-        }, this);
-        return this.rootNode;
-    }
-}
-class TableAccessNode$1 extends LogicalQueryPlanNode$1 {
-    constructor(table) {
-        super();
-        this.table = table;
-    }
-    toString() {
-        const table = this.table;
-        const postfix = table.getAlias() ? ` as ${table.getAlias()}` : "";
-        return `table_access(${this.table.getName()}${postfix})`;
-    }
-}
-class DeleteLogicalPlanGenerator$1 extends BaseLogicalPlanGenerator$1 {
-    constructor(query, rewritePasses) {
-        super(query);
-        this.rewritePasses = rewritePasses;
-    }
-    generateInternal() {
-        const deleteNode = new DeleteNode$1(this.query.from);
-        const selectNode = this.query.where ? new SelectNode$1(this.query.where.copy()) : null;
-        const tableAccessNode = new TableAccessNode$1(this.query.from);
-        if (selectNode === null) {
-            deleteNode.addChild(tableAccessNode);
-        }
-        else {
-            selectNode.addChild(tableAccessNode);
-            deleteNode.addChild(selectNode);
-        }
-        // Optimizing the "naive" logical plan.
-        const planRewriter = new LogicalPlanRewriter$1(deleteNode, this.query, this.rewritePasses);
-        return planRewriter.generate();
-    }
-}
-class JoinNode$1 extends LogicalQueryPlanNode$1 {
-    constructor(predicate, isOuterJoin) {
-        super();
-        this.predicate = predicate;
-        this.isOuterJoin = isOuterJoin;
-    }
-    toString() {
-        return (`join(type: ${this.isOuterJoin ? "outer" : "inner"}, `
-            + `${this.predicate.toString()})`);
-    }
-}
-class ImplicitJoinsPass$1 extends RewritePass$1 {
-    constructor() {
-        super();
-    }
-    rewrite(rootNode, context) {
-        const queryContext = context;
-        if (queryContext.from.length < 2) {
-            return rootNode;
-        }
-        this.rootNode = rootNode;
-        this.traverse(this.rootNode, queryContext);
-        return this.rootNode;
-    }
-    traverse(rootNode, queryContext) {
-        if (rootNode instanceof SelectNode$1
-            && rootNode.predicate instanceof JoinPredicate$1) {
-            assert$1(rootNode.getChildCount() === 1, "SelectNode must have exactly one child.");
-            const predicateId = rootNode.predicate.getId();
-            const child = rootNode.getChildAt(0);
-            if (child instanceof CrossProductNode$1) {
-                const isOuterJoin = queryContext.outerJoinPredicates
-                    && queryContext.outerJoinPredicates.has(predicateId);
-                const joinNode = new JoinNode$1(rootNode.predicate, isOuterJoin);
-                TreeHelper$1.replaceChainWithNode(rootNode, child, joinNode);
-                if (rootNode === this.rootNode) {
-                    this.rootNode = joinNode;
-                }
-                rootNode = joinNode;
-            }
-        }
-        rootNode.getChildren().forEach((child) => { this.traverse(child, queryContext); });
-    }
-}
-class InsertNode$1 extends LogicalQueryPlanNode$1 {
-    constructor(table, values) {
-        super();
-        this.table = table;
-        this.values = values;
-    }
-    toString() {
-        return `insert(${this.table.getName()}, R${this.values.length})`;
-    }
-}
-class InsertOrReplaceNode$1 extends LogicalQueryPlanNode$1 {
-    constructor(table, values) {
-        super();
-        this.table = table;
-        this.values = values;
-    }
-    toString() {
-        return `insertOrReplace(${this.table.getName()}, R${this.values.length})`;
-    }
-}
-class InsertLogicalPlanGenerator$1 extends BaseLogicalPlanGenerator$1 {
-    constructor(query) {
-        super(query);
-    }
-    generateInternal() {
-        return this.query.allowReplace ? new InsertOrReplaceNode$1(this.query.into, this.query.values) : new InsertNode$1(this.query.into, this.query.values);
-    }
-}
-class LogicalQueryPlan$1 {
-    constructor(rootNode, scope) {
-        this.rootNode = rootNode;
-        this.scope = scope;
-    }
-    getRoot() {
-        return this.rootNode;
-    }
-    getScope() {
-        return this.scope;
-    }
-}
-class PushDownSelectionsPass$1 extends RewritePass$1 {
-    constructor() {
-        super();
-        this.alreadyPushedDown = new Set();
-    }
-    rewrite(rootNode, context) {
-        const queryContext = context;
-        if (queryContext.where === undefined || queryContext.where === null) {
-            // No predicates exist.
-            return rootNode;
-        }
-        this.clear();
-        this.rootNode = rootNode;
-        this.traverse(this.rootNode, queryContext);
-        this.clear();
-        return this.rootNode;
-    }
-    // Clears any state in this rewrite pass, such that it can be re-used for
-    // rewriting multiple trees.
-    clear() {
-        this.alreadyPushedDown.clear();
-    }
-    traverse(rootNode, queryContext) {
-        const processChildren = (node) => {
-            node.getChildren().forEach(processNodeRec);
-        };
-        const processNodeRec = (node) => {
-            if (this.alreadyPushedDown.has(node)) {
-                return;
-            }
-            if (!this.isCandidateNode(node)) {
-                processChildren(node);
-                return;
-            }
-            const selectNode = node;
-            const selectNodeTables = selectNode.predicate.getTables();
-            const shouldPushDownFn = (child) => this.doesReferToTables(child, selectNodeTables);
-            const newRoot = this.pushDownNodeRec(queryContext, selectNode, shouldPushDownFn);
-            this.alreadyPushedDown.add(selectNode);
-            if (newRoot !== selectNode) {
-                if (newRoot.getParent() === null) {
-                    this.rootNode = newRoot;
-                }
-                processNodeRec(newRoot);
-            }
-            processChildren(selectNode);
-        };
-        processNodeRec(rootNode);
-    }
-    // Recursively pushes down a SelectNode until it can't be pushed any further
-    // down. |shouldPushDown| is a function to be called for each child to
-    // determine whether the node should be pushed down one level.
-    // Returns the new root of the subtree that itself could not be pushed further
-    // down.
-    pushDownNodeRec(queryContext, node, shouldPushDownFn) {
-        let newRoot = node;
-        if (this.shouldSwapWithChild(queryContext, node)) {
-            newRoot = TreeHelper$1.swapNodeWithChild(node);
-            this.pushDownNodeRec(queryContext, node, shouldPushDownFn);
-        }
-        else if (this.shouldPushBelowChild(node)) {
-            const newNodes = [];
-            const cloneFn = (n) => {
-                const newNode = new SelectNode$1(n.predicate);
-                newNodes.push(newNode);
-                return newNode;
-            };
-            newRoot = TreeHelper$1.pushNodeBelowChild(node, shouldPushDownFn, cloneFn);
-            // Recursively pushing down the nodes that were just added to the tree as
-            // a result of pushing down "node", if any.
-            newNodes.forEach((newNode) => this.pushDownNodeRec(queryContext, newNode, shouldPushDownFn));
-        }
-        return newRoot;
-    }
-    // Whether the subtree that starts at root refers to all tables in the given
-    // list.
-    doesReferToTables(root, tables) {
-        // Finding all tables that are involved in the subtree starting at the given
-        // root.
-        const referredTables = new Set();
-        TreeHelper$1.getLeafNodes(root).forEach((tableAccessNode) => referredTables.add(tableAccessNode.table));
-        if (root instanceof TableAccessNode$1) {
-            referredTables.add(root.table);
-        }
-        return isSubset$1(referredTables, tables);
-    }
-    // Whether the given node is a candidate for being pushed down the tree.
-    isCandidateNode(node) {
-        return node instanceof SelectNode$1;
-    }
-    // Whether an attempt should be made to push the given node below its only
-    // child.
-    shouldPushBelowChild(node) {
-        const child = node.getChildAt(0);
-        return child instanceof CrossProductNode$1 || child instanceof JoinNode$1;
-    }
-    // Whether the given node should be swapped with its only child.
-    shouldSwapWithChild(queryContext, node) {
-        const child = node.getChildAt(0);
-        if (!(child instanceof SelectNode$1)) {
-            return false;
-        }
-        if (queryContext.outerJoinPredicates === undefined
-            || queryContext.outerJoinPredicates === null) {
-            return true;
-        }
-        const nodeIsJoin = node.predicate instanceof JoinPredicate$1;
-        const childIsOuterJoin = queryContext.outerJoinPredicates.has(child.predicate.getId());
-        // If the node corresponds to a join predicate (outer or inner), allow it to
-        // be pushed below any other SelectNode. If the node does not correspond to
-        // a join predicate don't allow it to be pushed below an outer join, because
-        // it needs to be applied after the outer join is calculated.
-        return nodeIsJoin || !childIsOuterJoin;
-    }
-}
-class AggregationNode$1 extends LogicalQueryPlanNode$1 {
-    constructor(columns) {
-        super();
-        this.columns = columns;
-    }
-    toString() {
-        return `aggregation(${this.columns.toString()})`;
-    }
-}
-class GroupByNode$1 extends LogicalQueryPlanNode$1 {
-    constructor(columns) {
-        super();
-        this.columns = columns;
-    }
-    toString() {
-        return `group_by(${this.columns.toString()})`;
-    }
-}
-class LimitNode$1 extends LogicalQueryPlanNode$1 {
-    constructor(limit) {
-        super();
-        this.limit = limit;
-    }
-    toString() {
-        return `limit(${this.limit})`;
-    }
-}
-class OrderByNode$1 extends LogicalQueryPlanNode$1 {
-    constructor(orderBy) {
-        super();
-        this.orderBy = orderBy;
-    }
-    toString() {
-        return `order_by(${SelectContext$1.orderByToString(this.orderBy)})`;
-    }
-}
-class ProjectNode$1 extends LogicalQueryPlanNode$1 {
-    constructor(columns, groupByColumns) {
-        super();
-        this.columns = columns;
-        this.groupByColumns = groupByColumns;
-    }
-    toString() {
-        const columns = this.groupByColumns ? this.groupByColumns.map((col) => col.getNormalizedName()).join(", ") : "";
-        const postfix = columns.length ? `, groupBy(${columns})` : "";
-        return `project(${this.columns.toString()}${postfix})`;
-    }
-}
-class SkipNode$1 extends LogicalQueryPlanNode$1 {
-    constructor(skip) {
-        super();
-        this.skip = skip;
-    }
-    toString() {
-        return `skip(${this.skip})`;
-    }
-}
-class SelectLogicalPlanGenerator$1 extends BaseLogicalPlanGenerator$1 {
-    constructor(query, rewritePasses) {
-        super(query);
-        this.rewritePasses = rewritePasses;
-        this.tableAccessNodes = null;
-        this.crossProductNode = null;
-        this.selectNode = null;
-        this.groupByNode = null;
-        this.aggregationNode = null;
-        this.orderByNode = null;
-        this.skipNode = null;
-        this.limitNode = null;
-        this.projectNode = null;
-    }
-    generateInternal() {
-        this.generateNodes();
-        const rootNode = this.connectNodes();
-        // Optimizing the "naive" logical plan.
-        const planRewriter = new LogicalPlanRewriter$1(rootNode, this.query, this.rewritePasses);
-        return planRewriter.generate();
-    }
-    // Generates all the nodes that will make up the logical plan tree. After
-    // this function returns all nodes have been created, but they are not yet
-    // connected to each other.
-    generateNodes() {
-        this.generateTableAccessNodes();
-        this.generateCrossProductNode();
-        this.generateSelectNode();
-        this.generateOrderByNode();
-        this.generateSkipNode();
-        this.generateLimitNode();
-        this.generateGroupByNode();
-        this.generateAggregationNode();
-        this.generateProjectNode();
-    }
-    // Connects the nodes together such that the logical plan tree is formed.
-    connectNodes() {
-        const parentOrder = [
-            this.limitNode,
-            this.skipNode,
-            this.projectNode,
-            this.orderByNode,
-            this.aggregationNode,
-            this.groupByNode,
-            this.selectNode,
-            this.crossProductNode
-        ];
-        let lastExistingParentIndex = -1;
-        let rootNode = null;
-        for (let i = 0; i < parentOrder.length; i++) {
-            const node = parentOrder[i];
-            if (node !== null) {
-                if (rootNode === null) {
-                    rootNode = node;
-                }
-                else {
-                    parentOrder[lastExistingParentIndex].addChild(node);
-                }
-                lastExistingParentIndex = i;
-            }
-        }
-        this.tableAccessNodes.forEach((tableAccessNode) => {
-            parentOrder[lastExistingParentIndex].addChild(tableAccessNode);
-        });
-        return rootNode;
-    }
-    generateTableAccessNodes() {
-        this.tableAccessNodes = this.query.from.map((table) => new TableAccessNode$1(table));
-    }
-    generateCrossProductNode() {
-        if (this.query.from.length >= 2) {
-            this.crossProductNode = new CrossProductNode$1();
-        }
-    }
-    generateSelectNode() {
-        if (this.query.where) {
-            this.selectNode = new SelectNode$1(this.query.where.copy());
-        }
-    }
-    generateOrderByNode() {
-        if (this.query.orderBy) {
-            this.orderByNode = new OrderByNode$1(this.query.orderBy);
-        }
-    }
-    generateSkipNode() {
-        if (this.query.skip && this.query.skip > 0 || this.query.skipBinder) {
-            this.skipNode = new SkipNode$1(this.query.skip);
-        }
-    }
-    generateLimitNode() {
-        if (this.query.limit !== undefined && this.query.limit !== null) {
-            this.limitNode = new LimitNode$1(this.query.limit);
-        }
-    }
-    generateGroupByNode() {
-        if (this.query.groupBy) {
-            this.groupByNode = new GroupByNode$1(this.query.groupBy);
-        }
-    }
-    generateAggregationNode() {
-        const aggregatedColumns = this.query.columns.filter((column) => {
-            return column instanceof AggregatedColumn$1;
-        });
-        if (this.query.orderBy) {
-            this.query.orderBy.forEach((orderBy) => {
-                if (orderBy.column instanceof AggregatedColumn$1) {
-                    aggregatedColumns.push(orderBy.column);
-                }
-            });
-        }
-        if (aggregatedColumns.length > 0) {
-            this.aggregationNode = new AggregationNode$1(aggregatedColumns);
-        }
-    }
-    generateProjectNode() {
-        this.projectNode = new ProjectNode$1(this.query.columns || [], this.query.groupBy || null);
-    }
-}
-class UpdateNode$1 extends LogicalQueryPlanNode$1 {
-    constructor(table) {
-        super();
-        this.table = table;
-    }
-    toString() {
-        return `update(${this.table.getName()})`;
-    }
-}
-class UpdateLogicalPlanGenerator$1 extends BaseLogicalPlanGenerator$1 {
-    constructor(query) {
-        super(query);
-    }
-    generateInternal() {
-        const updateNode = new UpdateNode$1(this.query.table);
-        const selectNode = this.query.where !== null ? new SelectNode$1(this.query.where.copy()) : null;
-        const tableAccessNode = new TableAccessNode$1(this.query.table);
-        if (selectNode === null) {
-            updateNode.addChild(tableAccessNode);
-        }
-        else {
-            selectNode.addChild(tableAccessNode);
-            updateNode.addChild(selectNode);
-        }
-        return updateNode;
-    }
-}
-// A factory used to create a logical query plan corresponding to a given query.
-class LogicalPlanFactory$1 {
-    constructor() {
-        this.selectOptimizationPasses = [
-            new AndPredicatePass$1(),
-            new CrossProductPass$1(),
-            new PushDownSelectionsPass$1(),
-            new ImplicitJoinsPass$1()
-        ];
-        this.deleteOptimizationPasses = [new AndPredicatePass$1()];
-    }
-    create(query) {
-        let generator = null;
-        if (query instanceof InsertContext$1) {
-            generator = new InsertLogicalPlanGenerator$1(query);
-        }
-        else if (query instanceof DeleteContext$1) {
-            generator = new DeleteLogicalPlanGenerator$1(query, this.deleteOptimizationPasses);
-        }
-        else if (query instanceof SelectContext$1) {
-            generator = new SelectLogicalPlanGenerator$1(query, this.selectOptimizationPasses);
-        }
-        else if (query instanceof UpdateContext$1) {
-            generator = new UpdateLogicalPlanGenerator$1(query);
-        }
-        else {
-            // 513: Unknown query context.
-            throw new Exception$1(ErrorCode$1.UNKNOWN_QUERY_CONTEXT);
-        }
-        const rootNode = generator.generate();
-        return new LogicalQueryPlan$1(rootNode, query.getScope());
-    }
-}
-// Pseudo table used for initializing pseudo columns.
-class UnknownTable$1 {
-    constructor() {
-        this._alias = null;
-    }
-    getName() {
-        return "#UnknownTable";
-    }
-    getColumns() {
-        return [];
-    }
-    getIndices() {
-        return [];
-    }
-    persistentIndex() {
-        return false;
-    }
-    getAlias() {
-        return this._alias;
-    }
-    getEffectiveName() {
-        return this._alias || this.getName();
-    }
-    getRowIdIndexName() {
-        return "#UnknownTable.#";
-    }
-    createRow(value) {
-        throw new Exception$1(ErrorCode$1.NOT_SUPPORTED);
-    }
-    deserializeRow(dbRecord) {
-        throw new Exception$1(ErrorCode$1.NOT_SUPPORTED);
-    }
-    getConstraint() {
-        return null;
-    }
-    as(alias) {
-        this._alias = alias;
-        return this;
-    }
-    col(name) {
-        return null;
-    }
-}
-//  A dummy Column implementation to be used as a substitute for '*',
-// for example in COUNT(*).
-class StarColumn$1 extends NonPredicateProvider$1 {
-    constructor(alias) {
-        super();
-        this.alias = alias || null;
-        this.table = new UnknownTable$1();
-    }
-    getName() {
-        return "*";
-    }
-    getNormalizedName() {
-        return this.getName();
-    }
-    toString() {
-        return this.getNormalizedName();
-    }
-    getTable() {
-        // NOTE: The table here does not have a useful meaning, since the StarColumn
-        // represents all columns that are available, which could be the result of a
-        // join, therefore a dummy Table instance is used.
-        return this.table;
-    }
-    getType() {
-        // NOTE: The type here does not have a useful meaning, since the notion of a
-        // type does not apply to a collection of all columns (which is what this
-        // class represents).
-        return Type$1.NUMBER;
-    }
-    getAlias() {
-        return this.alias;
-    }
-    getIndices() {
-        return [];
-    }
-    getIndex() {
-        return null;
-    }
-    isNullable() {
-        return false;
-    }
-    isUnique() {
-        return false;
-    }
-    as(alias) {
-        const clone = new StarColumn$1(alias);
-        clone.table = this.table;
-        return clone;
-    }
-}
-class AggregationCalculator$1 {
-    constructor(relation, columns) {
-        this.relation = relation;
-        this.columns = columns;
-    }
-    // Calculates all requested aggregations. Results are stored within
-    // this.relation.
-    calculate() {
-        this.columns.forEach((column) => {
-            const reverseColumnChain = column.getColumnChain().reverse();
-            for (let i = 1; i < reverseColumnChain.length; i++) {
-                const currentColumn = reverseColumnChain[i];
-                const leafColumn = currentColumn.getColumnChain().slice(-1)[0];
-                const inputRelation = this.getInputRelationFor(currentColumn);
-                // Return early if the aggregation result has already been calculated.
-                if (inputRelation.hasAggregationResult(currentColumn)) {
-                    return;
-                }
-                const result = this.evalAggregation(currentColumn.aggregatorType, inputRelation, leafColumn);
-                this.relation.setAggregationResult(currentColumn, result);
-            }
-        }, this);
-    }
-    // Returns the relation that should be used as input for calculating the
-    // given aggregated column.
-    getInputRelationFor(column) {
-        return column.child instanceof AggregatedColumn$1 ? this.relation.getAggregationResult(column.child) : this.relation;
-    }
-    evalAggregation(aggregatorType, relation, column) {
-        let result = null;
-        switch (aggregatorType) {
-            case FnType$1.MIN:
-                result = this.reduce(relation, column, (s, v) => {
-                    const soFar = s;
-                    const value = v;
-                    return value < soFar ? value : soFar;
-                });
-                break;
-            case FnType$1.MAX:
-                result = this.reduce(relation, column, (s, v) => {
-                    const soFar = s;
-                    const value = v;
-                    return value > soFar ? value : soFar;
-                });
-                break;
-            case FnType$1.DISTINCT:
-                result = this.distinct(relation, column);
-                break;
-            case FnType$1.COUNT:
-                result = this.count(relation, column);
-                break;
-            case FnType$1.SUM:
-                result = this.sum(relation, column);
-                break;
-            case FnType$1.AVG: {
-                const count = this.count(relation, column);
-                if (count > 0) {
-                    result = this.sum(relation, column) / count;
-                }
-                break;
-            }
-            case FnType$1.GEOMEAN:
-                result = this.geomean(relation, column);
-                break;
-            default:
-                // Must be case of FnType.STDDEV.
-                result = this.stddev(relation, column);
-                break;
-        }
-        return result;
-    }
-    // Reduces the input relation to a single value. Null values are ignored.
-    reduce(relation, column, reduceFn) {
-        return relation.entries.reduce((soFar, entry) => {
-            const value = entry.getField(column);
-            if (value === null) {
-                return soFar;
-            }
-            return soFar === null ? value : reduceFn(soFar, value);
-        }, null);
-    }
-    // Calculates the count of the given column for the given relation.
-    // COUNT(*) returns count of all rows but COUNT(column) ignores nulls
-    // in that column.
-    count(relation, column) {
-        if (column instanceof StarColumn$1) {
-            return relation.entries.length;
-        }
-        return relation.entries.reduce((soFar, entry) => {
-            return soFar + (entry.getField(column) === null ? 0 : 1);
-        }, 0);
-    }
-    // Calculates the sum of the given column for the given relation.
-    // If all rows have only value null for that column, then null is returned.
-    // If the table is empty, null is returned.
-    sum(relation, column) {
-        return this.reduce(relation, column, (s, v) => {
-            const soFar = s;
-            const value = v;
-            return value + soFar;
-        });
-    }
-    // Calculates the standard deviation of the given column for the given
-    // relation. If all rows have only value null for that column, then null is
-    // returned. If the table is empty, null is returned.
-    stddev(relation, column) {
-        const values = [];
-        relation.entries.forEach((entry) => {
-            const value = entry.getField(column);
-            if (value !== null) {
-                values.push(value);
-            }
-        });
-        return values.length === 0 ? null : MathHelper$1.standardDeviation.apply(null, values);
-    }
-    // Calculates the geometrical mean of the given column for the given relation.
-    // Zero values are ignored. If all values given are zero, or if the input
-    // relation is empty, null is returned.
-    geomean(relation, column) {
-        let nonZeroEntriesCount = 0;
-        const reduced = relation.entries.reduce((soFar, entry) => {
-            const value = entry.getField(column);
-            if (value !== null && value !== 0) {
-                nonZeroEntriesCount++;
-                return soFar + Math.log(value);
-            }
-            else {
-                return soFar;
-            }
-        }, 0);
-        return nonZeroEntriesCount === 0 ? null : Math.E ** (reduced / nonZeroEntriesCount);
-    }
-    // Keeps only distinct entries with regards to the given column.
-    distinct(relation, column) {
-        const distinctMap = new Map();
-        relation.entries.forEach((entry) => {
-            const value = entry.getField(column);
-            distinctMap.set(value, entry);
-        });
-        return new Relation$1(Array.from(distinctMap.values()), relation.getTables());
-    }
-}
-class PhysicalQueryPlanNode$1 extends TreeNode$1 {
-    constructor(numRelations, execType) {
-        super();
-        this.numRelations = numRelations;
-        this.execType = execType;
-    }
-    exec(journal, context) {
-        switch (this.execType) {
-            case ExecType$1.FIRST_CHILD:
-                return this.execFirstChild(journal, context);
-            case ExecType$1.ALL:
-                return this.execAllChildren(journal, context);
-            default:
-                // NO_CHILD
-                return this.execNoChild(journal, context);
-        }
-    }
-    toString() {
-        return "dummy_node";
-    }
-    // Returns a string representation of this node taking into account the given
-    // context.
-    toContextString(context) {
-        return this.toString();
-    }
-    assertInput(relations) {
-        assert$1(this.numRelations === PhysicalQueryPlanNode$1.ANY
-            || relations.length === this.numRelations);
-    }
-    execNoChild(journal, context) {
-        return new Promise((resolve) => {
-            resolve(this.execInternal([], journal, context));
-        });
-    }
-    execFirstChild(journal, context) {
-        return this.getChildAt(0)
-            .exec(journal, context)
-            .then((results) => {
-                this.assertInput(results);
-                return this.execInternal(results, journal, context);
-            });
-    }
-    execAllChildren(journal, context) {
-        const promises = this.getChildren().map((child) => {
-            return child.exec(journal, context);
-        });
-        return Promise.all(promises).then((results) => {
-            const relations = [];
-            results.forEach((result) => {
-                result.forEach((res) => relations.push(res));
-            });
-            this.assertInput(relations);
-            return this.execInternal(relations, journal, context);
-        });
-    }
-}
-PhysicalQueryPlanNode$1.ANY = -1;
-class AggregationStep$1 extends PhysicalQueryPlanNode$1 {
-    constructor(aggregatedColumns) {
-        super(PhysicalQueryPlanNode$1.ANY, ExecType$1.FIRST_CHILD);
-        this.aggregatedColumns = aggregatedColumns;
-    }
-    toString() {
-        const columnNames = this.aggregatedColumns.map((column) => column.getNormalizedName());
-        return `aggregation(${columnNames.toString()})`;
-    }
-    execInternal(relations, journal, context) {
-        relations.forEach((relation) => {
-            const calculator = new AggregationCalculator$1(relation, this.aggregatedColumns);
-            calculator.calculate();
-        }, this);
-        return relations;
-    }
-}
-class CrossProductStep$1 extends PhysicalQueryPlanNode$1 {
-    constructor() {
-        super(2, ExecType$1.ALL);
-    }
-    toString() {
-        return "cross_product";
-    }
-    execInternal(relations, journal, context) {
-        return this.crossProduct(relations[0], relations[1]);
-    }
-    // Calculates the cross product of two relations.
-    crossProduct(leftRelation, rightRelation) {
-        const combinedEntries = [];
-        const leftRelationTableNames = leftRelation.getTables();
-        const rightRelationTableNames = rightRelation.getTables();
-        leftRelation.entries.forEach((le) => {
-            rightRelation.entries.forEach((re) => {
-                const combinedEntry = RelationEntry$1.combineEntries(le, leftRelationTableNames, re, rightRelationTableNames);
-                combinedEntries.push(combinedEntry);
-            });
-        });
-        const srcTables = leftRelation
-            .getTables()
-            .concat(rightRelation.getTables());
-        return [new Relation$1(combinedEntries, srcTables)];
-    }
-}
-class DeleteStep$1 extends PhysicalQueryPlanNode$1 {
-    constructor(table) {
-        super(1, ExecType$1.FIRST_CHILD);
-        this.table = table;
-    }
-    toString() {
-        return `delete(${this.table.getName()})`;
-    }
-    execInternal(relations, journal, context) {
-        const rows = relations[0].entries.map((entry) => entry.row);
-        journal.remove(this.table, rows);
-        return [Relation$1.createEmpty()];
-    }
-}
-// Keep lower case class name for compatibility with Lovefield API.
-class fn$1 {
-    static avg(col) {
-        return new AggregatedColumn$1(col, FnType$1.AVG);
-    }
-    static count(column) {
-        const col = column || new StarColumn$1();
-        return new AggregatedColumn$1(col, FnType$1.COUNT);
-    }
-    static distinct(col) {
-        return new AggregatedColumn$1(col, FnType$1.DISTINCT);
-    }
-    static max(col) {
-        return new AggregatedColumn$1(col, FnType$1.MAX);
-    }
-    static min(col) {
-        return new AggregatedColumn$1(col, FnType$1.MIN);
-    }
-    static stddev(col) {
-        return new AggregatedColumn$1(col, FnType$1.STDDEV);
-    }
-    static sum(col) {
-        return new AggregatedColumn$1(col, FnType$1.SUM);
-    }
-    static geomean(col) {
-        return new AggregatedColumn$1(col, FnType$1.GEOMEAN);
-    }
-}
-class GetRowCountStep$1 extends PhysicalQueryPlanNode$1 {
-    constructor(global, table) {
-        super(0, ExecType$1.NO_CHILD);
-        this.table = table;
-        this.indexStore = global.getService(Service$1.INDEX_STORE);
-    }
-    toString() {
-        return `get_row_count(${this.table.getName()})`;
-    }
-    execInternal(relations, journal, context) {
-        const rowIdIndex = this.indexStore.get(this.table.getRowIdIndexName());
-        const relation = new Relation$1([], [this.table.getName()]);
-        relation.setAggregationResult(fn$1.count(), rowIdIndex.stats().totalRows);
-        return [relation];
-    }
-}
-class TableAccessFullStep$1 extends PhysicalQueryPlanNode$1 {
-    constructor(global, table) {
-        super(0, ExecType$1.NO_CHILD);
-        this.table = table;
-        this.cache = global.getService(Service$1.CACHE);
-        this.indexStore = global.getService(Service$1.INDEX_STORE);
-    }
-    toString() {
-        let postfix = "";
-        const table = this.table;
-        if (table.getAlias()) {
-            postfix = ` as ${table.getAlias()}`;
-        }
-        return `table_access(${this.table.getName()}${postfix})`;
-    }
-    execInternal(relations, journal, context) {
-        const table = this.table;
-        const rowIds = this.indexStore.get(table.getRowIdIndexName())
-            .getRange();
-        return [
-            Relation$1.fromRows(this.cache.getMany(rowIds), [
-                table.getEffectiveName()
-            ])
-        ];
-    }
-}
-// An optimization pass responsible for optimizing SELECT COUNT(*) queries,
-// where no LIMIT, SKIP, WHERE or GROUP_BY appears.
-class GetRowCountPass$1 extends RewritePass$1 {
-    constructor(global) {
-        super();
-        this.global = global;
-    }
-    rewrite(rootNode, queryContext) {
-        this.rootNode = rootNode;
-        if (!this.canOptimize(queryContext)) {
-            return rootNode;
-        }
-        const tableAccessFullStep = TreeHelper$1.find(rootNode, (node) => node instanceof TableAccessFullStep$1)[0];
-        const getRowCountStep = new GetRowCountStep$1(this.global, tableAccessFullStep.table);
-        TreeHelper$1.replaceNodeWithChain(tableAccessFullStep, getRowCountStep, getRowCountStep);
-        return this.rootNode;
-    }
-    canOptimize(queryContext) {
-        const isDefAndNotNull = (v) => v !== null && v !== undefined;
-        const isCandidate = queryContext.columns.length === 1
-            && queryContext.from.length === 1
-            && !isDefAndNotNull(queryContext.where)
-            && !isDefAndNotNull(queryContext.limit)
-            && !isDefAndNotNull(queryContext.skip)
-            && !isDefAndNotNull(queryContext.groupBy);
-        if (isCandidate) {
-            const column = queryContext.columns[0];
-            return (column instanceof AggregatedColumn$1
-                && column.aggregatorType === FnType$1.COUNT
-                && column.child instanceof StarColumn$1);
-        }
-        return false;
-    }
-}
-class GroupByStep$1 extends PhysicalQueryPlanNode$1 {
-    constructor(groupByColumns) {
-        super(1, ExecType$1.FIRST_CHILD);
-        this.groupByColumns = groupByColumns;
-    }
-    toString() {
-        const columnNames = this.groupByColumns.map((column) => column.getNormalizedName());
-        return `groupBy(${columnNames.toString()})`;
-    }
-    execInternal(relations, journal, ctx) {
-        return this.calculateGroupedRelations(relations[0]);
-    }
-    // Breaks down a single relation to multiple relations by grouping rows based
-    // on the specified groupBy columns.
-    calculateGroupedRelations(relation) {
-        const groupMap = new MapSet$1();
-        const getKey = (entry) => {
-            const keys = this.groupByColumns.map((column) => entry.getField(column));
-            return keys.join(",");
-        };
-        relation.entries.forEach((entry) => groupMap.set(getKey(entry), entry));
-        return groupMap.keys().map((key) => {
-            return new Relation$1(groupMap.get(key), relation.getTables());
-        });
-    }
-}
-var JoinAlgorithm$1;
-(function(JoinAlgorithm) {
-    JoinAlgorithm["HASH"] = "hash";
-    JoinAlgorithm["INDEX_NESTED_LOOP"] = "index_nested_loop";
-    JoinAlgorithm["NESTED_LOOP"] = "nested_loop";
-})(JoinAlgorithm$1 || (JoinAlgorithm$1 = {}));
-class JoinStep$1 extends PhysicalQueryPlanNode$1 {
-    constructor(global, predicate, isOuterJoin) {
-        super(2, ExecType$1.ALL);
-        this.predicate = predicate;
-        this.isOuterJoin = isOuterJoin;
-        this.indexStore = global.getService(Service$1.INDEX_STORE);
-        this.cache = global.getService(Service$1.CACHE);
-        this.algorithm
-            = this.predicate.evaluatorType === EvalType$1.EQ ? JoinAlgorithm$1.HASH : JoinAlgorithm$1.NESTED_LOOP;
-        this.indexJoinInfo = null;
-    }
-    toString() {
-        return (`join(type: ${this.isOuterJoin ? "outer" : "inner"}, `
-            + `impl: ${this.algorithm}, ${this.predicate.toString()})`);
-    }
-    execInternal(relations, journal, context) {
-        switch (this.algorithm) {
-            case JoinAlgorithm$1.HASH:
-                return [
-                    this.predicate.evalRelationsHashJoin(relations[0], relations[1], this.isOuterJoin)
-                ];
-            case JoinAlgorithm$1.INDEX_NESTED_LOOP:
-                return [
-                    this.predicate.evalRelationsIndexNestedLoopJoin(relations[0], relations[1], this.indexJoinInfo, this.cache)
-                ];
-            default:
-                // JoinAlgorithm.NESTED_LOOP
-                return [
-                    this.predicate.evalRelationsNestedLoopJoin(relations[0], relations[1], this.isOuterJoin)
-                ];
-        }
-    }
-    // Indicates that this JoinStep should be executed as an INDEX_NESTED_LOOP
-    // join. |column| is the column whose index should be queried.
-    markAsIndexJoin(column) {
-        this.algorithm = JoinAlgorithm$1.INDEX_NESTED_LOOP;
-        const index = this.indexStore.get(column.getIndex().getNormalizedName());
-        this.indexJoinInfo = {
-            "index": index,
-            "indexedColumn": column,
-            "nonIndexedColumn": column === this.predicate.leftColumn ? this.predicate.rightColumn : this.predicate.leftColumn
-        };
-    }
-}
-// A dummy execution step that performs no actual work.
-class NoOpStep$1 extends PhysicalQueryPlanNode$1 {
-    constructor(relations) {
-        super(PhysicalQueryPlanNode$1.ANY, ExecType$1.NO_CHILD);
-        this.relations = relations;
-    }
-    toString() {
-        return `no_op_step(${this.relations[0].getTables().join(",")})`;
-    }
-    execInternal(relations, journal, context) {
-        return this.relations;
-    }
-}
-// An optimization pass responsible for identifying JoinSteps that can be
-// calculated as index nested loop joins. It transforms the tree by specifying
-// the algorithm to use in such JoinSteps and also by eliminating
-// TableAccessFullStep corresponding to the side of the join where the index
-// will be used.
-class IndexJoinPass$1 extends RewritePass$1 {
-    constructor() {
-        super();
-    }
-    rewrite(rootNode, queryContext) {
-        this.rootNode = rootNode;
-        if (!this.canOptimize(queryContext)) {
-            return rootNode;
-        }
-        const joinSteps = TreeHelper$1.find(rootNode, (node) => node instanceof JoinStep$1);
-        joinSteps.forEach(this.processJoinStep, this);
-        return this.rootNode;
-    }
-    canOptimize(queryContext) {
-        return queryContext.from.length > 1;
-    }
-    // Examines the given join step and decides whether it should be executed as
-    // an index-join.
-    processJoinStep(joinStep) {
-        // Currently ONLY inner EQ join can be calculated using index join.
-        if (joinStep.predicate.evaluatorType !== EvalType$1.EQ
-            || joinStep.isOuterJoin) {
-            return;
-        }
-        // Finds which of the two joined columns corresponds to the given table.
-        const getColumnForTable = (table) => {
-            return table.getEffectiveName()
-                === joinStep.predicate.rightColumn.getTable().getEffectiveName() ? joinStep.predicate.rightColumn : joinStep.predicate.leftColumn;
-        };
-        // Extracts the candidate indexed column for the given execution step node.
-        const getCandidate = (executionStep) => {
-            // In order to use and index for implementing a join, the entire relation
-            // must be fed to the JoinStep, otherwise the index can't be used.
-            if (!(executionStep instanceof TableAccessFullStep$1)) {
-                return null;
-            }
-            const candidateColumn = getColumnForTable(executionStep.table);
-            return candidateColumn.getIndex() === null ? null : candidateColumn;
-        };
-        const leftCandidate = getCandidate(joinStep.getChildAt(0));
-        const rightCandidate = getCandidate(joinStep.getChildAt(1));
-        if (leftCandidate === null && rightCandidate === null) {
-            // None of the two involved columns can be used for an index join.
-            return;
-        }
-        // TODO(dpapad): If both columns can be used, currently the right column is
-        // preferred. A smarter decision is to use the column corresponding to the
-        // bigger incoming relation, such that index accesses are minimized. Use
-        // index stats to figure out the size of each relation.
-        const chosenColumn = rightCandidate !== null ? rightCandidate : leftCandidate;
-        joinStep.markAsIndexJoin(chosenColumn);
-        const dummyRelation = new Relation$1([], [chosenColumn.getTable().getEffectiveName()]);
-        joinStep.replaceChildAt(new NoOpStep$1([dummyRelation]), chosenColumn === leftCandidate ? 0 : 1);
-    }
-}
-class BoundedKeyRangeCalculator$1 {
-    // |this.predicateMap| is a map where a key is the name of an indexed column
-    // and the values are predicates IDs that correspond to that column. The IDs
-    // are used to grab the actual predicates from the given query context, such
-    // that this calculator can be re-used with different query contexts.
-    constructor(indexSchema, predicateMap) {
-        this.indexSchema = indexSchema;
-        this.predicateMap = predicateMap;
-        this.lastQueryContext = null;
-        this.combinations = null;
-    }
-    getKeyRangeCombinations(queryContext) {
-        if (this.lastQueryContext === queryContext) {
-            return this.combinations;
-        }
-        const keyRangeMap = this.calculateKeyRangeMap(queryContext);
-        this.fillMissingKeyRanges(keyRangeMap);
-        // If this IndexRangeCandidate refers to a single column index there is no
-        // need to perform cartesian product, since there is only one dimension.
-        this.combinations
-            = this.indexSchema.columns.length === 1 ? Array.from(keyRangeMap.values())[0].getValues() : this.calculateCartesianProduct(this.getSortedKeyRangeSets(keyRangeMap));
-        this.lastQueryContext = queryContext;
-        return this.combinations;
-    }
-    // Builds a map where a key is an indexed column name and the value is
-    // the SingleKeyRangeSet, created by considering all provided predicates.
-    calculateKeyRangeMap(queryContext) {
-        const keyRangeMap = new Map();
-        Array.from(this.predicateMap.keys()).forEach((columnName) => {
-            const predicateIds = this.predicateMap.get(columnName);
-            const predicates = predicateIds.map((predicateId) => {
-                return queryContext.getPredicate(predicateId);
-            }, this);
-            let keyRangeSetSoFar = new SingleKeyRangeSet$1([SingleKeyRange$1.all()]);
-            predicates.forEach((predicate) => {
-                keyRangeSetSoFar = SingleKeyRangeSet$1.intersect(keyRangeSetSoFar, predicate.toKeyRange());
-            });
-            keyRangeMap.set(columnName, keyRangeSetSoFar);
-        }, this);
-        return keyRangeMap;
-    }
-    // Traverses the indexed columns in reverse order and fills in an "all"
-    // SingleKeyRangeSet where possible in the provided map.
-    // Example1: Assume that the indexed columns are ['A', 'B', 'C'] and A is
-    // already bound, but B and C are unbound. Key ranges for B and C will be
-    // filled in with an "all" key range.
-    // Example2: Assume that the indexed columns are ['A', 'B', 'C', 'D'] and A, C
-    // are already bound, but B and D are unbound. Key ranges only for D will be
-    // filled in. In practice such a case will have already been rejected by
-    // IndexRangeCandidate#isUsable and should never occur here.
-    fillMissingKeyRanges(keyRangeMap) {
-        const getAllKeyRange = () => new SingleKeyRangeSet$1([SingleKeyRange$1.all()]);
-        for (let i = this.indexSchema.columns.length - 1; i >= 0; i--) {
-            const column = this.indexSchema.columns[i];
-            const keyRangeSet = keyRangeMap.get(column.schema.getName()) || null;
-            if (keyRangeSet !== null) {
-                break;
-            }
-            keyRangeMap.set(column.schema.getName(), getAllKeyRange());
-        }
-    }
-    // Sorts the key range sets corresponding to this index's columns according to
-    // the column order of the index schema.
-    getSortedKeyRangeSets(keyRangeMap) {
-        const sortHelper = new Map();
-        let priority = 0;
-        this.indexSchema.columns.forEach((column) => {
-            sortHelper.set(column.schema.getName(), priority);
-            priority++;
-        });
-        const sortedColumnNames = Array.from(keyRangeMap.keys()).sort((a, b) => (sortHelper.get(a) || 0) - (sortHelper.get(b) || 0));
-        return sortedColumnNames.map((columnName) => keyRangeMap.get(columnName));
-    }
-    // Finds the cartesian product of a collection of SingleKeyRangeSets.
-    // |keyRangeSets| is a SingleKeyRangeSet at position i in the input array
-    // corresponds to all possible values for the ith dimension in the
-    // N-dimensional space (where N is the number of columns in the cross-column
-    // index).
-    // Returns the cross-column key range combinations.
-    calculateCartesianProduct(keyRangeSets) {
-        assert$1(keyRangeSets.length > 1, "Should only be called for cross-column indices.");
-        const keyRangeSetsAsArrays = keyRangeSets.map((keyRangeSet) => keyRangeSet.getValues());
-        return ArrayHelper$1.product(keyRangeSetsAsArrays);
-    }
-}
-class IndexRangeCandidate$1 {
-    constructor(indexStore, indexSchema) {
-        this.indexStore = indexStore;
-        this.indexSchema = indexSchema;
-        this.indexedColumnNames = new Set(this.indexSchema.columns.map((col) => col.schema.getName()));
-        this.predicateMap = null;
-        this.keyRangeCalculator = null;
-    }
-    // The predicates that were consumed by this candidate.
-    getPredicateIds() {
-        return this.predicateMap ? this.predicateMap.values() : [];
-    }
-    getKeyRangeCalculator() {
-        assert$1(this.predicateMap !== null);
-        if (this.keyRangeCalculator === null) {
-            this.keyRangeCalculator = new BoundedKeyRangeCalculator$1(this.indexSchema, this.predicateMap);
-        }
-        return this.keyRangeCalculator;
-    }
-    // Finds which predicates are related to the index schema corresponding to
-    // this IndexRangeCandidate.
-    consumePredicates(predicates) {
-        predicates.forEach((predicate) => {
-            // If predicate is a ValuePredicate there in only one referred column. If
-            // predicate is an OR CombinedPredicate, then it must be referring to a
-            // single column (enforced by isKeyRangeCompatible()).
-            const columnName = predicate.getColumns()[0].getName();
-            if (this.indexedColumnNames.has(columnName)) {
-                if (this.predicateMap === null) {
-                    this.predicateMap = new MapSet$1();
-                }
-                this.predicateMap.set(columnName, predicate.getId());
-            }
-        }, this);
-    }
-    // Whether this candidate can actually be used for an IndexRangeScanStep
-    // optimization. Sometimes after building the candidate it turns out that it
-    // cannot be used. For example consider a cross column index on columns
-    // ['A', 'B'] and a query that only binds the key range of the 2nd
-    // dimension B.
-    isUsable() {
-        if (this.predicateMap === null) {
-            // If the map was never initialized, it means that no predicate matched
-            // this index schema columns.
-            return false;
-        }
-        let unboundColumnFound = false;
-        let isUsable = true;
-        this.indexSchema.columns.every((column) => {
-            const isBound = this.predicateMap.has(column.schema.getName());
-            if (unboundColumnFound && isBound) {
-                isUsable = false;
-                return false;
-            }
-            if (!isBound) {
-                unboundColumnFound = true;
-            }
-            return true;
-        }, this);
-        return isUsable;
-    }
-    calculateCost(queryContext) {
-        const combinations = this.getKeyRangeCalculator().getKeyRangeCombinations(queryContext);
-        const indexData = this.indexStore.get(this.indexSchema.getNormalizedName());
-        return combinations.reduce((costSoFar, combination) => {
-            return costSoFar + indexData.cost(combination);
-        }, 0);
-    }
-}
-// The maximum percent of
-// 1) values an EvalType.IN predicate can have or
-// 2) children an OR CombinedPredicate can have
-// to still be considered for leveraging an index, with respect to the total
-// number of rows in the table.
-// For each one of the values/children an index query will be performed, so the
-// trade-off here is that too many index queries can be slower than simply doing
-// a full table scan. This constant has been determined by trial and error.
-const INDEX_QUERY_THRESHOLD_PERCENT$1 = 0.02;
-class IndexCostEstimator$1 {
-    constructor(global, tableSchema) {
-        this.tableSchema = tableSchema;
-        this.indexStore = global.getService(Service$1.INDEX_STORE);
-    }
-    chooseIndexFor(queryContext, predicates) {
-        const candidatePredicates = predicates.filter(this.isCandidate, this);
-        if (candidatePredicates.length === 0) {
-            return null;
-        }
-        const indexRangeCandidates = this.generateIndexRangeCandidates(candidatePredicates);
-        if (indexRangeCandidates.length === 0) {
-            return null;
-        }
-        // If there is only one candidate there is no need to evaluate the cost.
-        if (indexRangeCandidates.length === 1) {
-            return indexRangeCandidates[0];
-        }
-        let minCost = Number.MAX_VALUE;
-        return indexRangeCandidates.reduce((prev, curr) => {
-            const cost = curr.calculateCost(queryContext);
-            if (cost < minCost) {
-                minCost = cost;
-                return curr;
-            }
-            return prev;
-        }, null);
-    }
-    // Returns the number of Index#getRange queries that can be performed faster
-    // than scanning the entire table instead.
-    getIndexQueryThreshold() {
-        const rowIdIndex = this.indexStore.get(this.tableSchema.getRowIdIndexName());
-        return Math.floor(rowIdIndex.stats().totalRows * INDEX_QUERY_THRESHOLD_PERCENT$1);
-    }
-    generateIndexRangeCandidates(predicates) {
-        const indexSchemas = this.tableSchema.getIndices();
-        return indexSchemas
-            .map((indexSchema) => {
-                const indexRangeCandidate = new IndexRangeCandidate$1(this.indexStore, indexSchema);
-                indexRangeCandidate.consumePredicates(predicates);
-                return indexRangeCandidate;
-            }, this)
-            .filter((indexRangeCandidate) => indexRangeCandidate.isUsable());
-    }
-    isCandidate(predicate) {
-        if (predicate instanceof ValuePredicate$1) {
-            return this.isCandidateValuePredicate(predicate);
-        }
-        else if (predicate instanceof CombinedPredicate$1) {
-            return this.isCandidateCombinedPredicate(predicate);
-        }
-        else {
-            return false;
-        }
-    }
-    isCandidateCombinedPredicate(predicate) {
-        if (!predicate.isKeyRangeCompatible()) {
-            return false;
-        }
-        const predicateColumn = predicate.getChildAt(0).column;
-        if (predicateColumn.getTable() !== this.tableSchema) {
-            return false;
-        }
-        return predicate.getChildCount() <= this.getIndexQueryThreshold();
-    }
-    isCandidateValuePredicate(predicate) {
-        if (!predicate.isKeyRangeCompatible()
-            || predicate.column.getTable() !== this.tableSchema) {
-            return false;
-        }
-        if (predicate.evaluatorType === EvalType$1.IN
-            && predicate.peek().length > this.getIndexQueryThreshold()) {
-            return false;
-        }
-        return true;
-    }
-}
-class IndexRangeScanStep$1 extends PhysicalQueryPlanNode$1 {
-    // |reverseOrder|: return the results in reverse index order.
-    constructor(global, index, keyRangeCalculator, reverseOrder) {
-        super(0, ExecType$1.NO_CHILD);
-        this.index = index;
-        this.keyRangeCalculator = keyRangeCalculator;
-        this.reverseOrder = reverseOrder;
-        this.indexStore = global.getService(Service$1.INDEX_STORE);
-        this.useLimit = false;
-        this.useSkip = false;
-    }
-    toString() {
-        return (`index_range_scan(${this.index.getNormalizedName()}, ?, `
-            + (this.reverseOrder ? "reverse" : "natural")
-            + (this.useLimit ? ", limit:?" : "")
-            + (this.useSkip ? ", skip:?" : "")
-            + ")");
-    }
-    toContextString(context) {
-        let results = this.toString();
-        const keyRanges = this.keyRangeCalculator.getKeyRangeCombinations(context);
-        results = results.replace("?", keyRanges.toString());
-        if (this.useLimit) {
-            results = results.replace("?", context.limit.toString());
-        }
-        if (this.useSkip) {
-            results = results.replace("?", context.skip.toString());
-        }
-        return results;
-    }
-    execInternal(relations, journal, ctx) {
-        const context = ctx;
-        const keyRanges = this.keyRangeCalculator.getKeyRangeCombinations(context);
-        const index = this.indexStore.get(this.index.getNormalizedName());
-        let rowIds;
-        if (keyRanges.length === 1
-            && keyRanges[0] instanceof SingleKeyRange$1
-            && keyRanges[0].isOnly()) {
-            rowIds = IndexHelper$1.slice(index.get(keyRanges[0].from), false, // Single key will never reverse order.
-                this.useLimit ? context.limit : undefined, this.useSkip ? context.skip : undefined);
-        }
-        else {
-            rowIds = index.getRange(keyRanges, this.reverseOrder, this.useLimit ? context.limit : undefined, this.useSkip ? context.skip : undefined);
-        }
-        const rows = rowIds.map((rowId) => new Row$1(rowId, {}));
-        return [Relation$1.fromRows(rows, [this.index.tableName])];
-    }
-}
-class SelectStep$1 extends PhysicalQueryPlanNode$1 {
-    constructor(predicateId) {
-        super(1, ExecType$1.FIRST_CHILD);
-        this.predicateId = predicateId;
-    }
-    toString() {
-        return "select(?)";
-    }
-    toContextString(context) {
-        const predicate = context.getPredicate(this.predicateId);
-        return this.toString().replace("?", predicate.toString());
-    }
-    execInternal(relations, journal, context) {
-        // context must be provided for SelectStep.
-        const predicate = context.getPredicate(this.predicateId);
-        return [predicate.eval(relations[0])];
-    }
-}
-class TableAccessByRowIdStep$1 extends PhysicalQueryPlanNode$1 {
-    constructor(global, table) {
-        super(1, ExecType$1.FIRST_CHILD);
-        this.table = table;
-        this.cache = global.getService(Service$1.CACHE);
-    }
-    toString() {
-        return `table_access_by_row_id(${this.table.getName()})`;
-    }
-    execInternal(relations, journal, ctx) {
-        return [
-            Relation$1.fromRows(this.cache.getMany(relations[0].getRowIds()), [
-                this.table.getEffectiveName()
-            ])
-        ];
-    }
-}
-//  An optimization pass that detects if there are any indices that can be used
-// in order to avoid full table scan.
-class IndexRangeScanPass$1 extends RewritePass$1 {
-    constructor(global) {
-        super();
-        this.global = global;
-    }
-    rewrite(rootNode, queryContext) {
-        this.rootNode = rootNode;
-        const tableAccessFullSteps = TreeHelper$1.find(rootNode, (node) => node instanceof TableAccessFullStep$1);
-        tableAccessFullSteps.forEach((tableAccessFullStep) => {
-            const selectStepsCandidates = this.findSelectSteps(tableAccessFullStep);
-            if (selectStepsCandidates.length === 0) {
-                return;
-            }
-            const costEstimator = new IndexCostEstimator$1(this.global, tableAccessFullStep.table);
-            const indexRangeCandidate = costEstimator.chooseIndexFor(queryContext, selectStepsCandidates.map((c) => queryContext.getPredicate(c.predicateId)));
-            if (indexRangeCandidate === null) {
-                // No SelectStep could be optimized for this table.
-                return;
-            }
-            // Creating a temporary mapping from Predicate to SelectStep, such that
-            // the predicates that can be replaced by an index-range scan can be
-            // mapped back to SelectStep nodes.
-            const predicateToSelectStepMap = new Map();
-            selectStepsCandidates.forEach((selectStep) => {
-                predicateToSelectStepMap.set(selectStep.predicateId, selectStep);
-            }, this);
-            this.rootNode = this.replaceWithIndexRangeScanStep(indexRangeCandidate, predicateToSelectStepMap, tableAccessFullStep);
-        }, this);
-        return this.rootNode;
-    }
-    // Finds all the SelectStep instances that exist in the tree above the given
-    // node and are eligible for optimization.
-    findSelectSteps(startNode) {
-        const selectSteps = [];
-        let node = startNode.getParent();
-        while (node) {
-            if (node instanceof SelectStep$1) {
-                selectSteps.push(node);
-            }
-            else if (node instanceof JoinStep$1) {
-                // Stop searching if a join node is traversed.
-                break;
-            }
-            node = node.getParent();
-        }
-        return selectSteps;
-    }
-    // Replaces all the SelectSteps that can be calculated by using the chosen
-    // index with two new steps an IndexRangeScanStep and a
-    // TableAccessByRowIdStep.
-    replaceWithIndexRangeScanStep(indexRangeCandidate, predicateToSelectStepMap, tableAccessFullStep) {
-        const predicateIds = indexRangeCandidate.getPredicateIds();
-        const selectSteps = predicateIds.map((predicateId) => {
-            return predicateToSelectStepMap.get(predicateId);
-        });
-        selectSteps.forEach(TreeHelper$1.removeNode);
-        const indexRangeScanStep = new IndexRangeScanStep$1(this.global, indexRangeCandidate.indexSchema, indexRangeCandidate.getKeyRangeCalculator(), false /* reverseOrder */);
-        const tableAccessByRowIdStep = new TableAccessByRowIdStep$1(this.global, tableAccessFullStep.table);
-        tableAccessByRowIdStep.addChild(indexRangeScanStep);
-        TreeHelper$1.replaceNodeWithChain(tableAccessFullStep, tableAccessByRowIdStep, indexRangeScanStep);
-        return indexRangeScanStep.getRoot();
-    }
-}
-class InsertStep$1 extends PhysicalQueryPlanNode$1 {
-    constructor(global, table) {
-        super(0, ExecType$1.NO_CHILD);
-        this.table = table;
-        this.indexStore = global.getService(Service$1.INDEX_STORE);
-    }
-    static assignAutoIncrementPks(t, values, indexStore) {
-        const table = t;
-        const pkIndexSchema = table.getConstraint().getPrimaryKey();
-        const autoIncrement = pkIndexSchema === null ? false : pkIndexSchema.columns[0].autoIncrement;
-        if (autoIncrement) {
-            const pkColumnName = pkIndexSchema.columns[0].schema.getName();
-            const index = indexStore.get(pkIndexSchema.getNormalizedName());
-            const max = index.stats().maxKeyEncountered;
-            let maxKey = max === null ? 0 : max;
-            values.forEach((row) => {
-                // A value of 0, null or undefined indicates that a primary key should
-                // automatically be assigned.
-                const val = row.payload()[pkColumnName];
-                if (val === 0 || val === null || val === undefined) {
-                    maxKey++;
-                    row.payload()[pkColumnName] = maxKey;
-                }
-            });
-        }
-    }
-    toString() {
-        return `insert(${this.table.getName()})`;
-    }
-    execInternal(relations, journal, queryContext) {
-        const values = queryContext.values;
-        InsertStep$1.assignAutoIncrementPks(this.table, values, this.indexStore);
-        journal.insert(this.table, values);
-        return [Relation$1.fromRows(values, [this.table.getName()])];
-    }
-}
-class InsertOrReplaceStep$1 extends PhysicalQueryPlanNode$1 {
-    constructor(global, table) {
-        super(0, ExecType$1.NO_CHILD);
-        this.table = table;
-        this.indexStore = global.getService(Service$1.INDEX_STORE);
-    }
-    toString() {
-        return `insert_replace(${this.table.getName()})`;
-    }
-    execInternal(relations, journal, ctx) {
-        const queryContext = ctx;
-        InsertStep$1.assignAutoIncrementPks(this.table, queryContext.values, this.indexStore);
-        journal.insertOrReplace(this.table, queryContext.values);
-        return [Relation$1.fromRows(queryContext.values, [this.table.getName()])];
-    }
-}
-class LimitStep$1 extends PhysicalQueryPlanNode$1 {
-    constructor() {
-        super(1, ExecType$1.FIRST_CHILD);
-    }
-    toString() {
-        return "limit(?)";
-    }
-    toContextString(context) {
-        return this.toString().replace("?", context.limit.toString());
-    }
-    execInternal(relations, journal, context) {
-        // opt_context must be provided for LimitStep.
-        relations[0].entries.splice(context.limit);
-        return relations;
-    }
-}
-class OrderByStep$1 extends PhysicalQueryPlanNode$1 {
-    constructor(orderBy) {
-        super(PhysicalQueryPlanNode$1.ANY, ExecType$1.FIRST_CHILD);
-        this.orderBy = orderBy;
-    }
-    toString() {
-        return `order_by(${SelectContext$1.orderByToString(this.orderBy)})`;
-    }
-    execInternal(relations, journal, context) {
-        if (relations.length === 1) {
-            const distinctColumn = this.findDistinctColumn(relations[0]);
-            // If such a column exists, sort the results of the lf.fn.distinct
-            // aggregator instead, since this is what will be used in the returned
-            // result.
-            const relationToSort = distinctColumn === null ? relations[0] : relations[0].getAggregationResult(distinctColumn);
-            relationToSort.entries.sort(this.entryComparatorFn.bind(this));
-        }
-        else {
-            // if (relations.length > 1) {
-            relations.sort(this.relationComparatorFn.bind(this));
-        }
-        return relations;
-    }
-    // Determines whether sorting is requested on a column that has been
-    // aggregated with lf.fn.distinct (if any).
-    findDistinctColumn(relation) {
-        let distinctColumn = null;
-        this.orderBy.every((entry) => {
-            const tempDistinctColumn = fn$1.distinct(entry.column);
-            if (relation.hasAggregationResult(tempDistinctColumn)) {
-                distinctColumn = tempDistinctColumn;
-                return false;
-            }
-            return true;
-        }, this);
-        return distinctColumn;
-    }
-    // Returns -1 if a should precede b, 1 if b should precede a, 0 if a and b
-    // are determined to be equal.
-    comparator(getLeftPayload, getRightPayload) {
-        let order;
-        let leftPayload = null;
-        let rightPayload = null;
-        let comparisonIndex = -1;
-        do {
-            comparisonIndex++;
-            const column = this.orderBy[comparisonIndex].column;
-            order = this.orderBy[comparisonIndex].order;
-            leftPayload = getLeftPayload(column);
-            rightPayload = getRightPayload(column);
-        } while (leftPayload === rightPayload
-            && comparisonIndex + 1 < this.orderBy.length);
-        let result = leftPayload < rightPayload ? -1 : leftPayload > rightPayload ? 1 : 0;
-        result = order === Order$1.ASC ? result : -result;
-        return result;
-    }
-    entryComparatorFn(lhs, rhs) {
-        // NOTE: Avoiding on purpose to create a getPayload(operand, column) method
-        // here, and binding it once to lhs and once to rhs, because it turns out
-        // that Function.bind() is significantly hurting performance (measured on
-        // Chrome 40).
-        return this.comparator((column) => lhs.getField(column), (column) => rhs.getField(column));
-    }
-    relationComparatorFn(lhs, rhs) {
-        // NOTE: See NOTE in entryComparatorFn_ on why two separate functions are
-        // passed in this.comparator_ instead of using one method and binding to lhs
-        // and to rhs respectively.
-        return this.comparator((column) => {
-            // If relations are sorted based on a non-aggregated column, choose
-            // the last entry of each relation as a representative row (same as
-            // SQLite).
-            return (column instanceof AggregatedColumn$1 ? lhs.getAggregationResult(column) : lhs.entries[lhs.entries.length - 1].getField(column));
-        }, (column) => {
-            return (column instanceof AggregatedColumn$1 ? rhs.getAggregationResult(column) : rhs.entries[rhs.entries.length - 1].getField(column));
-        });
-    }
-}
-class RelationTransformer$1 {
-    constructor(relation, columns) {
-        this.relation = relation;
-        this.columns = columns;
-    }
-    // Transforms a list of relations to a single relation. Each input relation is
-    // transformed to a single entry on the final relation.
-    // Note: Projection columns must include at least one aggregated column.
-    // |relations|: The relations to be transformed.
-    // |columns|: The columns to include in the transformed relation.
-    static transformMany(relations, columns) {
-        const entries = relations.map((relation) => {
-            const relationTransformer = new RelationTransformer$1(relation, columns);
-            const singleEntryRelation = relationTransformer.getTransformed();
-            return singleEntryRelation.entries[0];
-        });
-        return new Relation$1(entries, relations[0].getTables());
-    }
-    // Calculates a transformed Relation based on the columns that are requested.
-    // The type of the requested columns affect the output (non-aggregate only VS
-    // aggregate and non-aggregate mixed up).
-    getTransformed() {
-        // Determine whether any aggregated columns have been requested.
-        const aggregatedColumnsExist = this.columns.some((column) => column instanceof AggregatedColumn$1);
-        return aggregatedColumnsExist ? this.handleAggregatedColumns() : this.handleNonAggregatedColumns();
-    }
-    // Generates the transformed relation for the case where the requested columns
-    // include any aggregated columns.
-    handleAggregatedColumns() {
-        // If the only aggregator that was used was DISTINCT, return the relation
-        // corresponding to it.
-        if (this.columns.length === 1
-            && this.columns[0].aggregatorType === FnType$1.DISTINCT) {
-            const distinctRelation = this.relation.getAggregationResult(this.columns[0]);
-            const newEntries = distinctRelation.entries.map((e) => {
-                const newEntry = new RelationEntry$1(new Row$1(Row$1.DUMMY_ID, {}), this.relation.isPrefixApplied());
-                newEntry.setField(this.columns[0], e.getField(this.columns[0].child));
-                return newEntry;
-            }, this);
-            return new Relation$1(newEntries, []);
-        }
-        // Generate a new relation where there is only one entry, and within that
-        // entry there is exactly one field per column.
-        const entry = new RelationEntry$1(new Row$1(Row$1.DUMMY_ID, {}), this.relation.isPrefixApplied());
-        this.columns.forEach((column) => {
-            const value = column instanceof AggregatedColumn$1 ? this.relation.getAggregationResult(column) : this.relation.entries[0].getField(column);
-            entry.setField(column, value);
-        }, this);
-        return new Relation$1([entry], this.relation.getTables());
-    }
-    // Generates the transformed relation for the case where the requested columns
-    // include only non-aggregated columns.
-    handleNonAggregatedColumns() {
-        // Generate a new relation where each entry includes only the specified
-        // columns.
-        const transformedEntries = new Array(this.relation.entries.length);
-        const isPrefixApplied = this.relation.isPrefixApplied();
-        this.relation.entries.forEach((entry, index) => {
-            transformedEntries[index] = new RelationEntry$1(new Row$1(entry.row.id(), {}), isPrefixApplied);
-            this.columns.forEach((column) => {
-                transformedEntries[index].setField(column, entry.getField(column));
-            }, this);
-        }, this);
-        return new Relation$1(transformedEntries, this.relation.getTables());
-    }
-}
-class ProjectStep$1 extends PhysicalQueryPlanNode$1 {
-    constructor(columns, groupByColumns) {
-        super(PhysicalQueryPlanNode$1.ANY, ExecType$1.FIRST_CHILD);
-        this.columns = columns;
-        this.groupByColumns = groupByColumns;
-    }
-    toString() {
-        let postfix = "";
-        if (this.groupByColumns) {
-            const groupBy = this.groupByColumns
-                .map((col) => col.getNormalizedName())
-                .join(", ");
-            postfix = `, groupBy(${groupBy})`;
-        }
-        return `project(${this.columns.toString()}${postfix})`;
-    }
-    execInternal(relations, journal, context) {
-        if (relations.length === 0) {
-            return [Relation$1.createEmpty()];
-        }
-        else if (relations.length === 1) {
-            return [this.execNonGroupByProjection(relations[0])];
-        }
-        else {
-            return [this.execGroupByProjection(relations)];
-        }
-    }
-    // Returns whether any aggregators (either columns or groupBy) have been
-    // specified.
-    hasAggregators() {
-        const hasAggregators = this.columns.some((column) => {
-            return column instanceof AggregatedColumn$1;
-        });
-        return hasAggregators || this.groupByColumns !== null;
-    }
-    // Calculates the final relation for the case where GROUP_BY exists.
-    execGroupByProjection(relations) {
-        return RelationTransformer$1.transformMany(relations, this.columns);
-    }
-    // Calculates the final relation for the case where no GROUP_BY exists.
-    execNonGroupByProjection(relation) {
-        if (this.columns.length === 0) {
-            return relation;
-        }
-        const relationTransformer = new RelationTransformer$1(relation, this.columns);
-        return relationTransformer.getTransformed();
-    }
-}
-class SkipStep$1 extends PhysicalQueryPlanNode$1 {
-    constructor() {
-        super(1, ExecType$1.FIRST_CHILD);
-    }
-    toString() {
-        return "skip(?)";
-    }
-    toContextString(context) {
-        return this.toString().replace("?", context.skip.toString());
-    }
-    execInternal(relations, journal, context) {
-        return [
-            new Relation$1(relations[0].entries.slice(context.skip), relations[0].getTables())
-        ];
-    }
-}
-class LimitSkipByIndexPass$1 extends RewritePass$1 {
-    constructor() {
-        super();
-    }
-    rewrite(rootNode, queryContext) {
-        if (queryContext.limit === undefined && queryContext.skip === undefined) {
-            // No LIMIT or SKIP exists.
-            return rootNode;
-        }
-        const indexRangeScanStep = this.findIndexRangeScanStep(rootNode);
-        if (indexRangeScanStep === null) {
-            // No IndexRangeScanStep that can be leveraged was found.
-            return rootNode;
-        }
-        const nodes = TreeHelper$1.find(rootNode, (node) => node instanceof LimitStep$1 || node instanceof SkipStep$1);
-        nodes.forEach((node) => {
-            this.mergeToIndexRangeScanStep(node, indexRangeScanStep);
-        }, this);
-        return indexRangeScanStep.getRoot();
-    }
-    // Merges a LimitStep or SkipStep to the given IndexRangeScanStep.
-    mergeToIndexRangeScanStep(node, indexRangeScanStep) {
-        if (node instanceof LimitStep$1) {
-            indexRangeScanStep.useLimit = true;
-        }
-        else {
-            indexRangeScanStep.useSkip = true;
-        }
-        return TreeHelper$1.removeNode(node).parent;
-    }
-    // Finds any existing IndexRangeScanStep that can be leveraged to limit and
-    // skip results.
-    findIndexRangeScanStep(rootNode) {
-        const filterFn = (node) => {
-            return node instanceof IndexRangeScanStep$1;
-        };
-        // LIMIT and SKIP needs to be executed after
-        //  - projections that include either groupBy or aggregators,
-        //  - joins/cross-products,
-        //  - selections,
-        //  - sorting
-        // have been calculated. Therefore if such nodes exist this optimization can
-        // not be applied.
-        const stopFn = (node) => {
-            const hasAggregators = node instanceof ProjectStep$1 && node.hasAggregators();
-            return (hasAggregators
-                || node instanceof OrderByStep$1
-                || node.getChildCount() !== 1
-                || node instanceof SelectStep$1);
-        };
-        const indexRangeScanSteps = TreeHelper$1.find(rootNode, filterFn, stopFn);
-        return indexRangeScanSteps.length > 0 ? indexRangeScanSteps[0] : null;
-    }
-}
-class MultiIndexRangeScanStep$1 extends PhysicalQueryPlanNode$1 {
-    constructor() {
-        super(PhysicalQueryPlanNode$1.ANY, ExecType$1.ALL);
-    }
-    toString() {
-        return "multi_index_range_scan()";
-    }
-    execInternal(relations, journal, ctx) {
-        // Calculate a new Relation that includes the union of the entries of all
-        // relations. All child relations must be including rows from the same
-        // table.
-        const entriesUnion = new Map();
-        relations.forEach((relation) => {
-            relation.entries.forEach((entry) => {
-                entriesUnion.set(entry.row.id(), entry);
-            });
-        });
-        const entries = Array.from(entriesUnion.values());
-        return [new Relation$1(entries, relations[0].getTables())];
-    }
-}
-// An optimization pass that detects if there are any OR predicates that
-// 1) Refer to a single table.
-// 2) Refer to multiple columns.
-// 3) All referred columns  are indexed.
-//
-// If such predicates are found the tree is transformed to leverage indices.
-// OR predicates that refer to a single column are already optimized by the
-// previous optimization pass IndexRangeScanPass.
-class MultiColumnOrPass$1 extends RewritePass$1 {
-    constructor(global) {
-        super();
-        this.global = global;
-    }
-    rewrite(rootNode, queryContext) {
-        this.rootNode = rootNode;
-        const orSelectSteps = this.findOrPredicates(queryContext);
-        if (orSelectSteps.length === 0) {
-            // No OR predicates exist, this optimization does not apply.
-            return this.rootNode;
-        }
-        // In the presence of multiple candidate OR predicates currently the first
-        // one that can leverage indices is chosen.
-        // TODO(dpapad): Compare the index range scan cost for each of the
-        // predicates and select the fastest one.
-        let indexRangeCandidates = null;
-        let orSelectStep = null;
-        let i = 0;
-        do {
-            orSelectStep = orSelectSteps[i++];
-            indexRangeCandidates = this.findIndexRangeCandidates(orSelectStep, queryContext);
-        } while (indexRangeCandidates === null && i < orSelectSteps.length);
-        if (indexRangeCandidates === null) {
-            return this.rootNode;
-        }
-        const tableAccessFullStep = this.findTableAccessFullStep(indexRangeCandidates[0].indexSchema.tableName);
-        if (tableAccessFullStep === null) {
-            // No TableAccessFullStep exists, an index is leveraged already, this
-            // optimization does not apply.
-            return this.rootNode;
-        }
-        this.rootNode = this.replaceWithIndexRangeScan(orSelectStep, tableAccessFullStep, indexRangeCandidates);
-        return this.rootNode;
-    }
-    // Find SelectStep instances in the tree corresponding to OR predicates.
-    findOrPredicates(queryContext) {
-        const filterFn = (node) => {
-            if (!(node instanceof SelectStep$1)) {
-                return false;
-            }
-            const predicate = queryContext.getPredicate(node.predicateId);
-            return (predicate instanceof CombinedPredicate$1
-                && predicate.operator === Operator$1.OR);
-        };
-        return TreeHelper$1.find(this.rootNode, filterFn);
-    }
-    // Find the table access step corresponding to the given table, or null if
-    // such a step does not exist.
-    findTableAccessFullStep(tableName) {
-        return (TreeHelper$1.find(this.rootNode, (node) => node instanceof TableAccessFullStep$1
-            && node.table.getName() === tableName)[0] || null);
-    }
-    // Returns the IndexRangeCandidates corresponding to the given multi-column
-    // OR predicate. Null is returned if no indices can be leveraged for the
-    // given predicate.
-    findIndexRangeCandidates(selectStep, queryContext) {
-        const predicate = queryContext.getPredicate(selectStep.predicateId);
-        const tables = predicate.getTables();
-        if (tables.size !== 1) {
-            // Predicates which refer to more than one table are not eligible for this
-            // optimization.
-            return null;
-        }
-        const tableSchema = Array.from(tables.values())[0];
-        const indexCostEstimator = new IndexCostEstimator$1(this.global, tableSchema);
-        let indexRangeCandidates = null;
-        const allIndexed = predicate.getChildren().every((childPredicate) => {
-            const indexRangeCandidate = indexCostEstimator.chooseIndexFor(queryContext, [childPredicate]);
-            if (indexRangeCandidate !== null) {
-                indexRangeCandidates === null ? indexRangeCandidates = [indexRangeCandidate] : indexRangeCandidates.push(indexRangeCandidate);
-            }
-            return indexRangeCandidate !== null;
-        });
-        return allIndexed ? indexRangeCandidates : null;
-    }
-    // Replaces the given SelectStep with a MultiIndexRangeScanStep
-    // (and children).
-    replaceWithIndexRangeScan(selectStep, tableAccessFullStep, indexRangeCandidates) {
-        const tableAccessByRowIdStep = new TableAccessByRowIdStep$1(this.global, tableAccessFullStep.table);
-        const multiIndexRangeScanStep = new MultiIndexRangeScanStep$1();
-        tableAccessByRowIdStep.addChild(multiIndexRangeScanStep);
-        indexRangeCandidates.forEach((candidate) => {
-            const indexRangeScanStep = new IndexRangeScanStep$1(this.global, candidate.indexSchema, candidate.getKeyRangeCalculator(), false /* reverseOrder */);
-            multiIndexRangeScanStep.addChild(indexRangeScanStep);
-        }, this);
-        TreeHelper$1.removeNode(selectStep);
-        TreeHelper$1.replaceNodeWithChain(tableAccessFullStep, tableAccessByRowIdStep, multiIndexRangeScanStep);
-        return multiIndexRangeScanStep.getRoot();
-    }
-}
-class UnboundedKeyRangeCalculator$1 {
-    constructor(indexSchema) {
-        this.indexSchema = indexSchema;
-    }
-    getKeyRangeCombinations(queryContext) {
-        return this.indexSchema.columns.length === 1 ? [SingleKeyRange$1.all()] : [this.indexSchema.columns.map((col) => SingleKeyRange$1.all())];
-    }
-}
-// The OrderByIndexPass is responsible for modifying a tree that has a
-// OrderByStep node to an equivalent tree that leverages indices to perform
-// sorting.
-class OrderByIndexPass$1 extends RewritePass$1 {
-    constructor(global) {
-        super();
-        this.global = global;
-    }
-    rewrite(rootNode, queryContext) {
-        const orderByStep = this.findOrderByStep(rootNode, queryContext);
-        if (orderByStep === null) {
-            // No OrderByStep was found.
-            return rootNode;
-        }
-        let newSubtreeRoot = this.applyTableAccessFullOptimization(orderByStep);
-        if (newSubtreeRoot === orderByStep) {
-            newSubtreeRoot = this.applyIndexRangeScanStepOptimization(orderByStep);
-        }
-        return newSubtreeRoot.getRoot();
-    }
-    // Attempts to replace the OrderByStep with a new IndexRangeScanStep.
-    applyTableAccessFullOptimization(orderByStep) {
-        let rootNode = orderByStep;
-        const tableAccessFullStep = this.findTableAccessFullStep(orderByStep.getChildAt(0));
-        if (tableAccessFullStep !== null) {
-            const indexRangeCandidate = this.findIndexCandidateForOrderBy(tableAccessFullStep.table, orderByStep.orderBy);
-            if (indexRangeCandidate === null) {
-                // Could not find an index schema that can be leveraged.
-                return rootNode;
-            }
-            const indexRangeScanStep = new IndexRangeScanStep$1(this.global, indexRangeCandidate.indexSchema, new UnboundedKeyRangeCalculator$1(indexRangeCandidate.indexSchema), indexRangeCandidate.isReverse);
-            const tableAccessByRowIdStep = new TableAccessByRowIdStep$1(this.global, tableAccessFullStep.table);
-            tableAccessByRowIdStep.addChild(indexRangeScanStep);
-            TreeHelper$1.removeNode(orderByStep);
-            rootNode = TreeHelper$1.replaceNodeWithChain(tableAccessFullStep, tableAccessByRowIdStep, indexRangeScanStep);
-        }
-        return rootNode;
-    }
-    // Attempts to replace the OrderByStep with an existing IndexRangeScanStep.
-    applyIndexRangeScanStepOptimization(orderByStep) {
-        let rootNode = orderByStep;
-        const indexRangeScanStep = this.findIndexRangeScanStep(orderByStep.getChildAt(0));
-        if (indexRangeScanStep !== null) {
-            const indexRangeCandidate = this.getIndexCandidateForIndexSchema(indexRangeScanStep.index, orderByStep.orderBy);
-            if (indexRangeCandidate === null) {
-                return rootNode;
-            }
-            indexRangeScanStep.reverseOrder = indexRangeCandidate.isReverse;
-            rootNode = TreeHelper$1.removeNode(orderByStep)
-                .parent;
-        }
-        return rootNode;
-    }
-    // Finds any existing IndexRangeScanStep that can potentially be used to
-    // produce the requested ordering instead of the OrderByStep.
-    findIndexRangeScanStep(rootNode) {
-        const filterFn = (node) => node instanceof IndexRangeScanStep$1;
-        // CrossProductStep/JoinStep/MultiIndexRangeScanStep nodes have more than
-        // one child, and mess up the ordering of results. Therefore if such nodes
-        // exist this optimization can not be applied.
-        const stopFn = (node) => node.getChildCount() !== 1;
-        const indexRangeScanSteps = TreeHelper$1.find(rootNode, filterFn, stopFn);
-        return indexRangeScanSteps.length > 0 ? indexRangeScanSteps[0] : null;
-    }
-    // Finds any existing TableAccessFullStep that can potentially be converted to
-    // an IndexRangeScanStep instead of using an explicit OrderByStep.
-    findTableAccessFullStep(rootNode) {
-        const filterFn = (node) => node instanceof TableAccessFullStep$1;
-        // CrossProductStep and JoinStep nodes have more than one child, and mess up
-        // the ordering of results. Therefore if such nodes exist this optimization
-        // can not be applied.
-        const stopFn = (node) => node.getChildCount() !== 1;
-        const tableAccessFullSteps = TreeHelper$1.find(rootNode, filterFn, stopFn);
-        return tableAccessFullSteps.length > 0 ? tableAccessFullSteps[0] : null;
-    }
-    // Finds the OrderByStep if it exists in the tree.
-    findOrderByStep(rootNode, queryContext) {
-        if (queryContext.orderBy === undefined) {
-            // No ORDER BY exists.
-            return null;
-        }
-        return TreeHelper$1.find(rootNode, (node) => node instanceof OrderByStep$1)[0];
-    }
-    findIndexCandidateForOrderBy(tableSchema, orderBy) {
-        let indexCandidate = null;
-        const indexSchemas = tableSchema.getIndices();
-        for (let i = 0; i < indexSchemas.length && indexCandidate === null; i++) {
-            indexCandidate = this.getIndexCandidateForIndexSchema(indexSchemas[i], orderBy);
-        }
-        return indexCandidate;
-    }
-    // Determines whether the given index schema can be leveraged for producing
-    // the ordering specified by the given orderBy.
-    getIndexCandidateForIndexSchema(indexSchema, orderBy) {
-        // First find an index schema which includes all columns to be sorted in the
-        // same order.
-        const columnsMatch = indexSchema.columns.length === orderBy.length
-            && orderBy.every((singleOrderBy, j) => {
-                const indexedColumn = indexSchema.columns[j];
-                return (singleOrderBy.column.getName() === indexedColumn.schema.getName());
-            });
-        if (!columnsMatch) {
-            return null;
-        }
-        // If columns match, determine whether the requested ordering within each
-        // column matches the index, either in natural or reverse order.
-        const isNaturalOrReverse = this.checkOrder(orderBy, indexSchema);
-        if (!isNaturalOrReverse[0] && !isNaturalOrReverse[1]) {
-            return null;
-        }
-        return {
-            "indexSchema": indexSchema,
-            "isReverse": isNaturalOrReverse[1]
-        };
-    }
-    // Compares the order of each column in the orderBy and the indexSchema and
-    // determines whether it is equal to the indexSchema 'natural' or 'reverse'
-    // order.
-    // Returns An array of 2 elements, where 1st element corresponds to isNatural
-    // and 2nd to isReverse.
-    checkOrder(orderBy, indexSchema) {
-        // Converting orderBy orders to a bitmask.
-        const ordersLeftBitmask = orderBy.reduce((soFar, columnOrderBy) => {
-            return soFar << 1 | (columnOrderBy.order === Order$1.DESC ? 0 : 1);
-        }, 0);
-        // Converting indexSchema orders to a bitmask.
-        const ordersRightBitmask = indexSchema.columns.reduce((soFar, indexedColumn) => {
-            return soFar << 1 | (indexedColumn.order === Order$1.DESC ? 0 : 1);
-        }, 0);
-        const xorBitmask = ordersLeftBitmask ^ ordersRightBitmask;
-        const isNatural = xorBitmask === 0;
-        const isReverse = xorBitmask
-            === 2 ** Math.max(orderBy.length, indexSchema.columns.length) - 1;
-        return [isNatural, isReverse];
-    }
-}
-// Rewrites the logical query plan such that the resulting physical query plan
-// is faster to calculate than the original "naive" plan.
-class PhysicalPlanRewriter$1 {
-    constructor(rootNode, queryContext, rewritePasses) {
-        this.rootNode = rootNode;
-        this.queryContext = queryContext;
-        this.rewritePasses = rewritePasses;
-    }
-    // Rewrites the physical plan.
-    generate() {
-        this.rewritePasses.forEach((rewritePass) => {
-            this.rootNode = rewritePass.rewrite(this.rootNode, this.queryContext);
-        }, this);
-        return this.rootNode;
-    }
-}
-class UpdateStep$1 extends PhysicalQueryPlanNode$1 {
-    constructor(table) {
-        super(1, ExecType$1.FIRST_CHILD);
-        this.table = table;
-    }
-    toString() {
-        return `update(${this.table.getName()})`;
-    }
-    execInternal(relations, journal, context) {
-        const table = this.table;
-        const rows = relations[0].entries.map((entry) => {
-            // Need to clone the row here before modifying it, because it is a
-            // direct reference to the cache's contents.
-            const clone = table.deserializeRow(entry.row.serialize());
-            context.set.forEach((update) => {
-                clone.payload()[update.column.getName()] = update.value;
-            }, this);
-            return clone;
-        }, this);
-        journal.update(table, rows);
-        return [Relation$1.createEmpty()];
-    }
-}
-class PhysicalPlanFactory$1 {
-    constructor(global) {
-        this.global = global;
-        this.selectOptimizationPasses = [
-            new IndexJoinPass$1(),
-            new IndexRangeScanPass$1(global),
-            new MultiColumnOrPass$1(global),
-            new OrderByIndexPass$1(global),
-            new LimitSkipByIndexPass$1(),
-            new GetRowCountPass$1(global)
-        ];
-        this.deleteOptimizationPasses = [new IndexRangeScanPass$1(global)];
-    }
-    create(logicalQueryPlan, queryContext) {
-        const logicalQueryPlanRoot = logicalQueryPlan.getRoot();
-        if (logicalQueryPlanRoot instanceof InsertOrReplaceNode$1
-            || logicalQueryPlanRoot instanceof InsertNode$1) {
-            return this.createPlan(logicalQueryPlan, queryContext);
-        }
-        if (logicalQueryPlanRoot instanceof ProjectNode$1
-            || logicalQueryPlanRoot instanceof LimitNode$1
-            || logicalQueryPlanRoot instanceof SkipNode$1) {
-            return this.createPlan(logicalQueryPlan, queryContext, this.selectOptimizationPasses);
-        }
-        if (logicalQueryPlanRoot instanceof DeleteNode$1
-            || logicalQueryPlanRoot instanceof UpdateNode$1) {
-            return this.createPlan(logicalQueryPlan, queryContext, this.deleteOptimizationPasses);
-        }
-        // Should never get here since all cases are handled above.
-        // 8: Unknown query plan node.
-        throw new Exception$1(ErrorCode$1.UNKNOWN_PLAN_NODE);
-    }
-    createPlan(logicalPlan, queryContext, rewritePasses) {
-        let rootStep = TreeHelper$1.map(logicalPlan.getRoot(), this.mapFn.bind(this));
-        if (rewritePasses !== undefined && rewritePasses !== null) {
-            const planRewriter = new PhysicalPlanRewriter$1(rootStep, queryContext, rewritePasses);
-            rootStep = planRewriter.generate();
-        }
-        return new PhysicalQueryPlan$1(rootStep, logicalPlan.getScope());
-    }
-    // Maps each node of a logical execution plan to a corresponding physical
-    // execution step.
-    mapFn(node) {
-        if (node instanceof ProjectNode$1) {
-            return new ProjectStep$1(node.columns, node.groupByColumns);
-        }
-        else if (node instanceof GroupByNode$1) {
-            return new GroupByStep$1(node.columns);
-        }
-        else if (node instanceof AggregationNode$1) {
-            return new AggregationStep$1(node.columns);
-        }
-        else if (node instanceof OrderByNode$1) {
-            return new OrderByStep$1(node.orderBy);
-        }
-        else if (node instanceof SkipNode$1) {
-            return new SkipStep$1();
-        }
-        else if (node instanceof LimitNode$1) {
-            return new LimitStep$1();
-        }
-        else if (node instanceof SelectNode$1) {
-            return new SelectStep$1(node.predicate.getId());
-        }
-        else if (node instanceof CrossProductNode$1) {
-            return new CrossProductStep$1();
-        }
-        else if (node instanceof JoinNode$1) {
-            return new JoinStep$1(this.global, node.predicate, node.isOuterJoin);
-        }
-        else if (node instanceof TableAccessNode$1) {
-            return new TableAccessFullStep$1(this.global, node.table);
-        }
-        else if (node instanceof DeleteNode$1) {
-            return new DeleteStep$1(node.table);
-        }
-        else if (node instanceof UpdateNode$1) {
-            return new UpdateStep$1(node.table);
-        }
-        else if (node instanceof InsertOrReplaceNode$1) {
-            return new InsertOrReplaceStep$1(this.global, node.table);
-        }
-        else if (node instanceof InsertNode$1) {
-            return new InsertStep$1(this.global, node.table);
-        }
-        // 514: Unknown node type.
-        throw new Exception$1(ErrorCode$1.UNKNOWN_NODE_TYPE);
-    }
-}
-class DefaultQueryEngine$1 {
-    constructor(global) {
-        this.logicalPlanFactory = new LogicalPlanFactory$1();
-        this.physicalPlanFactory = new PhysicalPlanFactory$1(global);
-    }
-    getPlan(query) {
-        const logicalQueryPlan = this.logicalPlanFactory.create(query);
-        return this.physicalPlanFactory.create(logicalQueryPlan, query);
-    }
-}
-class ExportTask$1 extends UniqueId$1 {
-    constructor(global) {
-        super();
-        this.global = global;
-        this.schema = global.getService(Service$1.SCHEMA);
-        this.scope = new Set(this.schema.tables());
-        this.resolver = new Resolver$1();
-    }
-    // Grabs contents from the cache and exports them as a plain object.
-    execSync() {
-        const indexStore = this.global.getService(Service$1.INDEX_STORE);
-        const cache = this.global.getService(Service$1.CACHE);
-        const tables = {};
-        this.schema.tables().forEach((table) => {
-            const rowIds = indexStore.get(table.getRowIdIndexName())
-                .getRange();
-            const payloads = cache.getMany(rowIds).map((row) => row.payload());
-            tables[table.getName()] = payloads;
-        });
-        return {
-            "name": this.schema.name(),
-            "tables": tables,
-            "version": this.schema.version()
-        };
-    }
-    exec() {
-        const results = this.execSync();
-        const entry = new RelationEntry$1(new Row$1(Row$1.DUMMY_ID, results), true);
-        return Promise.resolve([new Relation$1([entry], [])]);
-    }
-    getType() {
-        return TransactionType$1.READ_ONLY;
-    }
-    getScope() {
-        return this.scope;
-    }
-    getResolver() {
-        return this.resolver;
-    }
-    getId() {
-        return this.getUniqueNumber();
-    }
-    getPriority() {
-        return TaskPriority$1.EXPORT_TASK;
-    }
-}
-// Imports table/rows from given JavaScript object to an empty database.
-class ImportTask$1 extends UniqueId$1 {
-    constructor(global, data) {
-        super();
-        this.global = global;
-        this.data = data;
-        this.schema = global.getService(Service$1.SCHEMA);
-        this.scope = new Set(this.schema.tables());
-        this.resolver = new Resolver$1();
-        this.backStore = global.getService(Service$1.BACK_STORE);
-        this.cache = global.getService(Service$1.CACHE);
-        this.indexStore = global.getService(Service$1.INDEX_STORE);
-    }
-    exec() {
-        if (!this.backStore.supportsImport()) {
-            // Import is supported only on MemoryDB / IndexedDB / WebSql.
-            // 300: Not supported.
-            throw new Exception$1(ErrorCode$1.NOT_SUPPORTED);
-        }
-        if (!this.isEmptyDB()) {
-            // 110: Attempt to import into a non-empty database.
-            throw new Exception$1(ErrorCode$1.IMPORT_TO_NON_EMPTY_DB);
-        }
-        if (this.schema.name() !== this.data["name"]
-            || this.schema.version() !== this.data["version"]) {
-            // 111: Database name/version mismatch for import.
-            throw new Exception$1(ErrorCode$1.DB_MISMATCH);
-        }
-        if (this.data["tables"] === undefined || this.data["tables"] === null) {
-            // 112: Import data not found.
-            throw new Exception$1(ErrorCode$1.IMPORT_DATA_NOT_FOUND);
-        }
-        return this.import();
-    }
-    getType() {
-        return TransactionType$1.READ_WRITE;
-    }
-    getScope() {
-        return this.scope;
-    }
-    getResolver() {
-        return this.resolver;
-    }
-    getId() {
-        return this.getUniqueNumber();
-    }
-    getPriority() {
-        return TaskPriority$1.IMPORT_TASK;
-    }
-    isEmptyDB() {
-        return this.schema.tables().every((t) => {
-            const table = t;
-            const index = this.indexStore.get(table.getRowIdIndexName());
-            if (index.stats().totalRows > 0) {
-                return false;
-            }
-            return true;
-        });
-    }
-    import() {
-        const journal = new Journal$1(this.global, this.scope);
-        const tx = this.backStore.createTx(this.getType(), Array.from(this.scope.values()), journal);
-        Object.keys(this.data["tables"]).forEach((tableName) => {
-            const tableSchema = this.schema.table(tableName);
-            const payloads = this.data["tables"][tableName];
-            const rows = payloads.map((value) => tableSchema.createRow(value));
-            const table = tx.getTable(tableName, tableSchema.deserializeRow, TableType$1.DATA);
-            this.cache.setMany(tableName, rows);
-            const indices = this.indexStore.getTableIndices(tableName);
-            rows.forEach((row) => {
-                indices.forEach((index) => {
-                    const key = row.keyOfIndex(index.getName());
-                    index.add(key, row.id());
-                });
-            });
-            table.put(rows);
-        }, this);
-        return tx.commit();
-    }
-}
-class LockTableEntry$1 {
-    constructor() {
-        this.exclusiveLock = null;
-        this.reservedReadWriteLock = null;
-        this.reservedReadOnlyLocks = null;
-        this.sharedLocks = null;
-    }
-    releaseLock(taskId) {
-        if (this.exclusiveLock === taskId) {
-            this.exclusiveLock = null;
-        }
-        if (this.reservedReadWriteLock === taskId) {
-            this.reservedReadWriteLock = null;
-        }
-        if (this.reservedReadOnlyLocks) {
-            this.reservedReadOnlyLocks.delete(taskId);
-        }
-        if (this.sharedLocks) {
-            this.sharedLocks.delete(taskId);
-        }
-    }
-    canAcquireLock(taskId, lockType) {
-        const noReservedReadOnlyLocksExist = this.reservedReadOnlyLocks === null
-            || this.reservedReadOnlyLocks.size === 0;
-        if (lockType === LockType$1.EXCLUSIVE) {
-            const noSharedLocksExist = this.sharedLocks === null || this.sharedLocks.size === 0;
-            return (noSharedLocksExist
-                && noReservedReadOnlyLocksExist
-                && this.exclusiveLock === null
-                && this.reservedReadWriteLock !== null
-                && this.reservedReadWriteLock === taskId);
-        }
-        else if (lockType === LockType$1.SHARED) {
-            return (this.exclusiveLock === null
-                && this.reservedReadWriteLock === null
-                && this.reservedReadOnlyLocks !== null
-                && this.reservedReadOnlyLocks.has(taskId));
-        }
-        else if (lockType === LockType$1.RESERVED_READ_ONLY) {
-            return this.reservedReadWriteLock === null;
-        }
-        else {
-            // case of lockType == lf.proc.LockType.RESERVED_READ_WRITE
-            return (noReservedReadOnlyLocksExist
-                && (this.reservedReadWriteLock === null
-                    || this.reservedReadWriteLock === taskId));
-        }
-    }
-    grantLock(taskId, lockType) {
-        if (lockType === LockType$1.EXCLUSIVE) {
-            // TODO(dpapad): Assert that reserved lock was held by this taskId.
-            this.reservedReadWriteLock = null;
-            this.exclusiveLock = taskId;
-        }
-        else if (lockType === LockType$1.SHARED) {
-            // TODO(dpapad): Assert that no other locked is held by this taskId and
-            // that no reserved/exclusive locks exist.
-            if (this.sharedLocks === null) {
-                this.sharedLocks = new Set();
-            }
-            this.sharedLocks.add(taskId);
-            if (this.reservedReadOnlyLocks === null) {
-                this.reservedReadOnlyLocks = new Set();
-            }
-            this.reservedReadOnlyLocks.delete(taskId);
-        }
-        else if (lockType === LockType$1.RESERVED_READ_ONLY) {
-            if (this.reservedReadOnlyLocks === null) {
-                this.reservedReadOnlyLocks = new Set();
-            }
-            this.reservedReadOnlyLocks.add(taskId);
-        }
-        else if (lockType === LockType$1.RESERVED_READ_WRITE) {
-            // TODO(dpapad): Any other assertions here?
-            this.reservedReadWriteLock = taskId;
-        }
-    }
-}
-// LockManager is responsible for granting locks to tasks. Each lock corresponds
-// to a database table.
-//
-// Four types of locks exist in order to implement a two-phase locking
-// algorithm.
-// 1) RESERVED_READ_ONLY: Multiple such locks can be granted. It prevents any
-//    RESERVED_READ_WRITE and EXCLUSIVE locks from being granted. It needs to be
-//    acquired by any task that wants to eventually escalate it to a SHARED
-//    lock.
-// 2) SHARED: Multiple shared locks can be granted (meant to be used by
-//    READ_ONLY tasks). Such tasks must be already holding a RESERVED_READ_ONLY
-//    lock.
-// 3) RESERVED_READ_WRITE: Granted to a single READ_WRITE task. It prevents
-//    further SHARED, RESERVED_READ_ONLY and RESERVED_READ_WRITE locks to be
-//    granted, but the underlying table should not be modified yet, until the
-//    lock is escalated to an EXCLUSIVE lock.
-// 4) EXCLUSIVE: Granted to a single READ_WRITE task. That task must already be
-//    holding a RESERVED_READ_WRITE lock. It prevents further SHARED or
-//    EXCLUSIVE locks to be granted. It is OK to modify a table while holding
-//    such a lock.
-class LockManager$1 {
-    constructor() {
-        this.lockTable = new Map();
-    }
-    // Returns whether the requested lock was acquired.
-    requestLock(taskId, dataItems, lockType) {
-        const canAcquireLock = this.canAcquireLock(taskId, dataItems, lockType);
-        if (canAcquireLock) {
-            this.grantLock(taskId, dataItems, lockType);
-        }
-        return canAcquireLock;
-    }
-    releaseLock(taskId, dataItems) {
-        dataItems.forEach((dataItem) => { this.getEntry(dataItem).releaseLock(taskId); });
-    }
-    // Removes any reserved locks for the given data items. This is needed in
-    // order to prioritize a taskId higher than a taskId that already holds a
-    // reserved lock.
-    clearReservedLocks(dataItems) {
-        dataItems.forEach((dataItem) => this.getEntry(dataItem).reservedReadWriteLock = null);
-    }
-    getEntry(dataItem) {
-        let lockTableEntry = this.lockTable.get(dataItem.getName()) || null;
-        if (lockTableEntry === null) {
-            lockTableEntry = new LockTableEntry$1();
-            this.lockTable.set(dataItem.getName(), lockTableEntry);
-        }
-        return lockTableEntry;
-    }
-    grantLock(taskId, dataItems, lockType) {
-        dataItems.forEach((dataItem) => { this.getEntry(dataItem).grantLock(taskId, lockType); });
-    }
-    canAcquireLock(taskId, dataItems, lockType) {
-        let canAcquireLock = true;
-        dataItems.forEach((dataItem) => {
-            if (canAcquireLock) {
-                const lockTableEntry = this.getEntry(dataItem);
-                canAcquireLock = lockTableEntry.canAcquireLock(taskId, lockType);
-            }
-        }, this);
-        return canAcquireLock;
-    }
-}
-class TaskQueue$1 {
-    constructor() {
-        this.queue = [];
-    }
-    // Inserts a task to the queue.
-    insert(task) {
-        ArrayHelper$1.binaryInsert(this.queue, task, (t1, t2) => {
-            const priorityDiff = t1.getPriority() - t2.getPriority();
-            return priorityDiff === 0 ? t1.getId() - t2.getId() : priorityDiff;
-        });
-    }
-    // Returns a shallow copy of this queue.
-    getValues() {
-        return this.queue.slice();
-    }
-    // Removes the given task from the queue. Returns true if the task were
-    // removed, false if the task were not found.
-    remove(task) {
-        const i = this.queue.indexOf(task);
-        if (i >= 0) {
-            this.queue.splice(i, 1);
-        }
-        return i >= 0;
-    }
-}
-// Query/Transaction runner which actually runs the query in a transaction
-// (either implicit or explicit) on the back store.
-class Runner$1 {
-    constructor() {
-        this.queue = new TaskQueue$1();
-        this.lockManager = new LockManager$1();
-    }
-    // Schedules a task for this runner.
-    scheduleTask(task) {
-        if (task.getPriority() < TaskPriority$1.USER_QUERY_TASK
-            || task.getPriority() < TaskPriority$1.TRANSACTION_TASK) {
-            // Any priority that is higher than USER_QUERY_TASK or TRANSACTION_TASK is
-            // considered a "high" priority task and all held reserved locks should be
-            // cleared to allow it to execute.
-            this.lockManager.clearReservedLocks(task.getScope());
-        }
-        this.queue.insert(task);
-        this.consumePending();
-        return task.getResolver().promise;
-    }
-    // Examines the queue and executes as many tasks as possible taking into
-    // account the scope of each task and the currently occupied scopes.
-    consumePending() {
-        const queue = this.queue.getValues();
-        queue.forEach((task) => {
-            // Note: Iterating on a shallow copy of this.queue_, because this.queue_
-            // will be modified during iteration and therefore iterating on
-            // this.queue_ would not guarantee that every task in the queue will be
-            // traversed.
-            let acquiredLock = false;
-            if (task.getType() === TransactionType$1.READ_ONLY) {
-                acquiredLock = this.requestTwoPhaseLock(task, LockType$1.RESERVED_READ_ONLY, LockType$1.SHARED);
-            }
-            else {
-                acquiredLock = this.requestTwoPhaseLock(task, LockType$1.RESERVED_READ_WRITE, LockType$1.EXCLUSIVE);
-            }
-            if (acquiredLock) {
-                // Removing task from the task queue and executing it.
-                this.queue.remove(task);
-                this.execTask(task);
-            }
-        });
-    }
-    // Performs a two-phase lock acquisition. The 1st lock is requested first. If
-    // it is granted, the 2nd lock is requested. Returns false if the 2nd lock was
-    // not granted or both 1st and 2nd were not granted.
-    requestTwoPhaseLock(task, lockType1, lockType2) {
-        let acquiredLock = false;
-        const acquiredFirstLock = this.lockManager.requestLock(task.getId(), task.getScope(), lockType1);
-        if (acquiredFirstLock) {
-            // Escalating the first lock to the second lock.
-            acquiredLock = this.lockManager.requestLock(task.getId(), task.getScope(), lockType2);
-        }
-        return acquiredLock;
-    }
-    // Executes a QueryTask. Callers of this method should have already acquired a
-    // lock according to the task that is about to be executed.
-    execTask(task) {
-        task
-            .exec()
-            .then(this.onTaskSuccess.bind(this, task), this.onTaskError.bind(this, task));
-    }
-    // Executes when a task finished successfully.
-    onTaskSuccess(task, results) {
-        this.lockManager.releaseLock(task.getId(), task.getScope());
-        task.getResolver().resolve(results);
-        this.consumePending();
-    }
-    // Executes when a task finished with an error.
-    onTaskError(task, error) {
-        this.lockManager.releaseLock(task.getId(), task.getScope());
-        task.getResolver().reject(error);
-        this.consumePending();
-    }
-}
-// The following states represent the life cycle of a transaction. These states
-// are exclusive meaning that a tx can be only on one state at a given time.
-var TransactionState$1;
-(function(TransactionState) {
-    TransactionState[TransactionState["CREATED"] = 0] = "CREATED";
-    TransactionState[TransactionState["ACQUIRING_SCOPE"] = 1] = "ACQUIRING_SCOPE";
-    TransactionState[TransactionState["ACQUIRED_SCOPE"] = 2] = "ACQUIRED_SCOPE";
-    TransactionState[TransactionState["EXECUTING_QUERY"] = 3] = "EXECUTING_QUERY";
-    TransactionState[TransactionState["EXECUTING_AND_COMMITTING"] = 4] = "EXECUTING_AND_COMMITTING";
-    TransactionState[TransactionState["COMMITTING"] = 5] = "COMMITTING";
-    TransactionState[TransactionState["ROLLING_BACK"] = 6] = "ROLLING_BACK";
-    TransactionState[TransactionState["FINALIZED"] = 7] = "FINALIZED";
-})(TransactionState$1 || (TransactionState$1 = {}));
-class StateTransition$1 {
-    constructor() {
-        this.map = new MapSet$1();
-        const TS = TransactionState$1;
-        this.map.set(TS.CREATED, TS.ACQUIRING_SCOPE);
-        this.map.set(TS.CREATED, TS.EXECUTING_AND_COMMITTING);
-        this.map.set(TS.ACQUIRING_SCOPE, TS.ACQUIRED_SCOPE);
-        this.map.set(TS.ACQUIRED_SCOPE, TS.EXECUTING_QUERY);
-        this.map.set(TS.ACQUIRED_SCOPE, TS.COMMITTING);
-        this.map.set(TS.ACQUIRED_SCOPE, TS.ROLLING_BACK);
-        this.map.set(TS.EXECUTING_QUERY, TS.ACQUIRED_SCOPE);
-        this.map.set(TS.EXECUTING_QUERY, TS.FINALIZED);
-        this.map.set(TS.EXECUTING_AND_COMMITTING, TS.FINALIZED);
-        this.map.set(TS.COMMITTING, TS.FINALIZED);
-        this.map.set(TS.ROLLING_BACK, TS.FINALIZED);
-    }
-    static get() {
-        if (!StateTransition$1.instance) {
-            StateTransition$1.instance = new StateTransition$1();
-        }
-        return StateTransition$1.instance;
-    }
-    get(current) {
-        return this.map.getSet(current);
-    }
-}
-// A TransactionTask is used when the user explicitly starts a transaction and
-// can execute queries within this transaction at will. A TransactionTask is
-// posted to the Runner to ensure that all required locks have been acquired
-// before any queries are executed. Any queries that are performed as part of a
-// TransactionTask will not be visible to lf.proc.Runner at all (no
-// corresponding QueryTask will be posted). Once the transaction is finalized,
-// it will appear to the lf.proc.Runner that this task finished and all locks
-// will be released, exactly as is done for any type of Task.
-class TransactionTask$1 extends UniqueId$1 {
-    constructor(global, scope) {
-        super();
-        this.global = global;
-        this.backStore = global.getService(Service$1.BACK_STORE);
-        this.runner = global.getService(Service$1.RUNNER);
-        this.scope = new Set(scope);
-        this.journal = new Journal$1(this.global, this.scope);
-        this.resolver = new Resolver$1();
-        this.execResolver = new Resolver$1();
-        this.acquireScopeResolver = new Resolver$1();
-    }
-    exec() {
-        this.acquireScopeResolver.resolve();
-        return this.execResolver.promise;
-    }
-    getType() {
-        return TransactionType$1.READ_WRITE;
-    }
-    getScope() {
-        return this.scope;
-    }
-    getResolver() {
-        return this.resolver;
-    }
-    // Returns a unique number for this task.
-    getId() {
-        return this.getUniqueNumber();
-    }
-    // Returns the priority of this task.
-    getPriority() {
-        return TaskPriority$1.TRANSACTION_TASK;
-    }
-    // Acquires all locks required such that this task can execute queries.
-    acquireScope() {
-        this.runner.scheduleTask(this);
-        return this.acquireScopeResolver.promise;
-    }
-    // Executes the given query without flushing any changes to disk yet.
-    attachQuery(queryBuilder) {
-        const taskItem = queryBuilder.getTaskItem();
-        return taskItem.plan
-            .getRoot()
-            .exec(this.journal, taskItem.context)
-            .then((relations) => {
-                return relations[0].getPayloads();
-            }, (e) => {
-                this.journal.rollback();
-                // Need to resolve execResolver here such that all locks acquired
-                // by this transaction task are eventually released and avoid
-                // unhandled rejected promise, which ends up in an unwanted
-                // exception showing up in the console.
-                this.execResolver.resolve();
-                // Rethrows e so that caller's catch and reject handler will have
-                // a chance to handle error instead of considering execution
-                // success.
-                throw e;
-            });
-    }
-    commit() {
-        this.tx = this.backStore.createTx(this.getType(), Array.from(this.scope.values()), this.journal);
-        this.tx.commit().then(() => {
-            this.execResolver.resolve();
-        }, (e) => {
-            this.journal.rollback();
-            this.execResolver.reject(e);
-        });
-        return this.resolver.promise;
-    }
-    rollback() {
-        this.journal.rollback();
-        this.execResolver.resolve();
-        return this.resolver.promise;
-    }
-    stats() {
-        let results = null;
-        if (this.tx) {
-            results = this.tx.stats();
-        }
-        return results === null ? TransactionStatsImpl$1.getDefault() : results;
-    }
-}
-class RuntimeTransaction$1 {
-    constructor(global) {
-        this.global = global;
-        this.runner = global.getService(Service$1.RUNNER);
-        this.task = null;
-        this.state = TransactionState$1.CREATED;
-        this.stateTransition = StateTransition$1.get();
-    }
-    exec(queryBuilders) {
-        this.updateState(TransactionState$1.EXECUTING_AND_COMMITTING);
-        const taskItems = [];
-        try {
-            queryBuilders.forEach((queryBuilder) => {
-                queryBuilder.assertExecPreconditions();
-                taskItems.push(queryBuilder.getTaskItem());
-            });
-        }
-        catch (e) {
-            this.updateState(TransactionState$1.FINALIZED);
-            return Promise.reject(e);
-        }
-        this.task = new UserQueryTask$1(this.global, taskItems);
-        return this.runner.scheduleTask(this.task).then((results) => {
-            this.updateState(TransactionState$1.FINALIZED);
-            return results.map((relation) => relation.getPayloads());
-        }, (e) => {
-            this.updateState(TransactionState$1.FINALIZED);
-            throw e;
-        });
-    }
-    begin(scope) {
-        this.updateState(TransactionState$1.ACQUIRING_SCOPE);
-        this.task = new TransactionTask$1(this.global, scope);
-        return this.task
-            .acquireScope()
-            .then(() => { this.updateState(TransactionState$1.ACQUIRED_SCOPE); });
-    }
-    attach(query) {
-        this.updateState(TransactionState$1.EXECUTING_QUERY);
-        try {
-            query.assertExecPreconditions();
-        }
-        catch (e) {
-            this.updateState(TransactionState$1.FINALIZED);
-            return Promise.reject(e);
-        }
-        return this.task.attachQuery(query).then((result) => {
-            this.updateState(TransactionState$1.ACQUIRED_SCOPE);
-            return result;
-        }, (e) => {
-            this.updateState(TransactionState$1.FINALIZED);
-            throw e;
-        });
-    }
-    commit() {
-        this.updateState(TransactionState$1.COMMITTING);
-        return this.task.commit().then((res) => {
-            this.updateState(TransactionState$1.FINALIZED);
-            return res;
-        });
-    }
-    rollback() {
-        this.updateState(TransactionState$1.ROLLING_BACK);
-        return this.task.rollback().then((res) => {
-            this.updateState(TransactionState$1.FINALIZED);
-            return res;
-        });
-    }
-    stats() {
-        if (this.state !== TransactionState$1.FINALIZED) {
-            // 105: Attempt to access in-flight transaction states.
-            throw new Exception$1(ErrorCode$1.INVALID_TX_ACCESS);
-        }
-        return this.task.stats();
-    }
-    // Update this transaction from its current state to the given one.
-    updateState(newState) {
-        const nextStates = this.stateTransition.get(this.state);
-        if (!nextStates.has(newState)) {
-            // 107: Invalid transaction state transition: {0} -> {1}.
-            throw new Exception$1(ErrorCode$1.INVALID_TX_STATE, this.state.toString(), newState.toString());
-        }
-        else {
-            this.state = newState;
-        }
-    }
-}
-class RuntimeDatabase$1 {
-    constructor(global) {
-        this.global = global;
-        this.schema = global.getService(Service$1.SCHEMA);
-        // Whether this connection to the database is active.
-        this.isActive = false;
-    }
-    init(options) {
-        // The SCHEMA might have been removed from this.global in the case where
-        // Database#close() was called, therefore it needs to be re-added.
-        this.global.registerService(Service$1.SCHEMA, this.schema);
-        this.global.registerService(Service$1.CACHE, new DefaultCache$1(this.schema));
-        const backStore = this.createBackStore(this.schema, options);
-        this.global.registerService(Service$1.BACK_STORE, backStore);
-        const indexStore = new MemoryIndexStore$1();
-        this.global.registerService(Service$1.INDEX_STORE, indexStore);
-        const onUpgrade = options ? options.onUpgrade : undefined;
-        return backStore
-            .init(onUpgrade)
-            .then(() => {
-                this.global.registerService(Service$1.QUERY_ENGINE, new DefaultQueryEngine$1(this.global));
-                this.runner = new Runner$1();
-                this.global.registerService(Service$1.RUNNER, this.runner);
-                return indexStore.init(this.schema);
-            })
-            .then(() => {
-                this.isActive = true;
-                return this;
-            });
-    }
-    getGlobal() {
-        return this.global;
-    }
-    getSchema() {
-        return this.schema;
-    }
-    select(...columns) {
-        this.checkActive();
-        return new SelectBuilder$1(this.global, columns);
-    }
-    insert() {
-        this.checkActive();
-        return new InsertBuilder$1(this.global);
-    }
-    insertOrReplace() {
-        this.checkActive();
-        return new InsertBuilder$1(this.global, /* allowReplace */ true);
-    }
-    update(table) {
-        this.checkActive();
-        return new UpdateBuilder$1(this.global, table);
-    }
-    delete() {
-        this.checkActive();
-        return new DeleteBuilder$1(this.global);
-    }
-    createTransaction(type) {
-        this.checkActive();
-        return new RuntimeTransaction$1(this.global);
-    }
-    close() {
-        try {
-            const backStore = this.global.getService(Service$1.BACK_STORE);
-            backStore.close();
-        }
-        catch (e) {
-            // Swallow the exception if DB is not initialized yet.
-        }
-        this.global.clear();
-        this.isActive = false;
-    }
-    export() {
-        this.checkActive();
-        const task = new ExportTask$1(this.global);
-        return this.runner.scheduleTask(task).then((results) => {
-            return results[0].getPayloads()[0];
-        });
-    }
-    import(d) {
-        const data = d;
-        this.checkActive();
-        const task = new ImportTask$1(this.global, data);
-        return this.runner.scheduleTask(task);
-    }
-    isOpen() {
-        return this.isActive;
-    }
-    checkActive() {
-        if (!this.isActive) {
-            throw new Exception$1(ErrorCode$1.CONNECTION_CLOSED);
-        }
-    }
-    createBackStore(schema, options) {
-        return new Memory$1(schema);
-    }
-}
-class DatabaseSchemaImpl$1 {
-    constructor(_name, _version) {
-        this._name = _name;
-        this._version = _version;
-        this.tableMap = new Map();
-        this._pragma = { "enableBundledMode": false };
-        // Lazy initialization
-        this._info = undefined;
-    }
-    name() {
-        return this._name;
-    }
-    version() {
-        return this._version;
-    }
-    info() {
-        if (this._info === undefined) {
-            this._info = new Info$1(this);
-        }
-        return this._info;
-    }
-    tables() {
-        return Array.from(this.tableMap.values());
-    }
-    table(tableName) {
-        const ret = this.tableMap.get(tableName);
-        if (!ret) {
-            // 101: Table {0} not found.
-            throw new Exception$1(ErrorCode$1.TABLE_NOT_FOUND, tableName);
-        }
-        return ret;
-    }
-    setTable(table) {
-        this.tableMap.set(table.getName(), table);
-    }
-    pragma() {
-        return this._pragma;
-    }
-}
-class GraphNode$1 {
-    constructor(name) {
-        this.name = name;
-        this.visited = false;
-        this.onStack = false;
-        this.edges = new Set();
-    }
-}
-class ForeignKeySpec$1 {
-    constructor(rawSpec, childTable, name) {
-        this.childTable = childTable;
-        const array = rawSpec.ref.split(".");
-        if (array.length !== 2) {
-            // 540: Foreign key {0} has invalid reference syntax.
-            throw new Exception$1(ErrorCode$1.INVALID_FK_REF, name);
-        }
-        this.childColumn = rawSpec.local;
-        this.parentTable = array[0];
-        this.parentColumn = array[1];
-        this.name = `${childTable}.${name}`;
-        this.action = rawSpec.action || ConstraintAction$1.RESTRICT;
-        this.timing = rawSpec.timing || ConstraintTiming$1.IMMEDIATE;
-    }
-}
-function createPredicate$1(lhs, rhs, type) {
-    // For the case of .eq(null).
-    if (rhs === null) {
-        return new ValuePredicate$1(lhs, rhs, type);
-    }
-    const r = rhs;
-    if (r.getIndex && r.getIndices) {
-        return new JoinPredicate$1(lhs, r, type);
-    }
-    // Value predicate, which can be bounded or not.
-    return new ValuePredicate$1(lhs, rhs, type);
-}
-class ColumnImpl$1 {
-    constructor(table, name, unique, nullable, type, alias) {
-        this.table = table;
-        this.name = name;
-        this.unique = unique;
-        this.nullable = nullable;
-        this.type = type;
-        this.alias = alias || null;
-        this.indices = [];
-        this.index = undefined;
-    }
-    getName() {
-        return this.name;
-    }
-    getNormalizedName() {
-        return `${this.table.getEffectiveName()}.${this.name}`;
-    }
-    toString() {
-        return this.getNormalizedName();
-    }
-    getTable() {
-        return this.table;
-    }
-    getType() {
-        return this.type;
-    }
-    getAlias() {
-        return this.alias;
-    }
-    isNullable() {
-        return this.nullable;
-    }
-    isUnique() {
-        return this.unique;
-    }
-    getIndices() {
-        this.table.getIndices().forEach((index) => {
-            const colNames = index.columns.map((col) => col.schema.getName());
-            if (colNames.includes(this.name)) {
-                this.indices.push(index);
-            }
-        });
-        return this.indices;
-    }
-    getIndex() {
-        // Check of undefined is used purposefully here, such that this logic is
-        // skipped if this.index has been set to null by a previous execution of
-        // getIndex().
-        if (this.index === undefined) {
-            const indices = this.getIndices().filter((indexSchema) => {
-                if (indexSchema.columns.length !== 1) {
-                    return false;
-                }
-                return indexSchema.columns[0].schema.getName() === this.name;
-            });
-            // Normally there should be only one dedicated index for this column,
-            // but if there are more, just grab the first one.
-            this.index
-                = indices.length > 0 ? indices[0] : null;
-        }
-        return this.index;
-    }
-    eq(operand) {
-        return createPredicate$1(this, operand, EvalType$1.EQ);
-    }
-    neq(operand) {
-        return createPredicate$1(this, operand, EvalType$1.NEQ);
-    }
-    lt(operand) {
-        return createPredicate$1(this, operand, EvalType$1.LT);
-    }
-    lte(operand) {
-        return createPredicate$1(this, operand, EvalType$1.LTE);
-    }
-    gt(operand) {
-        return createPredicate$1(this, operand, EvalType$1.GT);
-    }
-    gte(operand) {
-        return createPredicate$1(this, operand, EvalType$1.GTE);
-    }
-    match(operand) {
-        return createPredicate$1(this, operand, EvalType$1.MATCH);
-    }
-    between(from, to) {
-        return createPredicate$1(this, [from, to], EvalType$1.BETWEEN);
-    }
-    in(values) {
-        return createPredicate$1(this, values, EvalType$1.IN);
-    }
-    isNull() {
-        return this.eq(null);
-    }
-    isNotNull() {
-        return this.neq(null);
-    }
-    as(name) {
-        return new ColumnImpl$1(this.table, this.name, this.unique, this.nullable, this.type, name);
-    }
-}
-class Constraint$1 {
-    constructor(primaryKey, notNullable, foreignKeys) {
-        this.primaryKey = primaryKey;
-        this.notNullable = notNullable;
-        this.foreignKeys = foreignKeys;
-    }
-    getPrimaryKey() {
-        return this.primaryKey;
-    }
-    getNotNullable() {
-        return this.notNullable;
-    }
-    getForeignKeys() {
-        return this.foreignKeys;
-    }
-}
-class IndexImpl$1 {
-    constructor(tableName, name, isUnique, columns) {
-        this.tableName = tableName;
-        this.name = name;
-        this.isUnique = isUnique;
-        this.columns = columns;
-    }
-    getNormalizedName() {
-        return `${this.tableName}.${this.name}`;
-    }
-    // Whether this index refers to any column that is marked as nullable.
-    hasNullableColumn() {
-        return this.columns.some((column) => column.schema.isNullable());
-    }
-}
-class RowImpl$1 extends Row$1 {
-    constructor(functionMap, columns, indices, id, payload) {
-        super(id, payload);
-        this.functionMap = functionMap;
-        this.columns = columns;
-        // TypeScript forbids super to be called after this. Therefore we need
-        // to duplicate this line from base class ctor because defaultPayload()
-        // needs to know column information.
-        this.payload_ = payload || this.defaultPayload();
-    }
-    defaultPayload() {
-        if (this.columns === undefined) {
-            // Called from base ctor, ignore for now.
-            return null;
-        }
-        const obj = {};
-        this.columns.forEach((col) => {
-            obj[col.getName()] = col.isNullable() ? null : DEFAULT_VALUES$1.get(col.getType());
-        });
-        return obj;
-    }
-    toDbPayload() {
-        const obj = {};
-        this.columns.forEach((col) => {
-            const key = col.getName();
-            const type = col.getType();
-            let value = this.payload()[key];
-            if (type === Type$1.ARRAY_BUFFER) {
-                value = value ? Row$1.binToHex(value) : null;
-            }
-            else if (type === Type$1.DATE_TIME) {
-                value = value ? value.getTime() : null;
-            }
-            else if (type === Type$1.OBJECT) {
-                value = value || null;
-            }
-            obj[key] = value;
-        });
-        return obj;
-    }
-    keyOfIndex(indexName) {
-        const key = super.keyOfIndex(indexName);
-        if (key === null) {
-            const fn = this.functionMap.get(indexName);
-            if (fn) {
-                return fn(this.payload());
-            }
-        }
-        return key;
-    }
-}
-class TableImpl$1 {
-    constructor(_name, cols, _indices, _usePersistentIndex, alias) {
-        this._name = _name;
-        this._indices = _indices;
-        this._usePersistentIndex = _usePersistentIndex;
-        this._columns = [];
-        cols.forEach((col) => {
-            const colSchema = new ColumnImpl$1(this, col.name, col.unique, col.nullable, col.type);
-            this[col.name] = colSchema;
-            this._columns.push(colSchema);
-        }, this);
-        this._referencingFK = null;
-        this._functionMap = null;
-        this._constraint = null;
-        this._evalRegistry = EvalRegistry$1.get();
-        this._alias = alias ? alias : null;
-    }
-    getName() {
-        return this._name;
-    }
-    getAlias() {
-        return this._alias;
-    }
-    getEffectiveName() {
-        return this._alias || this._name;
-    }
-    getIndices() {
-        return this._indices || TableImpl$1.EMPTY_INDICES;
-    }
-    getColumns() {
-        return this._columns;
-    }
-    getConstraint() {
-        return this._constraint;
-    }
-    persistentIndex() {
-        return this._usePersistentIndex;
-    }
-    as(name) {
-        const colDef = this._columns.map((col) => {
-            return {
-                "name": col.getName(),
-                "nullable": col.isNullable(),
-                "type": col.getType(),
-                "unique": col.isUnique()
-            };
-        });
-        const clone = new TableImpl$1(this._name, colDef, this._indices, this._usePersistentIndex, name);
-        clone._referencingFK = this._referencingFK;
-        clone._constraint = this._constraint;
-        clone._alias = name;
-        return clone;
-    }
-    col(name) {
-        return this[name];
-    }
-    getRowIdIndexName() {
-        return `${this._name}.${TableImpl$1.ROW_ID_INDEX_PATTERN}`;
-    }
-    createRow(value) {
-        return new RowImpl$1(this._functionMap, this._columns, this._indices, Row$1.getNextId(), value);
-    }
-    deserializeRow(dbRecord) {
-        const obj = {};
-        this._columns.forEach((col) => {
-            const key = col.getName();
-            const type = col.getType();
-            let value = dbRecord.value[key];
-            if (type === Type$1.ARRAY_BUFFER) {
-                value = Row$1.hexToBin(value);
-            }
-            else if (type === Type$1.DATE_TIME) {
-                value = value !== null ? new Date(value) : null;
-            }
-            obj[key] = value;
-        });
-        return new RowImpl$1(this._functionMap, this._columns, this._indices, dbRecord.id, obj);
-    }
-    constructIndices(pkName, indices, uniqueIndices, nullable, fkSpecs) {
-        if (indices.size === 0) {
-            this._constraint = new Constraint$1(null, [], []);
-            return;
-        }
-        const columnMap = new Map();
-        this._columns.forEach((col) => columnMap.set(col.getName(), col));
-        this._indices = Array.from(indices.keys()).map((indexName) => {
-            return new IndexImpl$1(this._name, indexName, uniqueIndices.has(indexName), this.generateIndexedColumns(indices, columnMap, indexName));
-        });
-        this._functionMap = new Map();
-        this._indices.forEach((index) => this._functionMap.set(index.getNormalizedName(), this.getKeyOfIndexFn(columnMap, index)));
-        const pk = pkName === null ? null : new IndexImpl$1(this._name, pkName, true, this.generateIndexedColumns(indices, columnMap, pkName));
-        const notNullable = this._columns.filter((col) => !nullable.has(col.getName()));
-        this._constraint = new Constraint$1(pk, notNullable, fkSpecs);
-    }
-    generateIndexedColumns(indices, columnMap, indexName) {
-        const index = indices.get(indexName);
-        if (index) {
-            return index.map((indexedColumn) => {
-                return {
-                    "autoIncrement": indexedColumn.autoIncrement,
-                    "order": indexedColumn.order,
-                    "schema": columnMap.get(indexedColumn.name)
-                };
-            });
-        }
-        throw new Exception$1(ErrorCode$1.ASSERTION);
-    }
-    getSingleKeyFn(columnMap, column) {
-        const col = columnMap.get(column.getName());
-        if (col) {
-            const colType = col.getType();
-            const keyOfIndexFn = this._evalRegistry.getKeyOfIndexEvaluator(colType);
-            return (payload) => keyOfIndexFn(payload[column.getName()]);
-        }
-        throw new Exception$1(ErrorCode$1.ASSERTION);
-    }
-    getMultiKeyFn(columnMap, columns) {
-        const getSingleKeyFunctions = columns.map((col) => this.getSingleKeyFn(columnMap, col.schema));
-        return (payload) => getSingleKeyFunctions.map((fn) => fn(payload));
-    }
-    getKeyOfIndexFn(columnMap, index) {
-        return index.columns.length === 1 ? this.getSingleKeyFn(columnMap, index.columns[0].schema) : this.getMultiKeyFn(columnMap, index.columns);
-    }
-}
-TableImpl$1.ROW_ID_INDEX_PATTERN = "#";
-TableImpl$1.EMPTY_INDICES = [];
-// Dynamic Table schema builder
-// TODO(arthurhsu): FIXME: use a public interface here.
-class TableBuilder$1 {
-    constructor(tableName) {
-        this.checkNamingRules(tableName);
-        this.name = tableName;
-        this.columns = new Map();
-        this.uniqueColumns = new Set();
-        this.uniqueIndices = new Set();
-        this.nullable = new Set();
-        this.pkName = null;
-        this.indices = new Map();
-        this.persistIndex = false;
-        this.fkSpecs = [];
-    }
-    static toPascal(name) {
-        return name[0].toUpperCase() + name.substring(1);
-    }
-    addColumn(name, type) {
-        this.checkNamingRules(name);
-        this.checkNameConflicts(name);
-        this.columns.set(name, type);
-        if (TableBuilder$1.NULLABLE_TYPES_BY_DEFAULT.has(type)) {
-            this.addNullable([name]);
-        }
-        return this;
-    }
-    // Adds a primary key to table.
-    // There are two overloads of this function:
-    //
-    // case 1: (columns: Array<string>, autoInc)
-    //   specifies primary key by given only column names with default ascending
-    //   orders (Order.ASC). When autoInc is true, there can be only one
-    //   column in the columns, its type must be Type.INTEGER, and its order
-    //   must be the default Order.ASC.
-    //
-    // case 2: (columns: Array<IndexedColumnSpec>)
-    //   allows different ordering per-column, but more verbose.
-    addPrimaryKey(columns, autoInc = false) {
-        this.pkName = "pk" + TableBuilder$1.toPascal(this.name);
-        this.checkNamingRules(this.pkName);
-        this.checkNameConflicts(this.pkName);
-        const cols = this.normalizeColumns(columns, true, undefined, autoInc);
-        this.checkPrimaryKey(cols);
-        if (cols.length === 1) {
-            this.uniqueColumns.add(cols[0].name);
-        }
-        this.uniqueIndices.add(this.pkName);
-        this.indices.set(this.pkName, cols);
-        return this;
-    }
-    // Creates a foreign key on a given table column.
-    addForeignKey(name, rawSpec) {
-        this.checkNamingRules(name);
-        this.checkNameConflicts(name);
-        if (rawSpec.action === undefined) {
-            rawSpec.action = ConstraintAction$1.RESTRICT;
-        }
-        if (rawSpec.timing === undefined) {
-            rawSpec.timing = ConstraintTiming$1.IMMEDIATE;
-        }
-        const spec = new ForeignKeySpec$1(rawSpec, this.name, name);
-        if (spec.action === ConstraintAction$1.CASCADE
-            && spec.timing === ConstraintTiming$1.DEFERRABLE) {
-            // 506: Lovefield allows only immediate evaluation of cascading
-            // constraints.
-            throw new Exception$1(ErrorCode$1.IMMEDIATE_EVAL_ONLY);
-        }
-        if (!this.columns.has(spec.childColumn)) {
-            // 540: Foreign key {0} has invalid reference syntax.
-            throw new Exception$1(ErrorCode$1.INVALID_FK_REF, `${this.name}.${name}`);
-        }
-        this.fkSpecs.push(spec);
-        this.addIndex(name, [spec.childColumn], this.uniqueColumns.has(spec.childColumn));
-        return this;
-    }
-    addUnique(name, columns) {
-        this.checkNamingRules(name);
-        this.checkNameConflicts(name);
-        const cols = this.normalizeColumns(columns, true);
-        if (cols.length === 1) {
-            this.uniqueColumns.add(cols[0].name);
-            this.markFkIndexForColumnUnique(cols[0].name);
-        }
-        this.indices.set(name, cols);
-        this.uniqueIndices.add(name);
-        return this;
-    }
-    addNullable(columns) {
-        this.normalizeColumns(columns, false).forEach((col) => this.nullable.add(col.name));
-        return this;
-    }
-    // Mimics SQL CREATE INDEX.
-    // There are two overloads of this function:
-    // case 1: (name, columns: !Array<string>, unique, order)
-    //   adds an index by column names only. All columns have same ordering.
-    // case 2: (name, columns: !Array<!TableBuilder.IndexedColumnSpec>, unique)
-    //   adds an index, allowing customization of ordering, but more verbose.
-    addIndex(name, columns, unique = false, order = Order$1.ASC) {
-        this.checkNamingRules(name);
-        this.checkNameConflicts(name);
-        this.indices.set(name, this.normalizeColumns(columns, true, order));
-        if (unique) {
-            this.uniqueIndices.add(name);
-        }
-        return this;
-    }
-    persistentIndex(value) {
-        this.persistIndex = value;
-    }
-    getSchema() {
-        this.checkPrimaryKeyNotForeignKey();
-        this.checkPrimaryKeyDuplicateIndex();
-        this.checkPrimaryKeyNotNullable();
-        const columns = Array.from(this.columns.keys()).map((colName) => {
-            return {
-                "name": colName,
-                "nullable": this.nullable.has(colName) || false,
-                "type": this.columns.get(colName),
-                "unique": this.uniqueColumns.has(colName) || false
-            };
-        });
-        // Pass null as indices since Columns are not really constructed yet.
-        const table = new TableImpl$1(this.name, columns, null, this.persistIndex);
-        // Columns shall be constructed within TableImpl ctor, now we can
-        // instruct it to construct proper index schema.
-        table.constructIndices(this.pkName, this.indices, this.uniqueIndices, this.nullable, this.fkSpecs);
-        return table;
-    }
-    getFkSpecs() {
-        return this.fkSpecs;
-    }
-    checkNamingRules(name) {
-        if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(name)) {
-            // 502: Naming rule violation: {0}.
-            throw new Exception$1(ErrorCode$1.INVALID_NAME, name);
-        }
-    }
-    checkNameConflicts(name) {
-        if (name === this.name) {
-            // 546: Indices/constraints/columns can't re-use the table name {0}
-            throw new Exception$1(ErrorCode$1.DUPLICATE_NAME, name);
-        }
-        if (this.columns.has(name)
-            || this.indices.has(name)
-            || this.uniqueIndices.has(name)) {
-            // 503: Name {0} is already defined.
-            throw new Exception$1(ErrorCode$1.NAME_IN_USE, `${this.name}.${name}`);
-        }
-    }
-    checkPrimaryKey(columns) {
-        let hasAutoIncrement = false;
-        columns.forEach((column) => {
-            const columnType = this.columns.get(column.name);
-            hasAutoIncrement
-                = hasAutoIncrement || column.autoIncrement;
-            if (column.autoIncrement && columnType !== Type$1.INTEGER) {
-                // 504: Can not use autoIncrement with a non-integer primary key.
-                throw new Exception$1(ErrorCode$1.INVALID_AUTO_KEY_TYPE);
-            }
-        });
-        if (hasAutoIncrement && columns.length > 1) {
-            // 505: Can not use autoIncrement with a cross-column primary key.
-            throw new Exception$1(ErrorCode$1.INVALID_AUTO_KEY_COLUMN);
-        }
-    }
-    // Checks whether any primary key column is also used as a foreign key child
-    // column, and throws an exception if such a column is found.
-    checkPrimaryKeyNotForeignKey() {
-        if (this.pkName === null) {
-            return;
-        }
-        const index = this.indices.get(this.pkName);
-        if (index) {
-            const pkColumns = index.map((column) => column.name);
-            let fkSpecIndex = 0;
-            const conflict = this.fkSpecs.some((fkSpec, i) => {
-                fkSpecIndex = i;
-                return pkColumns.includes(fkSpec.childColumn);
-            });
-            if (conflict) {
-                // 543: Foreign key {0}. A primary key column can't also be a foreign
-                // key child column.
-                throw new Exception$1(ErrorCode$1.PK_CANT_BE_FK, this.fkSpecs[fkSpecIndex].name);
-            }
-        } // else nothing to check.
-    }
-    // Checks whether the primary key index is identical (in terms of indexed
-    // columns) with another explicitly added index.
-    checkPrimaryKeyDuplicateIndex() {
-        if (this.pkName === null) {
-            return;
-        }
-        const index = this.indices.get(this.pkName);
-        if (index) {
-            const extractName = (column) => column.name;
-            const pkColumnsJson = JSON.stringify(index.map(extractName));
-            this.indices.forEach((indexedColumnSpecs, indexName) => {
-                if (indexName === this.pkName) {
-                    return;
-                }
-                if (JSON.stringify(indexedColumnSpecs.map(extractName)) === pkColumnsJson) {
-                    // 544: Duplicate primary key index found at {0}
-                    throw new Exception$1(ErrorCode$1.DUPLICATE_PK, `${this.name}.${indexName}`);
-                }
-            });
-        } // else nothing to check.
-    }
-    // Checks whether any primary key column has also been marked as nullable.
-    checkPrimaryKeyNotNullable() {
-        if (this.pkName === null) {
-            return;
-        }
-        const index = this.indices.get(this.pkName);
-        if (index) {
-            index.forEach((indexedColumnSpec) => {
-                if (this.nullable.has(indexedColumnSpec.name)) {
-                    // 545: Primary key column {0} can't be marked as nullable
-                    throw new Exception$1(ErrorCode$1.NULLABLE_PK, `${this.name}.${indexedColumnSpec.name}`);
-                }
-            });
-        } // else nothing to check.
-    }
-    // Convert different column representations (column name only or column
-    // objects) into column object array. Also performs consistency check to make
-    // sure referred columns are actually defined.
-    normalizeColumns(columns, checkIndexable, sortOrder = Order$1.ASC, autoInc = false) {
-        let normalized = null;
-        if (typeof columns[0] === "string") {
-            const array = columns;
-            normalized = array.map((col) => {
-                return {
-                    "autoIncrement": autoInc || false,
-                    "name": col,
-                    "order": sortOrder
-                };
-            });
-        }
-        else {
-            normalized = columns;
-        }
-        normalized.forEach((col) => {
-            if (!this.columns.has(col.name)) {
-                // 508: Table {0} does not have column: {1}.
-                throw new Exception$1(ErrorCode$1.COLUMN_NOT_FOUND, this.name, col.name);
-            }
-            if (checkIndexable) {
-                const type = this.columns.get(col.name);
-                if (type === Type$1.ARRAY_BUFFER || type === Type$1.OBJECT) {
-                    // 509: Attempt to index table {0} on non-indexable column {1}.
-                    throw new Exception$1(ErrorCode$1.COLUMN_NOT_INDEXABLE, this.name, col.name);
-                }
-            }
-        });
-        return normalized;
-    }
-    markFkIndexForColumnUnique(column) {
-        this.fkSpecs.forEach((fkSpec) => {
-            if (fkSpec.childColumn === column) {
-                this.uniqueIndices.add(fkSpec.name.split(".")[1]);
-            }
-        });
-    }
-}
-TableBuilder$1.NULLABLE_TYPES_BY_DEFAULT = new Set([
-    Type$1.ARRAY_BUFFER,
-    Type$1.OBJECT
-]);
-class SchemaBuilder$1 {
-    constructor(dbName, dbVersion) {
-        this.schema = new DatabaseSchemaImpl$1(dbName, dbVersion);
-        this.tableBuilders = new Map();
-        this.finalized = false;
-        this.db = null;
-        this.connectInProgress = false;
-    }
-    getSchema() {
-        console.log("getSchema");
-        if (!this.finalized) {
-            this.finalize();
-        }
-        return this.schema;
-    }
-    getGlobal() {
-        console.log("getGlobal");
-        const namespaceGlobalId = new ServiceId$1(`ns_${this.schema.name()}`);
-        const global = Global$1.get();
-        let namespacedGlobal;
-        if (!global.isRegistered(namespaceGlobalId)) {
-            namespacedGlobal = new Global$1();
-            global.registerService(namespaceGlobalId, namespacedGlobal);
-        }
-        else {
-            namespacedGlobal = global.getService(namespaceGlobalId);
-        }
-        return namespacedGlobal;
-    }
-    // Instantiates a connection to the database. Note: This method can only be
-    // called once per Builder instance. Subsequent calls will throw an error,
-    // unless the previous DB connection has been closed first.
-    connect(options) {
-        console.log("connect");
-        if (this.connectInProgress || this.db !== null && this.db.isOpen()) {
-            // 113: Attempt to connect() to an already connected/connecting database.
-            throw new Exception$1(ErrorCode$1.ALREADY_CONNECTED);
-        }
-        this.connectInProgress = true;
-        if (this.db === null) {
-            const global = this.getGlobal();
-            if (!global.isRegistered(Service$1.SCHEMA)) {
-                global.registerService(Service$1.SCHEMA, this.getSchema());
-            }
-            this.db = new RuntimeDatabase$1(global);
-        }
-        return this.db.init(options).then((db) => {
-            this.connectInProgress = false;
-            return db;
-        }, (e) => {
-            this.connectInProgress = false;
-            // TODO(arthurhsu): Add a new test case to verify that failed init
-            // call allows the database to be deleted since we close it properly
-            // here.
-            this.db.close();
-            throw e;
-        });
-    }
-    createTable(tableName) {
-        console.log("createTable");
-        if (this.tableBuilders.has(tableName)) {
-            // 503: Name {0} is already defined.
-            throw new Exception$1(ErrorCode$1.NAME_IN_USE, tableName);
-        }
-        else if (this.finalized) {
-            // 535: Schema is already finalized.
-            throw new Exception$1(ErrorCode$1.SCHEMA_FINALIZED);
-        }
-        this.tableBuilders.set(tableName, new TableBuilder$1(tableName));
-        const ret = this.tableBuilders.get(tableName);
-        if (!ret) {
-            throw new Exception$1(ErrorCode$1.ASSERTION, "Builder.createTable");
-        }
-        return ret;
-    }
-    setPragma(pragma) {
-        console.log("setPragma");
-        if (this.finalized) {
-            // 535: Schema is already finalized.
-            throw new Exception$1(ErrorCode$1.SCHEMA_FINALIZED);
-        }
-        this.schema._pragma = pragma;
-        return this;
-    }
-    // Builds the graph of foreign key relationships and checks for
-    // loop in the graph.
-    checkFkCycle() {
-        console.log("checkFkCycle");
-        // Builds graph.
-        const nodeMap = new Map();
-        this.schema.tables().forEach((table) => {
-            nodeMap.set(table.getName(), new GraphNode$1(table.getName()));
-        }, this);
-        this.tableBuilders.forEach((builder, tableName) => {
-            builder.getFkSpecs().forEach((spec) => {
-                const parentNode = nodeMap.get(spec.parentTable);
-                if (parentNode) {
-                    parentNode.edges.add(tableName);
-                }
-            });
-        });
-        // Checks for cycle.
-        Array.from(nodeMap.values()).forEach((graphNode) => { this.checkCycleUtil(graphNode, nodeMap); });
-    }
-    // Performs foreign key checks like validity of names of parent and
-    // child columns, matching of types and uniqueness of referred column
-    // in the parent.
-    checkForeignKeyValidity(builder) {
-        console.log("checkForeignKeyValidity");
-        builder.getFkSpecs().forEach((specs) => {
-            const parentTableName = specs.parentTable;
-            const table = this.tableBuilders.get(parentTableName);
-            if (!table) {
-                // 536: Foreign key {0} refers to invalid table.
-                throw new Exception$1(ErrorCode$1.INVALID_FK_TABLE);
-            }
-            const parentSchema = table.getSchema();
-            const parentColName = specs.parentColumn;
-            if (!Object.prototype.hasOwnProperty.call(parentSchema, parentColName)) {
-                // 537: Foreign key {0} refers to invalid column.
-                throw new Exception$1(ErrorCode$1.INVALID_FK_COLUMN);
-            }
-            const localSchema = builder.getSchema();
-            const localColName = specs.childColumn;
-            if (localSchema[localColName].getType()
-                !== parentSchema[parentColName].getType()) {
-                // 538: Foreign key {0} column type mismatch.
-                throw new Exception$1(ErrorCode$1.INVALID_FK_COLUMN_TYPE, specs.name);
-            }
-            if (!parentSchema[parentColName].isUnique()) {
-                // 539: Foreign key {0} refers to non-unique column.
-                throw new Exception$1(ErrorCode$1.FK_COLUMN_NONUNIQUE, specs.name);
-            }
-        }, this);
-    }
-    // Performs checks to avoid chains of foreign keys on same column.
-    checkForeignKeyChain(builder) {
-        console.log("checkForeignKeyChain");
-        const fkSpecArray = builder.getFkSpecs();
-        fkSpecArray.forEach((specs) => {
-            const parentBuilder = this.tableBuilders.get(specs.parentTable);
-            if (parentBuilder) {
-                parentBuilder.getFkSpecs().forEach((parentSpecs) => {
-                    if (parentSpecs.childColumn === specs.parentColumn) {
-                        // 534: Foreign key {0} refers to source column of another
-                        // foreign key.
-                        throw new Exception$1(ErrorCode$1.FK_COLUMN_IN_USE, specs.name);
-                    }
-                }, this);
-            }
-        }, this);
-    }
-    finalize() {
-        console.log("finalize");
-        if (!this.finalized) {
-            this.tableBuilders.forEach((builder) => {
-                this.checkForeignKeyValidity(builder);
-                this.schema.setTable(builder.getSchema());
-            });
-            Array.from(this.tableBuilders.values()).forEach(this.checkForeignKeyChain, this);
-            this.checkFkCycle();
-            this.tableBuilders.clear();
-            this.finalized = true;
-        }
-    }
-    // Checks for loop in the graph recursively. Ignores self loops.
-    // This algorithm is based on Lemma 22.11 in "Introduction To Algorithms
-    // 3rd Edition By Cormen et Al". It says that a directed graph G
-    // can be acyclic if and only DFS of G yields no back edges.
-    // @see http://www.geeksforgeeks.org/detect-cycle-in-a-graph/
-    checkCycleUtil(graphNode, nodeMap) {
-        console.log("checkCycleUtil");
-        if (!graphNode.visited) {
-            graphNode.visited = true;
-            graphNode.onStack = true;
-            graphNode.edges.forEach((edge) => {
-                const childNode = nodeMap.get(edge);
-                if (childNode) {
-                    if (!childNode.visited) {
-                        this.checkCycleUtil(childNode, nodeMap);
-                    }
-                    else if (childNode.onStack) {
-                        // Checks for self loop, in which case, it does not throw an
-                        // exception.
-                        if (graphNode !== childNode) {
-                            // 533: Foreign key loop detected.
-                            throw new Exception$1(ErrorCode$1.FK_LOOP);
-                        }
-                    }
-                }
-            }, this);
-        }
-        graphNode.onStack = false;
-    }
-}
-// Keep lower case class name for compatibility with Lovefield API.
-// TODO(arthurhsu): FIXME: Builder should be a public interface, not concrete
-// class. Currently Builder has no @export.
-class schema {
-    // Returns a builder.
-    // Note that Lovefield builder is a stateful object, and it remembers it has
-    // been used for connecting a database instance. Once the connection is closed
-    // or dropped, the builder cannot be used to reconnect. Instead, the caller
-    // needs to construct a new builder for doing so.
-    static create(name, version) {
-        return new SchemaBuilder$1(name, version);
-    }
-}
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-// The base row class for all rows.
-// @emptyExport
-class Row {
-    constructor(id_, payload) {
-        this.id_ = id_;
-        this.payload_ = payload || this.defaultPayload();
-    }
-    // Get the next unique row ID to use for creating a new instance.
-    static getNextId() {
-        return Row.nextId++;
-    }
-    // Sets the global row id. This is supposed to be called by BackStore
-    // instances during initialization only.
-    // NOTE: nextId is currently shared among different databases. It is
-    // NOT safe to ever decrease this value, because it will result in re-using
-    // row IDs. Currently used only for testing, and for back stores that are
-    // based on remote truth.
-    // @param nextId The next id should be used. This is typically the max
-    //     rowId in database plus 1.
-    static setNextId(nextId) {
-        Row.nextId = nextId;
-    }
-    // Updates global row id. Guarantees that the |nextId_| value will only be
-    // increased. This is supposed to be called by BackStore instances during
-    // initialization only.
-    // @param nextId The next id should be used. This is typically the max
-    //     rowId in database plus 1.
-    static setNextIdIfGreater(nextId) {
-        Row.nextId = Math.max(Row.nextId, nextId);
-    }
-    // Creates a new Row instance from DB data.
-    static deserialize(data) {
-        return new Row(data.id, data.value);
-    }
-    // Creates a new Row instance with an automatically assigned ID.
-    static create(payload) {
-        return new Row(Row.getNextId(), payload || {});
-    }
-    // ArrayBuffer to hex string.
-    static binToHex(buffer) {
-        if (buffer === null) {
-            return null;
-        }
-        const uint8Array = new Uint8Array(buffer);
-        let s = '';
-        uint8Array.forEach(c => {
-            const chr = c.toString(16);
-            s += chr.length < 2 ? '0' + chr : chr;
-        });
-        return s;
-    }
-    // Hex string to ArrayBuffer.
-    static hexToBin(hex) {
-        if (hex === null || hex === '') {
-            return null;
-        }
-        if (hex.length % 2 !== 0) {
-            hex = '0' + hex;
-        }
-        const buffer = new ArrayBuffer(hex.length / 2);
-        const uint8Array = new Uint8Array(buffer);
-        for (let i = 0, j = 0; i < hex.length; i += 2) {
-            uint8Array[j++] = Number(`0x${hex.substr(i, 2)}`) & 0xff;
-        }
-        return buffer;
-    }
-    id() {
-        return this.id_;
-    }
-    // Set the ID of this row instance.
-    assignRowId(id) {
-        this.id_ = id;
-    }
-    payload() {
-        return this.payload_;
-    }
-    defaultPayload() {
-        return {};
-    }
-    toDbPayload() {
-        return this.payload_;
-    }
-    serialize() {
-        return { id: this.id_, value: this.toDbPayload() };
-    }
-    keyOfIndex(indexName) {
-        if (indexName.substr(-1) === '#') {
-            return this.id_;
-        }
-        // Remaining indices keys are implemented by overriding keyOfIndex in
-        // subclasses.
-        return null;
-    }
-}
-// An ID to be used when a row that does not correspond to a DB entry is
-// created (for example the result of joining two rows).
-Row.DUMMY_ID = -1;
-// The ID to assign to the next row that will be created.
-// Should be initialized to the appropriate value from the BackStore instance
-// that is being used.
-Row.nextId = Row.DUMMY_ID + 1;
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-// Port of goog.math methods used by Lovefield.
-class MathHelper {
-    static longestCommonSubsequence(array1, array2, comparator, collector) {
-        const defaultComparator = (a, b) => a === b;
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const defaultCollector = (i1, i2) => array1[i1];
-        const compare = comparator || defaultComparator;
-        const collect = collector || defaultCollector;
-        const length1 = array1.length;
-        const length2 = array2.length;
-        const arr = [];
-        let i;
-        let j;
-        for (i = 0; i < length1 + 1; ++i) {
-            arr[i] = [];
-            arr[i][0] = 0;
-        }
-        for (j = 0; j < length2 + 1; ++j) {
-            arr[0][j] = 0;
-        }
-        for (i = 1; i < length1 + 1; ++i) {
-            for (j = 1; j < length2 + 1; ++j) {
-                arr[i][j] = compare(array1[i - 1], array2[j - 1])
-                    ? arr[i - 1][j - 1] + 1
-                    : Math.max(arr[i - 1][j], arr[i][j - 1]);
-            }
-        }
-        // Backtracking
-        const result = [];
-        i = length1;
-        j = length2;
-        while (i > 0 && j > 0) {
-            if (compare(array1[i - 1], array2[j - 1])) {
-                result.unshift(collect(i - 1, j - 1));
-                i--;
-                j--;
-            }
-            else {
-                if (arr[i - 1][j] > arr[i][j - 1]) {
-                    i--;
-                }
-                else {
-                    j--;
-                }
-            }
-        }
-        return result;
-    }
-    static sum(...args) {
-        return args.reduce((sum, value) => sum + value, 0);
-    }
-    static average(...args) {
-        return MathHelper.sum.apply(null, args) / args.length;
-    }
-    static standardDeviation(...args) {
-        if (!args || args.length < 2) {
-            return 0;
-        }
-        const mean = MathHelper.average.apply(null, args);
-        const sampleVariance = MathHelper.sum.apply(null, args.map(val => Math.pow(val - mean, 2))) /
-            (args.length - 1);
-        return Math.sqrt(sampleVariance);
-    }
-}
-
-/**
- * Copyright 2016 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-// @export
-var ConstraintAction;
-(function(ConstraintAction) {
-    ConstraintAction[ConstraintAction["RESTRICT"] = 0] = "RESTRICT";
-    ConstraintAction[ConstraintAction["CASCADE"] = 1] = "CASCADE";
-})(ConstraintAction || (ConstraintAction = {}));
-// @export
-var ConstraintTiming;
-(function(ConstraintTiming) {
-    ConstraintTiming[ConstraintTiming["IMMEDIATE"] = 0] = "IMMEDIATE";
-    ConstraintTiming[ConstraintTiming["DEFERRABLE"] = 1] = "DEFERRABLE";
-})(ConstraintTiming || (ConstraintTiming = {}));
-// @export
-var DataStoreType;
-(function(DataStoreType) {
-    DataStoreType[DataStoreType["INDEXED_DB"] = 0] = "INDEXED_DB";
-    DataStoreType[DataStoreType["MEMORY"] = 1] = "MEMORY";
-    DataStoreType[DataStoreType["LOCAL_STORAGE"] = 2] = "LOCAL_STORAGE";
-    DataStoreType[DataStoreType["FIREBASE"] = 3] = "FIREBASE";
-    DataStoreType[DataStoreType["WEB_SQL"] = 4] = "WEB_SQL";
-    DataStoreType[DataStoreType["OBSERVABLE_STORE"] = 5] = "OBSERVABLE_STORE";
-})(DataStoreType || (DataStoreType = {}));
-// @export
-var Order;
-(function(Order) {
-    Order[Order["DESC"] = 0] = "DESC";
-    Order[Order["ASC"] = 1] = "ASC";
-})(Order || (Order = {}));
-// @export
-var Type;
-(function(Type) {
-    Type[Type["ARRAY_BUFFER"] = 0] = "ARRAY_BUFFER";
-    Type[Type["BOOLEAN"] = 1] = "BOOLEAN";
-    Type[Type["DATE_TIME"] = 2] = "DATE_TIME";
-    Type[Type["INTEGER"] = 3] = "INTEGER";
-    Type[Type["NUMBER"] = 4] = "NUMBER";
-    Type[Type["STRING"] = 5] = "STRING";
-    Type[Type["OBJECT"] = 6] = "OBJECT";
-})(Type || (Type = {}));
-const DEFAULT_VALUES = new Map([
-    [Type.ARRAY_BUFFER, null],
-    [Type.BOOLEAN, false],
-    [Type.DATE_TIME, Object.freeze(new Date(0))],
-    [Type.INTEGER, 0],
-    [Type.NUMBER, 0],
-    [Type.STRING, ''],
-    [Type.OBJECT, null], // nullable
-]);
-// @export
-var TransactionType;
-(function(TransactionType) {
-    TransactionType[TransactionType["READ_ONLY"] = 0] = "READ_ONLY";
-    TransactionType[TransactionType["READ_WRITE"] = 1] = "READ_WRITE";
-})(TransactionType || (TransactionType = {}));
-// @export
-var ErrorCode;
-(function(ErrorCode) {
-    // System level errors
-    ErrorCode[ErrorCode["SYSTEM_ERROR"] = 0] = "SYSTEM_ERROR";
-    ErrorCode[ErrorCode["VERSION_MISMATCH"] = 1] = "VERSION_MISMATCH";
-    ErrorCode[ErrorCode["CONNECTION_CLOSED"] = 2] = "CONNECTION_CLOSED";
-    ErrorCode[ErrorCode["TIMEOUT"] = 3] = "TIMEOUT";
-    ErrorCode[ErrorCode["OPERATION_BLOCKED"] = 4] = "OPERATION_BLOCKED";
-    ErrorCode[ErrorCode["QUOTA_EXCEEDED"] = 5] = "QUOTA_EXCEEDED";
-    ErrorCode[ErrorCode["TOO_MANY_ROWS"] = 6] = "TOO_MANY_ROWS";
-    ErrorCode[ErrorCode["SERVICE_NOT_FOUND"] = 7] = "SERVICE_NOT_FOUND";
-    ErrorCode[ErrorCode["UNKNOWN_PLAN_NODE"] = 8] = "UNKNOWN_PLAN_NODE";
-    // Data errors
-    ErrorCode[ErrorCode["DATA_ERROR"] = 100] = "DATA_ERROR";
-    ErrorCode[ErrorCode["TABLE_NOT_FOUND"] = 101] = "TABLE_NOT_FOUND";
-    ErrorCode[ErrorCode["DATA_CORRUPTION"] = 102] = "DATA_CORRUPTION";
-    ErrorCode[ErrorCode["INVALID_ROW_ID"] = 103] = "INVALID_ROW_ID";
-    ErrorCode[ErrorCode["INVALID_TX_ACCESS"] = 105] = "INVALID_TX_ACCESS";
-    ErrorCode[ErrorCode["OUT_OF_SCOPE"] = 106] = "OUT_OF_SCOPE";
-    ErrorCode[ErrorCode["INVALID_TX_STATE"] = 107] = "INVALID_TX_STATE";
-    ErrorCode[ErrorCode["INCOMPATIBLE_DB"] = 108] = "INCOMPATIBLE_DB";
-    ErrorCode[ErrorCode["ROW_ID_EXISTED"] = 109] = "ROW_ID_EXISTED";
-    ErrorCode[ErrorCode["IMPORT_TO_NON_EMPTY_DB"] = 110] = "IMPORT_TO_NON_EMPTY_DB";
-    ErrorCode[ErrorCode["DB_MISMATCH"] = 111] = "DB_MISMATCH";
-    ErrorCode[ErrorCode["IMPORT_DATA_NOT_FOUND"] = 112] = "IMPORT_DATA_NOT_FOUND";
-    ErrorCode[ErrorCode["ALREADY_CONNECTED"] = 113] = "ALREADY_CONNECTED";
-    // Integrity errors
-    ErrorCode[ErrorCode["CONSTRAINT_ERROR"] = 200] = "CONSTRAINT_ERROR";
-    ErrorCode[ErrorCode["DUPLICATE_KEYS"] = 201] = "DUPLICATE_KEYS";
-    ErrorCode[ErrorCode["NOT_NULLABLE"] = 202] = "NOT_NULLABLE";
-    ErrorCode[ErrorCode["FK_VIOLATION"] = 203] = "FK_VIOLATION";
-    // Unsupported
-    ErrorCode[ErrorCode["NOT_SUPPORTED"] = 300] = "NOT_SUPPORTED";
-    ErrorCode[ErrorCode["FB_NO_RAW_TX"] = 351] = "FB_NO_RAW_TX";
-    ErrorCode[ErrorCode["IDB_NOT_PROVIDED"] = 352] = "IDB_NOT_PROVIDED";
-    ErrorCode[ErrorCode["WEBSQL_NOT_PROVIDED"] = 353] = "WEBSQL_NOT_PROVIDED";
-    ErrorCode[ErrorCode["CANT_OPEN_WEBSQL_DB"] = 354] = "CANT_OPEN_WEBSQL_DB";
-    ErrorCode[ErrorCode["NO_CHANGE_NOTIFICATION"] = 355] = "NO_CHANGE_NOTIFICATION";
-    ErrorCode[ErrorCode["NO_WEBSQL_TX"] = 356] = "NO_WEBSQL_TX";
-    ErrorCode[ErrorCode["NO_PRED_IN_TOSQL"] = 357] = "NO_PRED_IN_TOSQL";
-    ErrorCode[ErrorCode["NOT_IMPL_IN_TOSQL"] = 358] = "NOT_IMPL_IN_TOSQL";
-    ErrorCode[ErrorCode["LOCAL_STORAGE_NOT_PROVIDED"] = 359] = "LOCAL_STORAGE_NOT_PROVIDED";
-    ErrorCode[ErrorCode["NOT_IMPLEMENTED"] = 360] = "NOT_IMPLEMENTED";
-    ErrorCode[ErrorCode["CANT_OPEN_IDB"] = 361] = "CANT_OPEN_IDB";
-    ErrorCode[ErrorCode["CANT_READ_IDB"] = 362] = "CANT_READ_IDB";
-    ErrorCode[ErrorCode["CANT_LOAD_IDB"] = 363] = "CANT_LOAD_IDB";
-    // Syntax errors
-    ErrorCode[ErrorCode["SYNTAX_ERROR"] = 500] = "SYNTAX_ERROR";
-    ErrorCode[ErrorCode["UNBOUND_VALUE"] = 501] = "UNBOUND_VALUE";
-    ErrorCode[ErrorCode["INVALID_NAME"] = 502] = "INVALID_NAME";
-    ErrorCode[ErrorCode["NAME_IN_USE"] = 503] = "NAME_IN_USE";
-    ErrorCode[ErrorCode["INVALID_AUTO_KEY_TYPE"] = 504] = "INVALID_AUTO_KEY_TYPE";
-    ErrorCode[ErrorCode["INVALID_AUTO_KEY_COLUMN"] = 505] = "INVALID_AUTO_KEY_COLUMN";
-    ErrorCode[ErrorCode["IMMEDIATE_EVAL_ONLY"] = 506] = "IMMEDIATE_EVAL_ONLY";
-    ErrorCode[ErrorCode["COLUMN_NOT_FOUND"] = 508] = "COLUMN_NOT_FOUND";
-    ErrorCode[ErrorCode["COLUMN_NOT_INDEXABLE"] = 509] = "COLUMN_NOT_INDEXABLE";
-    ErrorCode[ErrorCode["BIND_ARRAY_OUT_OF_RANGE"] = 510] = "BIND_ARRAY_OUT_OF_RANGE";
-    ErrorCode[ErrorCode["CANT_GET_IDB_TABLE"] = 511] = "CANT_GET_IDB_TABLE";
-    ErrorCode[ErrorCode["CANT_GET_WEBSQL_TABLE"] = 512] = "CANT_GET_WEBSQL_TABLE";
-    ErrorCode[ErrorCode["UNKNOWN_QUERY_CONTEXT"] = 513] = "UNKNOWN_QUERY_CONTEXT";
-    ErrorCode[ErrorCode["UNKNOWN_NODE_TYPE"] = 514] = "UNKNOWN_NODE_TYPE";
-    ErrorCode[ErrorCode["DUPLICATE_FROM"] = 515] = "DUPLICATE_FROM";
-    ErrorCode[ErrorCode["DUPLICATE_WHERE"] = 516] = "DUPLICATE_WHERE";
-    ErrorCode[ErrorCode["INVALID_DELETE"] = 517] = "INVALID_DELETE";
-    ErrorCode[ErrorCode["INVALID_INSERT"] = 518] = "INVALID_INSERT";
-    ErrorCode[ErrorCode["INVALID_INSERT_OR_REPLACE"] = 519] = "INVALID_INSERT_OR_REPLACE";
-    ErrorCode[ErrorCode["DUPLICATE_INTO"] = 520] = "DUPLICATE_INTO";
-    ErrorCode[ErrorCode["DUPLICATE_VALUES"] = 521] = "DUPLICATE_VALUES";
-    ErrorCode[ErrorCode["INVALID_SELECT"] = 522] = "INVALID_SELECT";
-    ErrorCode[ErrorCode["UNBOUND_LIMIT_SKIP"] = 523] = "UNBOUND_LIMIT_SKIP";
-    ErrorCode[ErrorCode["INVALID_DISTINCT"] = 524] = "INVALID_DISTINCT";
-    ErrorCode[ErrorCode["INVALID_GROUPBY"] = 525] = "INVALID_GROUPBY";
-    ErrorCode[ErrorCode["INVALID_PROJECTION"] = 526] = "INVALID_PROJECTION";
-    ErrorCode[ErrorCode["INVALID_AGGREGATION"] = 527] = "INVALID_AGGREGATION";
-    ErrorCode[ErrorCode["DUPLICATE_LIMIT"] = 528] = "DUPLICATE_LIMIT";
-    ErrorCode[ErrorCode["DUPLICATE_SKIP"] = 529] = "DUPLICATE_SKIP";
-    ErrorCode[ErrorCode["DUPLICATE_GROUPBY"] = 530] = "DUPLICATE_GROUPBY";
-    ErrorCode[ErrorCode["NEGATIVE_LIMIT_SKIP"] = 531] = "NEGATIVE_LIMIT_SKIP";
-    ErrorCode[ErrorCode["INVALID_UPDATE"] = 532] = "INVALID_UPDATE";
-    ErrorCode[ErrorCode["FK_LOOP"] = 533] = "FK_LOOP";
-    ErrorCode[ErrorCode["FK_COLUMN_IN_USE"] = 534] = "FK_COLUMN_IN_USE";
-    ErrorCode[ErrorCode["SCHEMA_FINALIZED"] = 535] = "SCHEMA_FINALIZED";
-    ErrorCode[ErrorCode["INVALID_FK_TABLE"] = 536] = "INVALID_FK_TABLE";
-    ErrorCode[ErrorCode["INVALID_FK_COLUMN"] = 537] = "INVALID_FK_COLUMN";
-    ErrorCode[ErrorCode["INVALID_FK_COLUMN_TYPE"] = 538] = "INVALID_FK_COLUMN_TYPE";
-    ErrorCode[ErrorCode["FK_COLUMN_NONUNIQUE"] = 539] = "FK_COLUMN_NONUNIQUE";
-    ErrorCode[ErrorCode["INVALID_FK_REF"] = 540] = "INVALID_FK_REF";
-    ErrorCode[ErrorCode["INVALID_OUTER_JOIN"] = 541] = "INVALID_OUTER_JOIN";
-    ErrorCode[ErrorCode["MISSING_FROM_BEFORE_JOIN"] = 542] = "MISSING_FROM_BEFORE_JOIN";
-    ErrorCode[ErrorCode["PK_CANT_BE_FK"] = 543] = "PK_CANT_BE_FK";
-    ErrorCode[ErrorCode["DUPLICATE_PK"] = 544] = "DUPLICATE_PK";
-    ErrorCode[ErrorCode["NULLABLE_PK"] = 545] = "NULLABLE_PK";
-    ErrorCode[ErrorCode["DUPLICATE_NAME"] = 546] = "DUPLICATE_NAME";
-    ErrorCode[ErrorCode["INVALID_WHERE"] = 547] = "INVALID_WHERE";
-    ErrorCode[ErrorCode["FROM_AFTER_WHERE"] = 548] = "FROM_AFTER_WHERE";
-    ErrorCode[ErrorCode["FROM_AFTER_ORDER_GROUPBY"] = 549] = "FROM_AFTER_ORDER_GROUPBY";
-    ErrorCode[ErrorCode["INVALID_PREDICATE"] = 550] = "INVALID_PREDICATE";
-    // Test errors
-    ErrorCode[ErrorCode["TEST_ERROR"] = 900] = "TEST_ERROR";
-    ErrorCode[ErrorCode["ASSERTION"] = 998] = "ASSERTION";
-    ErrorCode[ErrorCode["SIMULATED_ERROR"] = 999] = "SIMULATED_ERROR";
-})(ErrorCode || (ErrorCode = {})); // enum ErrorCode
-
-/**
- * Copyright 2020 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the 'License');
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an 'AS IS' BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-class DefaultOptions {
-    constructor() {
-        this.debugMode = false;
-        this.memoryOnly = false;
-        this.exceptionUrl = DefaultOptions.url;
-        this.useGetAll = false;
-    }
-    errorMessage(code) {
-        return code.toString();
-    }
-}
-DefaultOptions.url = 'http://google.github.io/lovefield/error_lookup/src/error_lookup.html?c=';
-/* eslint-enable @typescript-eslint/class-name-casing */
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-class Global {
-    constructor() {
-        this.services = new Map();
-    }
-    static get() {
-        if (!Global.instance) {
-            Global.instance = new Global();
-        }
-        if (!Global.instance.opt) {
-            Global.instance.setOptions(new DefaultOptions());
-        }
-        return Global.instance;
-    }
-    clear() {
-        this.services.clear();
-    }
-    registerService(serviceId, service) {
-        this.services.set(serviceId.toString(), service);
-        return service;
-    }
-    getService(serviceId) {
-        const service = this.services.get(serviceId.toString());
-        if (!service) {
-            // 7: Service {0} not registered.
-            throw new Exception(ErrorCode.SERVICE_NOT_FOUND, serviceId.toString());
-        }
-        return service;
-    }
-    isRegistered(serviceId) {
-        return this.services.has(serviceId.toString());
-    }
-    listServices() {
-        return Array.from(this.services.keys());
-    }
-    getOptions() {
-        return this.opt;
-    }
-    setOptions(options) {
-        this.opt = options;
-    }
-}
-
-/**
- * Copyright 2016 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-class Exception {
-    constructor(code, ...args) {
-        this.code = code;
-        this.args = args;
-        this.message = Global.get().getOptions().exceptionUrl + code.toString();
-        if (args.length) {
-            // Allow at most 4 parameters, each parameter at most 64 chars.
-            for (let i = 0; i < Math.min(4, args.length); ++i) {
-                const val = encodeURIComponent(String(args[i]).slice(0, 64));
-                if (Global.get().getOptions().exceptionUrl.length) {
-                    this.message += `&p${i}=${val}`;
-                }
-                else {
-                    this.message += `|${val}`;
-                }
-            }
-        }
-    }
-    toString() {
-        const template = Global.get()
-            .getOptions()
-            .errorMessage(this.code) || this.code.toString();
-        return template.replace(/{([^}]+)}/g, (match, pattern) => this.args[Number(pattern)]);
-    }
-} // class Exception
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-function assert(condition, message = 'assertion failed') {
-    if (Global.get().getOptions().debugMode) {
-        if (!condition) {
-            throw new Exception(ErrorCode.ASSERTION, message);
-        }
-    }
-}
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-class ArrayHelper {
-    // Returns true if the value were inserted, false otherwise.
-    static binaryInsert(arr, value, comparator) {
-        const index = ArrayHelper.binarySearch(arr, value, comparator);
-        if (index < 0) {
-            arr.splice(-(index + 1), 0, value);
-            return true;
-        }
-        return false;
-    }
-    // Returns true if the value were inserted, false otherwise.
-    static binaryRemove(arr, value, comparator) {
-        const index = ArrayHelper.binarySearch(arr, value, comparator);
-        if (index < 0) {
-            return false;
-        }
-        arr.splice(index, 1);
-        return true;
-    }
-    // Randomly shuffle an array's element.
-    static shuffle(arr) {
-        for (let i = arr.length - 1; i > 0; i--) {
-            // Choose a random array index in [0, i] (inclusive with i).
-            const j = Math.floor(Math.random() * (i + 1));
-            const tmp = arr[i];
-            arr[i] = arr[j];
-            arr[j] = tmp;
-        }
-    }
-    // Clone the array.
-    static clone(arr) {
-        const length = arr.length;
-        if (length > 0) {
-            const rv = new Array(length);
-            arr.forEach((v, i) => (rv[i] = v));
-            return rv;
-        }
-        return [];
-    }
-    // Flatten the array.
-    static flatten(...arr) {
-        const CHUNK_SIZE = 8192;
-        const result = [];
-        arr.forEach(element => {
-            if (Array.isArray(element)) {
-                for (let c = 0; c < element.length; c += CHUNK_SIZE) {
-                    const chunk = element.slice(c, c + CHUNK_SIZE);
-                    const recurseResult = ArrayHelper.flatten.apply(null, chunk);
-                    recurseResult.forEach((r) => result.push(r));
-                }
-            }
-            else {
-                result.push(element);
-            }
-        });
-        return result;
-    }
-    // Cartesian product of zero or more sets.  Gives an iterator that gives every
-    // combination of one element chosen from each set.  For example,
-    // ([1, 2], [3, 4]) gives ([1, 3], [1, 4], [2, 3], [2, 4]).
-    static product(arrays) {
-        const someArrayEmpty = arrays.some(arr => !arr.length);
-        if (someArrayEmpty || arrays.length === 0) {
-            return [];
-        }
-        let indices = new Array(arrays.length);
-        indices.fill(0);
-        const result = [];
-        while (indices !== null) {
-            result.push(indices.map((valueIndex, arrayIndex) => arrays[arrayIndex][valueIndex]));
-            // Generate the next-largest indices for the next call.
-            // Increase the rightmost index. If it goes over, increase the next
-            // rightmost (like carry-over addition).
-            for (let i = indices.length - 1; i >= 0; i--) {
-                // Assertion prevents compiler warning below.
-                assert(indices !== null);
-                if (indices[i] < arrays[i].length - 1) {
-                    indices[i]++;
-                    break;
-                }
-                // We're at the last indices (the last element of every array), so
-                // the iteration is over on the next call.
-                if (i === 0) {
-                    indices = null;
-                    break;
-                }
-                // Reset the index in this column and loop back to increment the
-                // next one.
-                indices[i] = 0;
-            }
-        }
-        return result;
-    }
-    // Returns an object whose keys are all unique return values of sorter.
-    static bucket(arr, sorter) {
-        const bucket = {};
-        arr.forEach(v => {
-            const key = sorter(v);
-            if (bucket[key] === undefined) {
-                bucket[key] = [];
-            }
-            bucket[key].push(v);
-        });
-        return bucket;
-    }
-    // Returns lowest index of the target value if found, otherwise
-    // (-(insertion point) - 1). The insertion point is where the value should
-    // be inserted into arr to preserve the sorted property.  Return value >= 0
-    // iff target is found.
-    static binarySearch(arr, value, comparator) {
-        let left = 0;
-        let right = arr.length;
-        const comp = comparator ||
-            ArrayHelper.defaultComparator;
-        while (left < right) {
-            const middle = (left + right) >> 1;
-            if (comp(arr[middle], value) < 0) {
-                left = middle + 1;
-            }
-            else {
-                right = middle;
-            }
-        }
-        // ~left is a shorthand for -left - 1.
-        return left === right && arr[left] === value ? left : ~left;
-    }
-    // Returns negative value if lhs < rhs, 0 if equal, positive value if
-    // lhs > rhs.
-    static defaultComparator(lhs, rhs) {
-        return lhs - rhs;
-    }
-}
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-class ServiceId {
-    constructor(serviceId) {
-        this.serviceId = serviceId;
-    }
-    toString() {
-        return this.serviceId;
-    }
-    // Dummy method to please the compiler (need to use <T> somewhere).
-    getAsType() {
-        return {};
-    }
-}
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-class Service {
-}
-// The backing data store used by this connection.
-// following statement fail compilation, need solution.
-Service.BACK_STORE = new ServiceId('backstore');
-// The shared row cache used by this connection.
-Service.CACHE = new ServiceId('cache');
-// The shared store of all indices defined.
-Service.INDEX_STORE = new ServiceId('indexstore');
-// Query engine used for generating execution plan.
-Service.QUERY_ENGINE = new ServiceId('engine');
-// Query runner which executes transactions.
-Service.RUNNER = new ServiceId('runner');
-// Observer registry storing all observing queries.
-Service.OBSERVER_REGISTRY = new ServiceId('observerregistry');
-// Finalized schema associated with this connection.
-Service.SCHEMA = new ServiceId('schema');
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-// The comparison result constant. This must be consistent with the constant
-// required by the sort function of Array.prototype.sort.
-var Favor;
-(function(Favor) {
-    Favor[Favor["RHS"] = -1] = "RHS";
-    Favor[Favor["TIE"] = 0] = "TIE";
-    Favor[Favor["LHS"] = 1] = "LHS";
-})(Favor || (Favor = {}));
-var TableType;
-(function(TableType) {
-    TableType[TableType["DATA"] = 0] = "DATA";
-    TableType[TableType["INDEX"] = 1] = "INDEX";
-})(TableType || (TableType = {}));
-var ExecType;
-(function(ExecType) {
-    ExecType[ExecType["NO_CHILD"] = -1] = "NO_CHILD";
-    ExecType[ExecType["ALL"] = 0] = "ALL";
-    ExecType[ExecType["FIRST_CHILD"] = 1] = "FIRST_CHILD";
-})(ExecType || (ExecType = {}));
-var LockType;
-(function(LockType) {
-    LockType[LockType["EXCLUSIVE"] = 0] = "EXCLUSIVE";
-    LockType[LockType["RESERVED_READ_ONLY"] = 1] = "RESERVED_READ_ONLY";
-    LockType[LockType["RESERVED_READ_WRITE"] = 2] = "RESERVED_READ_WRITE";
-    LockType[LockType["SHARED"] = 3] = "SHARED";
-})(LockType || (LockType = {}));
-// The priority of each type of task. Lower number means higher priority.
-var TaskPriority;
-(function(TaskPriority) {
-    TaskPriority[TaskPriority["EXPORT_TASK"] = 0] = "EXPORT_TASK";
-    TaskPriority[TaskPriority["IMPORT_TASK"] = 0] = "IMPORT_TASK";
-    TaskPriority[TaskPriority["OBSERVER_QUERY_TASK"] = 0] = "OBSERVER_QUERY_TASK";
-    TaskPriority[TaskPriority["EXTERNAL_CHANGE_TASK"] = 1] = "EXTERNAL_CHANGE_TASK";
-    TaskPriority[TaskPriority["USER_QUERY_TASK"] = 2] = "USER_QUERY_TASK";
-    TaskPriority[TaskPriority["TRANSACTION_TASK"] = 2] = "TRANSACTION_TASK";
-})(TaskPriority || (TaskPriority = {}));
-var FnType;
-(function(FnType) {
-    FnType["AVG"] = "AVG";
-    FnType["COUNT"] = "COUNT";
-    FnType["DISTINCT"] = "DISTINCT";
-    FnType["GEOMEAN"] = "GEOMEAN";
-    FnType["MAX"] = "MAX";
-    FnType["MIN"] = "MIN";
-    FnType["STDDEV"] = "STDDEV";
-    FnType["SUM"] = "SUM";
-})(FnType || (FnType = {}));
-var Operator;
-(function(Operator) {
-    Operator["AND"] = "and";
-    Operator["OR"] = "or";
-})(Operator || (Operator = {}));
-
-/**
- * Copyright 2017 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-class Resolver {
-    constructor() {
-        this.promise = new Promise((resolve, reject) => {
-            this.resolveFn = resolve;
-            this.rejectFn = reject;
-        });
-    }
-    resolve(value) {
-        this.resolveFn(value);
-    }
-    reject(reason) {
-        this.rejectFn(reason);
-    }
-}
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-class UniqueId {
-    getUniqueId() {
-        if (this.uniqueId === undefined) {
-            this.uniqueId = `lf_${this.getUniqueNumber()}`;
-        }
-        return this.uniqueId;
-    }
-    getUniqueNumber() {
-        if (this.uniqueNumber === undefined) {
-            this.uniqueNumber = ++UniqueId.nextId;
-        }
-        return this.uniqueNumber;
-    }
-}
-UniqueId.nextId = 0;
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-class InMemoryUpdater {
-    constructor(global) {
-        this.cache = global.getService(Service.CACHE);
-        this.indexStore = global.getService(Service.INDEX_STORE);
-        this.schema = global.getService(Service.SCHEMA);
-    }
-    // Updates all indices and the cache to reflect the changes that are described
-    // in the given diffs.
-    update(tableDiffs) {
-        tableDiffs.forEach(tableDiff => {
-            this.updateIndicesForDiff(tableDiff);
-            this.updateCacheForDiff(tableDiff);
-        }, this);
-    }
-    // Updates all indices that are affected as a result of the given
-    // modification. In the case where an exception is thrown (constraint
-    // violation) all the indices are unaffected.
-    updateTableIndicesForRow(table, modification) {
-        const indices = this.indexStore.getTableIndices(table.getName());
-        let updatedIndices = 0;
-        indices.forEach(index => {
-            try {
-                this.updateTableIndexForRow(index, modification);
-                updatedIndices++;
-            }
-            catch (e) {
-                // Rolling back any indices that were successfully updated, since
-                // updateTableIndicesForRow must be atomic.
-                indices.slice(0, updatedIndices).forEach(idx => {
-                    this.updateTableIndexForRow(idx, [modification[1], modification[0]]);
-                }, this);
-                // Forwarding the exception to the caller.
-                throw e;
-            }
-        }, this);
-    }
-    // Updates the cache based on the given table diff.
-    updateCacheForDiff(diff) {
-        const tableName = diff.getName();
-        diff
-            .getDeleted()
-            .forEach((row, rowId) => this.cache.remove(tableName, rowId));
-        diff.getAdded().forEach(row => this.cache.set(tableName, row));
-        diff
-            .getModified()
-            .forEach(modification => this.cache.set(tableName, modification[1]));
-    }
-    // Updates index data structures based on the given table diff.
-    updateIndicesForDiff(diff) {
-        const table = this.schema.table(diff.getName());
-        const modifications = diff.getAsModifications();
-        modifications.forEach(modification => {
-            this.updateTableIndicesForRow(table, modification);
-        }, this);
-    }
-    // Updates a given index to reflect a given row modification.
-    updateTableIndexForRow(index, modification) {
-        // Using 'undefined' as a special value to indicate insertion/
-        // deletion instead of 'null', since 'null' can be a valid index key.
-        const keyNow = modification[1] === null
-            ? undefined
-            : modification[1].keyOfIndex(index.getName());
-        const keyThen = modification[0] === null
-            ? undefined
-            : modification[0].keyOfIndex(index.getName());
-        if (keyThen === undefined && keyNow !== undefined) {
-            // Insertion
-            index.add(keyNow, modification[1].id());
-        }
-        else if (keyThen !== undefined && keyNow !== undefined) {
-            // Index comparators may not handle null, so handle it here for them.
-            if (keyNow === null || keyThen === null) {
-                if (keyNow === keyThen) {
-                    return;
-                }
-            }
-            else if (index.comparator().compare(keyThen, keyNow) === Favor.TIE) {
-                return;
-            }
-            // Update
-            // NOTE: the order of calling add() and remove() here matters.
-            // Index#add() might throw an exception because of a constraint
-            // violation, in which case the index remains unaffected as expected.
-            index.add(keyNow, modification[1].id());
-            index.remove(keyThen, modification[0].id());
-        }
-        else if (keyThen !== undefined && keyNow === undefined) {
-            // Deletion
-            index.remove(keyThen, modification[0].id());
-        }
-    }
-}
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-class TransactionStatsImpl {
-    constructor(success_, insertedRowCount_, updatedRowCount_, deletedRowCount_, changedTableCount_) {
-        this.success_ = success_;
-        this.insertedRowCount_ = insertedRowCount_;
-        this.updatedRowCount_ = updatedRowCount_;
-        this.deletedRowCount_ = deletedRowCount_;
-        this.changedTableCount_ = changedTableCount_;
-    }
-    static getDefault() {
-        return new TransactionStatsImpl(false, 0, 0, 0, 0);
-    }
-    success() {
-        return this.success_;
-    }
-    insertedRowCount() {
-        return this.insertedRowCount_;
-    }
-    updatedRowCount() {
-        return this.updatedRowCount_;
-    }
-    deletedRowCount() {
-        return this.deletedRowCount_;
-    }
-    changedTableCount() {
-        return this.changedTableCount_;
-    }
-}
-
-/**
- * Copyright 2016 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-// A MapSet maps a key to a set of values, without allowing duplicate entries
-// for a given key.
-class MapSet {
-    constructor() {
-        this.map = new Map();
-        this.count = 0;
-    }
-    get size() {
-        return this.count;
-    }
-    has(key) {
-        return this.map.has(key);
-    }
-    set(key, value) {
-        const valueSet = this.getSet(key);
-        if (!valueSet.has(value)) {
-            valueSet.add(value);
-            this.count++;
-        }
-        return this;
-    }
-    setMany(key, values) {
-        const valueSet = this.getSet(key);
-        values.forEach(value => {
-            if (!valueSet.has(value)) {
-                valueSet.add(value);
-                this.count++;
-            }
-        });
-        return this;
-    }
-    merge(mapSet) {
-        mapSet
-            .keys()
-            .forEach(key => this.setMany(key, Array.from(mapSet.getSet(key))));
-        return this;
-    }
-    /**
-     * Removes a value associated with the given key.
-     * Returns true if the map was modified.
-     */
-    delete(key, value) {
-        const valueSet = this.map.get(key) || null;
-        if (valueSet === null) {
-            return false;
-        }
-        const didRemove = valueSet.delete(value);
-        if (didRemove) {
-            this.count--;
-            if (valueSet.size === 0) {
-                this.map.delete(key);
-            }
-        }
-        return didRemove;
-    }
-    get(key) {
-        const valueSet = this.map.get(key) || null;
-        return valueSet === null ? null : Array.from(valueSet);
-    }
-    clear() {
-        this.map.clear();
-        this.count = 0;
-    }
-    keys() {
-        return Array.from(this.map.keys());
-    }
-    values() {
-        const results = [];
-        this.map.forEach(valueSet => results.push(...Array.from(valueSet)));
-        return results;
-    }
-    // Returns a set for a given key. If the key does not exist in the map,
-    // a new Set will be created.
-    getSet(key) {
-        let valueSet = this.map.get(key) || null;
-        if (valueSet === null) {
-            valueSet = new Set();
-            this.map.set(key, valueSet);
-        }
-        return valueSet;
-    }
-}
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-// Read-only objects that provides information for schema metadata.
-class Info {
-    constructor(dbSchema) {
-        this.dbSchema = dbSchema;
-        this.cascadeReferringFk = new MapSet();
-        this.restrictReferringFk = new MapSet();
-        this.parents = new MapSet();
-        this.colParent = new Map();
-        this.children = new MapSet();
-        this.cascadeChildren = new MapSet();
-        this.restrictChildren = new MapSet();
-        this.colChild = new MapSet();
-        this.dbSchema.tables().forEach(t => {
-            const table = t;
-            const tableName = table.getName();
-            table
-                .getConstraint()
-                .getForeignKeys()
-                .forEach(fkSpec => {
-                    this.parents.set(tableName, this.dbSchema.table(fkSpec.parentTable));
-                    this.children.set(fkSpec.parentTable, table);
-                    if (fkSpec.action === ConstraintAction.RESTRICT) {
-                        this.restrictReferringFk.set(fkSpec.parentTable, fkSpec);
-                        this.restrictChildren.set(fkSpec.parentTable, table);
-                    }
-                    else {
-                        // fkSpec.action === ConstraintAction.CASCADE
-                        this.cascadeReferringFk.set(fkSpec.parentTable, fkSpec);
-                        this.cascadeChildren.set(fkSpec.parentTable, table);
-                    }
-                    this.colParent.set(table.getName() + '.' + fkSpec.childColumn, fkSpec.parentTable);
-                    const ref = `${fkSpec.parentTable}.${fkSpec.parentColumn}`;
-                    this.colChild.set(ref, table.getName());
-                }, this);
-        }, this);
-    }
-    static from(dbSchema) {
-        return dbSchema.info();
-    }
-    // Looks up referencing foreign key for a given table.
-    // If no constraint action type were provided, all types are included.
-    getReferencingForeignKeys(tableName, constraintAction) {
-        if (constraintAction !== undefined && constraintAction !== null) {
-            return constraintAction === ConstraintAction.CASCADE
-                ? this.cascadeReferringFk.get(tableName)
-                : this.restrictReferringFk.get(tableName);
-        }
-        else {
-            const cascadeConstraints = this.cascadeReferringFk.get(tableName);
-            const restrictConstraints = this.restrictReferringFk.get(tableName);
-            if (cascadeConstraints === null && restrictConstraints === null) {
-                return null;
-            }
-            else {
-                return (cascadeConstraints || []).concat(restrictConstraints || []);
-            }
-        }
-    }
-    // Look up parent tables for given tables.
-    getParentTables(tableName) {
-        return this.expandScope(tableName, this.parents);
-    }
-    // Looks up parent tables for a given column set.
-    getParentTablesByColumns(colNames) {
-        const tableNames = new Set();
-        colNames.forEach(col => {
-            const table = this.colParent.get(col);
-            if (table) {
-                tableNames.add(table);
-            }
-        }, this);
-        const tables = Array.from(tableNames.values());
-        return tables.map(tableName => this.dbSchema.table(tableName));
-    }
-    // Looks up child tables for given tables.
-    getChildTables(tableName, constraintAction) {
-        if (!(constraintAction !== undefined && constraintAction !== null)) {
-            return this.expandScope(tableName, this.children);
-        }
-        else if (constraintAction === ConstraintAction.RESTRICT) {
-            return this.expandScope(tableName, this.restrictChildren);
-        }
-        else {
-            return this.expandScope(tableName, this.cascadeChildren);
-        }
-    }
-    // Looks up child tables for a given column set.
-    getChildTablesByColumns(colNames) {
-        const tableNames = new Set();
-        colNames.forEach(col => {
-            const children = this.colChild.get(col);
-            if (children) {
-                children.forEach(child => tableNames.add(child));
-            }
-        }, this);
-        const tables = Array.from(tableNames.values());
-        return tables.map(tableName => this.dbSchema.table(tableName));
-    }
-    expandScope(tableName, map) {
-        const values = map.get(tableName);
-        return values === null ? [] : values;
-    }
-}
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-class ConstraintChecker {
-    constructor(global) {
-        this.indexStore = global.getService(Service.INDEX_STORE);
-        this.schema = global.getService(Service.SCHEMA);
-        this.cache = global.getService(Service.CACHE);
-        this.foreignKeysParentIndices = new Map();
-    }
-    static didColumnValueChange(rowBefore, rowAfter, indexName) {
-        const deletionOrAddition = rowBefore === null ? rowAfter !== null : rowAfter === null;
-        return (deletionOrAddition ||
-            rowBefore.keyOfIndex(indexName) !== rowAfter.keyOfIndex(indexName));
-    }
-    // Finds if any row with the same primary key exists in the primary key index.
-    // Returns the row ID of an existing row that has the same primary
-    // key as the input row, on null if no existing row was found.
-    // |table|: the table where the row belongs.
-    // |row|: the row whose primary key needs to be checked.
-    findExistingRowIdInPkIndex(table, row) {
-        const pkIndexSchema = table.getConstraint().getPrimaryKey();
-        if (pkIndexSchema === null) {
-            // There is no primary key for the given table.
-            return null;
-        }
-        return this.findExistingRowIdInIndex(pkIndexSchema, row);
-    }
-    // Checks whether any not-nullable constraint violation occurs as a result of
-    // inserting/updating the given set of rows.
-    // |table|: the table where the row belongs.
-    // |rows|: the rows being inserted
-    checkNotNullable(table, rows) {
-        const notNullable = table.getConstraint().getNotNullable();
-        rows.forEach(row => {
-            notNullable.forEach(column => {
-                const target = row.payload()[column.getName()];
-                if (!(target !== null && target !== undefined)) {
-                    // 202: Attempted to insert NULL value to non-nullable field {0}.
-                    throw new Exception(ErrorCode.NOT_NULLABLE, column.getNormalizedName());
-                }
-            }, this);
-        }, this);
-    }
-    // Finds all rows in the database that should be updated as a result of
-    // cascading updates, taking into account the given foreign key constraints.
-    detectCascadeUpdates(table, modifications, foreignKeySpecs) {
-        const cascadedUpdates = new MapSet();
-        this.loopThroughReferringRows(foreignKeySpecs, modifications, (foreignKeySpec, childIndex, parentKey, modification) => {
-            const childRowIds = childIndex.get(parentKey);
-            childRowIds.forEach(rowId => {
-                cascadedUpdates.set(rowId, {
-                    fkSpec: foreignKeySpec,
-                    originalUpdatedRow: modification[1],
-                });
-            });
-        });
-        return cascadedUpdates;
-    }
-    // Performs all necessary foreign key constraint checks for the case where new
-    // rows are inserted. Only constraints with |constraintTiming| will be
-    // checked.
-    checkForeignKeysForInsert(table, rows, constraintTiming) {
-        if (rows.length === 0) {
-            return;
-        }
-        const modifications = rows.map(row => {
-            return [null /* rowBefore */, row /* rowNow */];
-        });
-        this.checkReferredKeys(table, modifications, constraintTiming);
-    }
-    // Performs all necessary foreign key constraint checks for the case of
-    // existing rows being updated. Only constraints with |constraintTiming| will
-    // be checked.
-    checkForeignKeysForUpdate(table, modifications, constraintTiming) {
-        if (modifications.length === 0) {
-            return;
-        }
-        this.checkReferredKeys(table, modifications, constraintTiming);
-        this.checkReferringKeys(table, modifications, constraintTiming, ConstraintAction.RESTRICT);
-    }
-    // Performs all necessary foreign key constraint checks for the case of
-    // existing rows being deleted. Only constraints with |constraintTiming| will
-    // be checked.
-    checkForeignKeysForDelete(table, rows, constraintTiming) {
-        if (rows.length === 0) {
-            return;
-        }
-        const modifications = rows.map(row => {
-            return [row /* rowBefore */, null /* rowNow */];
-        });
-        this.checkReferringKeys(table, modifications, constraintTiming);
-    }
-    // Finds all rows in the database that should be deleted as a result of
-    // cascading deletions.
-    // |rows| are the original rows being deleted (before taking cascading into
-    // account).
-    detectCascadeDeletion(table, rows) {
-        const result = {
-            rowIdsPerTable: new MapSet(),
-            tableOrder: [],
-        };
-        let lastRowIdsToDelete = new MapSet();
-        lastRowIdsToDelete.setMany(table.getName(), rows.map(row => row.id()));
-        do {
-            const newRowIdsToDelete = new MapSet();
-            lastRowIdsToDelete.keys().forEach(tableName => {
-                const tbl = this.schema.table(tableName);
-                const rowIds = lastRowIdsToDelete.get(tableName);
-                const modifications = rowIds.map(rowId => {
-                    const row = this.cache.get(rowId);
-                    return [row /* rowBefore */, null /* rowNow */];
-                }, this);
-                const referringRowIds = this.findReferringRowIds(tbl, modifications);
-                if (referringRowIds !== null) {
-                    result.tableOrder.unshift(...referringRowIds.keys());
-                    newRowIdsToDelete.merge(referringRowIds);
-                }
-            }, this);
-            lastRowIdsToDelete = newRowIdsToDelete;
-            result.rowIdsPerTable.merge(lastRowIdsToDelete);
-        } while (lastRowIdsToDelete.size > 0);
-        return result;
-    }
-    // Finds if any row with the same index key exists in the given index.
-    // Returns the row ID of an existing row that has the same index
-    // key as the input row, on null if no existing row was found.
-    // |indexSchema|: the index to check.
-    // |row|: the row whose index key needs to be checked.
-    findExistingRowIdInIndex(indexSchema, row) {
-        const indexName = indexSchema.getNormalizedName();
-        const indexKey = row.keyOfIndex(indexName);
-        const index = this.indexStore.get(indexName);
-        const rowIds = index.get(indexKey);
-        return rowIds.length === 0 ? null : rowIds[0];
-    }
-    // Checks that all referred keys in the given rows actually exist.
-    // Only constraints with matching |constraintTiming| will be checked.
-    checkReferredKeys(table, modifications, constraintTiming) {
-        const foreignKeySpecs = table.getConstraint().getForeignKeys();
-        foreignKeySpecs.forEach(foreignKeySpec => {
-            if (foreignKeySpec.timing === constraintTiming) {
-                this.checkReferredKey(foreignKeySpec, modifications);
-            }
-        }, this);
-    }
-    checkReferredKey(foreignKeySpec, modifications) {
-        const parentIndex = this.getParentIndex(foreignKeySpec);
-        modifications.forEach(modification => {
-            const didColumnValueChange = ConstraintChecker.didColumnValueChange(modification[0], modification[1], foreignKeySpec.name);
-            if (didColumnValueChange) {
-                const rowAfter = modification[1];
-                const parentKey = rowAfter.keyOfIndex(foreignKeySpec.name);
-                // A null value in the child column implies to ignore it, and not
-                // considering it as a constraint violation.
-                if (parentKey !== null && !parentIndex.containsKey(parentKey)) {
-                    // 203: Foreign key constraint violation on constraint {0}.
-                    throw new Exception(ErrorCode.FK_VIOLATION, foreignKeySpec.name);
-                }
-            }
-        }, this);
-    }
-    // Finds the index corresponding to the parent column of the given foreign
-    // key by querying the schema and the IndexStore.
-    // Returns the index corresponding to the parent column of the
-    // given foreign key constraint.
-    findParentIndex(foreignKeySpec) {
-        const parentTable = this.schema.table(foreignKeySpec.parentTable);
-        const parentColumn = parentTable[foreignKeySpec.parentColumn];
-        // getIndex() must find an index since the parent of a foreign key
-        // constraint must have a dedicated index.
-        const parentIndexSchema = parentColumn.getIndex();
-        return this.indexStore.get(parentIndexSchema.getNormalizedName());
-    }
-    // Gets the index corresponding to the parent column of the given foreign key.
-    // Leverages this.foreignKeysParentIndices map, such that the work for finding
-    // the parent index happens only once per foreign key.
-    // Returns the index corresponding to the parent column of the
-    // given foreign key constraint.
-    getParentIndex(foreignKeySpec) {
-        let parentIndex = this.foreignKeysParentIndices.get(foreignKeySpec.name);
-        if (parentIndex === undefined) {
-            parentIndex = this.findParentIndex(foreignKeySpec);
-            this.foreignKeysParentIndices.set(foreignKeySpec.name, parentIndex);
-        }
-        return parentIndex;
-    }
-    // Checks that no referring keys exist for the given rows.
-    // Only constraints with |constraintTiming| will be checked.
-    // Only constraints with |constraintAction| will be checked. If not provided
-    // both CASCADE and RESTRICT are checked.
-    checkReferringKeys(table, modifications, constraintTiming, constraintAction) {
-        let foreignKeySpecs = Info.from(this.schema).getReferencingForeignKeys(table.getName(), constraintAction);
-        if (foreignKeySpecs === null) {
-            return;
-        }
-        // TODO(dpapad): Enhance lf.schema.Info#getReferencingForeignKeys to filter
-        // based on constraint timing, such that this linear search is avoided.
-        foreignKeySpecs = foreignKeySpecs.filter(foreignKeySpec => {
-            return foreignKeySpec.timing === constraintTiming;
-        });
-        if (foreignKeySpecs.length === 0) {
-            return;
-        }
-        this.loopThroughReferringRows(foreignKeySpecs, modifications, (foreignKeySpec, childIndex, parentKey) => {
-            if (childIndex.containsKey(parentKey)) {
-                // 203: Foreign key constraint violation on constraint {0}.
-                throw new Exception(ErrorCode.FK_VIOLATION, foreignKeySpec.name);
-            }
-        });
-    }
-    // Finds row IDs that refer to the given modified rows and specifically only
-    // if the refer to a modified column. Returns referring row IDs per table.
-    findReferringRowIds(table, modifications) {
-        // Finding foreign key constraints referring to the affected table.
-        const foreignKeySpecs = Info.from(this.schema).getReferencingForeignKeys(table.getName(), ConstraintAction.CASCADE);
-        if (foreignKeySpecs === null) {
-            return null;
-        }
-        const referringRowIds = new MapSet();
-        this.loopThroughReferringRows(foreignKeySpecs, modifications, (foreignKeySpec, childIndex, parentKey) => {
-            const childRowIds = childIndex.get(parentKey);
-            if (childRowIds.length > 0) {
-                referringRowIds.setMany(foreignKeySpec.childTable, childRowIds);
-            }
-        });
-        return referringRowIds;
-    }
-    // Loops through the given list of foreign key constraints, for each modified
-    // row and invokes the given callback only when a referred column's value has
-    // been modified.
-    loopThroughReferringRows(foreignKeySpecs, modifications, callbackFn) {
-        foreignKeySpecs.forEach(foreignKeySpec => {
-            const childIndex = this.indexStore.get(foreignKeySpec.name);
-            const parentIndex = this.getParentIndex(foreignKeySpec);
-            modifications.forEach(modification => {
-                const didColumnValueChange = ConstraintChecker.didColumnValueChange(modification[0], modification[1], parentIndex.getName());
-                if (didColumnValueChange) {
-                    const rowBefore = modification[0];
-                    const parentKey = rowBefore.keyOfIndex(parentIndex.getName());
-                    callbackFn(foreignKeySpec, childIndex, parentKey, modification);
-                }
-            }, this);
-        }, this);
-    }
-}
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-class TableDiff {
-    constructor(name) {
-        this.name = name;
-        this.added = new Map();
-        this.modified = new Map();
-        this.deleted = new Map();
-    }
-    getName() {
-        return this.name;
-    }
-    getAdded() {
-        return this.added;
-    }
-    getModified() {
-        return this.modified;
-    }
-    getDeleted() {
-        return this.deleted;
-    }
-    add(row) {
-        if (this.deleted.has(row.id())) {
-            const modification = [
-                this.deleted.get(row.id()),
-                row,
-            ];
-            this.modified.set(row.id(), modification);
-            this.deleted.delete(row.id());
-        }
-        else {
-            this.added.set(row.id(), row);
-        }
-    }
-    modify(modification) {
-        const oldValue = modification[0];
-        const newValue = modification[1];
-        assert(oldValue.id() === newValue.id(), 'Row ID mismatch between old/new values.');
-        const id = oldValue.id();
-        if (this.added.has(id)) {
-            this.added.set(id, newValue);
-        }
-        else if (this.modified.has(id)) {
-            const overallModification = [
-                this.modified.get(id)[0],
-                newValue,
-            ];
-            this.modified.set(id, overallModification);
-        }
-        else {
-            this.modified.set(id, modification);
-        }
-    }
-    delete(row) {
-        if (this.added.has(row.id())) {
-            this.added.delete(row.id());
-        }
-        else if (this.modified.has(row.id())) {
-            const originalRow = this.modified.get(row.id())[0];
-            this.modified.delete(row.id());
-            this.deleted.set(row.id(), originalRow);
-        }
-        else {
-            this.deleted.set(row.id(), row);
-        }
-    }
-    // Merge another diff into this one.
-    merge(other) {
-        other.added.forEach(row => this.add(row));
-        other.modified.forEach(modification => this.modify(modification));
-        other.deleted.forEach(row => this.delete(row));
-    }
-    // Transforms each changes included in this diff (insertion, modification,
-    // deletion) as a pair of before and after values.
-    // Example addition:     [null, rowValue]
-    // Example modification: [oldRowValue, newRowValue]
-    // Example deletion      [oldRowValue, null]
-    getAsModifications() {
-        const modifications = [];
-        this.added.forEach(row => modifications.push([/* then */ null, /* now */ row]));
-        this.modified.forEach(modification => modifications.push(modification));
-        this.deleted.forEach(row => modifications.push([/* then */ row, /* now */ null]));
-        return modifications;
-    }
-    toString() {
-        return (`[${Array.from(this.added.keys()).toString()}], ` +
-            `[${Array.from(this.modified.keys()).toString()}], ` +
-            `[${Array.from(this.deleted.keys()).toString()}]`);
-    }
-    // Reverses this set of changes. Useful for reverting changes after they have
-    // been applied.
-    getReverse() {
-        const reverseDiff = new TableDiff(this.name);
-        this.added.forEach(row => reverseDiff.delete(row));
-        this.deleted.forEach(row => reverseDiff.add(row));
-        this.modified.forEach(modification => {
-            reverseDiff.modify([modification[1], modification[0]]);
-        });
-        return reverseDiff;
-    }
-    isEmpty() {
-        return (this.added.size === 0 &&
-            this.deleted.size === 0 &&
-            this.modified.size === 0);
-    }
-}
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the 'License');
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an 'AS IS' BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-// A transaction journal which is contained within Tx. The journal
-// stores rows changed by this transaction so that they can be merged into the
-// backing store. Caches and indices are updated as soon as a change is
-// recorded in the journal.
-class Journal {
-    constructor(global, txScope) {
-        this.scope = new Map();
-        txScope.forEach(tableSchema => this.scope.set(tableSchema.getName(), tableSchema));
-        this.schema = global.getService(Service.SCHEMA);
-        this.cache = global.getService(Service.CACHE);
-        this.indexStore = global.getService(Service.INDEX_STORE);
-        this.constraintChecker = new ConstraintChecker(global);
-        this.inMemoryUpdater = new InMemoryUpdater(global);
-        this.terminated = false;
-        this.pendingRollback = false;
-        this.tableDiffs = new Map();
-    }
-    getDiff() {
-        return this.tableDiffs;
-    }
-    // Returns the indices that were modified in this within this journal.
-    // TODO(dpapad): Indices currently can't provide a diff, therefore the entire
-    // index is flushed into disk every time, even if only one leaf-node changed.
-    getIndexDiff() {
-        const tableSchemas = Array.from(this.tableDiffs.keys()).map(tableName => this.scope.get(tableName));
-        const indices = [];
-        tableSchemas.forEach(tblSchema => {
-            const tableSchema = tblSchema;
-            if (tableSchema.persistentIndex()) {
-                const tableIndices = tableSchema.getIndices();
-                tableIndices.forEach(indexSchema => {
-                    indices.push(this.indexStore.get(indexSchema.getNormalizedName()));
-                }, this);
-                indices.push(this.indexStore.get(tableSchema.getName() + '.#'));
-            }
-        }, this);
-        return indices;
-    }
-    getScope() {
-        return this.scope;
-    }
-    insert(t, rows) {
-        const table = t;
-        this.assertJournalWritable();
-        this.checkScope(table);
-        this.constraintChecker.checkNotNullable(table, rows);
-        this.constraintChecker.checkForeignKeysForInsert(table, rows, ConstraintTiming.IMMEDIATE);
-        rows.forEach(row => {
-            this.modifyRow(table, [null /* rowBefore */, row /* rowNow */]);
-        }, this);
-    }
-    update(t, rows) {
-        const table = t;
-        this.assertJournalWritable();
-        this.checkScope(table);
-        this.constraintChecker.checkNotNullable(table, rows);
-        const modifications = rows.map(row => {
-            const rowBefore = this.cache.get(row.id());
-            return [rowBefore /* rowBefore */, row /* rowNow */];
-        }, this);
-        this.updateByCascade(table, modifications);
-        this.constraintChecker.checkForeignKeysForUpdate(table, modifications, ConstraintTiming.IMMEDIATE);
-        modifications.forEach(modification => this.modifyRow(table, modification));
-    }
-    insertOrReplace(t, rows) {
-        const table = t;
-        this.assertJournalWritable();
-        this.checkScope(table);
-        this.constraintChecker.checkNotNullable(table, rows);
-        rows.forEach(rowNow => {
-            let rowBefore = null;
-            const existingRowId = this.constraintChecker.findExistingRowIdInPkIndex(table, rowNow);
-            if (existingRowId !== undefined && existingRowId !== null) {
-                rowBefore = this.cache.get(existingRowId);
-                rowNow.assignRowId(existingRowId);
-                const modification = [rowBefore, rowNow];
-                this.constraintChecker.checkForeignKeysForUpdate(table, [modification], ConstraintTiming.IMMEDIATE);
-            }
-            else {
-                this.constraintChecker.checkForeignKeysForInsert(table, [rowNow], ConstraintTiming.IMMEDIATE);
-            }
-            this.modifyRow(table, [rowBefore, rowNow]);
-        }, this);
-    }
-    remove(t, rows) {
-        const table = t;
-        this.assertJournalWritable();
-        this.checkScope(table);
-        this.removeByCascade(table, rows);
-        this.constraintChecker.checkForeignKeysForDelete(table, rows, ConstraintTiming.IMMEDIATE);
-        rows.forEach(row => {
-            this.modifyRow(table, [row /* rowBefore */, null /* rowNow */]);
-        }, this);
-    }
-    checkDeferredConstraints() {
-        this.tableDiffs.forEach(tableDiff => {
-            const table = this.scope.get(tableDiff.getName());
-            this.constraintChecker.checkForeignKeysForInsert(table, Array.from(tableDiff.getAdded().values()), ConstraintTiming.DEFERRABLE);
-            this.constraintChecker.checkForeignKeysForDelete(table, Array.from(tableDiff.getDeleted().values()), ConstraintTiming.DEFERRABLE);
-            this.constraintChecker.checkForeignKeysForUpdate(table, Array.from(tableDiff.getModified().values()), ConstraintTiming.DEFERRABLE);
-        }, this);
-    }
-    // Commits journal changes into cache and indices.
-    commit() {
-        this.assertJournalWritable();
-        this.terminated = true;
-    }
-    // Rolls back all the changes that were made in this journal from the cache
-    // and indices.
-    rollback() {
-        assert(!this.terminated, 'Attempted to rollback a terminated journal.');
-        const reverseDiffs = Array.from(this.tableDiffs.values()).map(tableDiff => tableDiff.getReverse());
-        this.inMemoryUpdater.update(reverseDiffs);
-        this.terminated = true;
-        this.pendingRollback = false;
-    }
-    // Asserts that this journal can still be used.
-    assertJournalWritable() {
-        assert(!this.pendingRollback, 'Attempted to use journal that needs to be rolled back.');
-        assert(!this.terminated, 'Attempted to commit a terminated journal.');
-    }
-    // Checks that the given table is within the declared scope.
-    checkScope(tableSchema) {
-        if (!this.scope.has(tableSchema.getName())) {
-            // 106: Attempt to access {0} outside of specified scope.
-            throw new Exception(ErrorCode.OUT_OF_SCOPE, tableSchema.getName());
-        }
-    }
-    // Updates the journal to reflect a modification (insertion, update, deletion)
-    // of a single row.
-    modifyRow(table, modification) {
-        const tableName = table.getName();
-        const diff = this.tableDiffs.get(tableName) || new TableDiff(tableName);
-        this.tableDiffs.set(tableName, diff);
-        try {
-            this.inMemoryUpdater.updateTableIndicesForRow(table, modification);
-        }
-        catch (e) {
-            this.pendingRollback = true;
-            throw e;
-        }
-        const rowBefore = modification[0];
-        const rowNow = modification[1];
-        if (rowBefore === null && rowNow !== null) {
-            // Insertion
-            this.cache.set(tableName, rowNow);
-            diff.add(rowNow);
-        }
-        else if (rowBefore !== null && rowNow !== null) {
-            // Update
-            this.cache.set(tableName, rowNow);
-            diff.modify(modification);
-        }
-        else if (rowBefore !== null && rowNow === null) {
-            // Deletion
-            this.cache.remove(tableName, rowBefore.id());
-            diff.delete(rowBefore);
-        }
-    }
-    // Updates rows in the DB as a result of cascading foreign key constraints.
-    // |table| refers to the table where the update is initiated.
-    // |modifications| means the initial modifications.
-    updateByCascade(table, modifications) {
-        const foreignKeySpecs = Info.from(this.schema).getReferencingForeignKeys(table.getName(), ConstraintAction.CASCADE);
-        if (foreignKeySpecs === null) {
-            // The affected table does not appear as the parent in any CASCADE foreign
-            // key constraint, therefore no cascading detection is needed.
-            return;
-        }
-        const cascadedUpdates = this.constraintChecker.detectCascadeUpdates(table, modifications, foreignKeySpecs);
-        cascadedUpdates.keys().forEach(rowId => {
-            const updates = cascadedUpdates.get(rowId);
-            updates.forEach(update => {
-                const tbl = this.schema.table(update.fkSpec.childTable);
-                const rowBefore = this.cache.get(rowId);
-                // TODO(dpapad): Explore faster ways to clone an lf.Row.
-                const rowAfter = tbl.deserializeRow(rowBefore.serialize());
-                rowAfter.payload()[update.fkSpec.childColumn] =
-                    update.originalUpdatedRow.payload()[update.fkSpec.parentColumn];
-                this.modifyRow(tbl, [rowBefore /* rowBefore */, rowAfter /* rowNow */]);
-            }, this);
-        }, this);
-    }
-    // Removes rows in the DB as a result of cascading foreign key constraints.
-    // |table| refers to the table where the update is initiated.
-    // |rows| means the initial rows to be deleted.
-    removeByCascade(table, deletedRows) {
-        const foreignKeySpecs = Info.from(this.schema).getReferencingForeignKeys(table.getName(), ConstraintAction.CASCADE);
-        if (foreignKeySpecs === null) {
-            // The affected table does not appear as the parent in any CASCADE foreign
-            // key constraint, therefore no cascading detection is needed.
-            return;
-        }
-        const cascadeDeletion = this.constraintChecker.detectCascadeDeletion(table, deletedRows);
-        const cascadeRowIds = cascadeDeletion.rowIdsPerTable;
-        cascadeDeletion.tableOrder.forEach(tableName => {
-            const tbl = this.schema.table(tableName);
-            const rows = cascadeRowIds.get(tableName).map(rowId => {
-                return this.cache.get(rowId);
-            }, this);
-            this.constraintChecker.checkForeignKeysForDelete(tbl, rows, ConstraintTiming.IMMEDIATE);
-            rows.forEach(row => {
-                this.modifyRow(tbl, [row /* rowBefore */, null /* rowNow */]);
-            }, this);
-        }, this);
-    }
-}
-
-/**
- * Copyright 2016 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-// Binder class that instructs the query engine to evaluate bound value at
-// execution time.
-// @export
-class Binder {
-    constructor(index) {
-        this.index = index;
-    }
-    getIndex() {
-        return this.index;
-    }
-}
-
-/**
- * Copyright 2016 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-var EvalType;
-(function(EvalType) {
-    EvalType["BETWEEN"] = "between";
-    EvalType["EQ"] = "eq";
-    EvalType["GTE"] = "gte";
-    EvalType["GT"] = "gt";
-    EvalType["IN"] = "in";
-    EvalType["LTE"] = "lte";
-    EvalType["LT"] = "lt";
-    EvalType["MATCH"] = "match";
-    EvalType["NEQ"] = "neq";
-})(EvalType || (EvalType = {}));
-function identity(value) {
-    return value;
-}
-/**
- * Builds a map associating evaluator types with the evaluator functions, for
- * the case of a column of type 'boolean'.
- * NOTE: lf.eval.Type.BETWEEN, MATCH, GTE, GT, LTE, LT, are not available for
- * boolean objects.
- */
-function buildKeyOfIndexConversionMap() {
-    const map = new Map();
-    map.set(Type.BOOLEAN, ((value) => {
-        return value === null ? null : value ? 1 : 0;
-    }));
-    map.set(Type.DATE_TIME, ((value) => {
-        return value === null ? null : value.getTime();
-    }));
-    map.set(Type.INTEGER, identity);
-    map.set(Type.NUMBER, identity);
-    map.set(Type.STRING, identity);
-    return map;
-}
-/**
- * Builds a map associating evaluator types with the evaluator functions, for
- * the case of a column of type 'boolean'.
- * NOTE: lf.eval.Type.BETWEEN, MATCH, GTE, GT, LTE, LT, are not available for
- * boolean objects.
- */
-function buildBooleanEvaluatorMap() {
-    const map = new Map();
-    map.set(EvalType.EQ, (a, b) => a === b);
-    map.set(EvalType.NEQ, (a, b) => a !== b);
-    return map;
-}
-function buildCommonEvaluatorMap() {
-    const map = buildBooleanEvaluatorMap();
-    map.set(EvalType.BETWEEN, (a, range) => {
-        return a === null || range[0] === null || range[1] === null
-            ? false
-            : a >= range[0] && a <= range[1];
-    });
-    map.set(EvalType.GTE, (a, b) => {
-        return a === null || b === null ? false : a >= b;
-    });
-    map.set(EvalType.GT, (a, b) => {
-        return a === null || b === null ? false : a > b;
-    });
-    map.set(EvalType.IN, (rowValue, values) => {
-        return values.indexOf(rowValue) !== -1;
-    });
-    map.set(EvalType.LTE, (a, b) => {
-        return a === null || b === null ? false : a <= b;
-    });
-    map.set(EvalType.LT, (a, b) => {
-        return a === null || b === null ? false : a < b;
-    });
-    return map;
-}
-/**
- * Builds a map associating evaluator types with the evaluator functions, for
- * the case of a column of type 'number'.
- * NOTE: lf.eval.Type.MATCH is not available for numbers.
- */
-const buildNumberEvaluatorMap = buildCommonEvaluatorMap;
-/**
- * Builds a map associating evaluator types with the evaluator functions, for
- * the case of a column of type 'string'.
- */
-function buildStringEvaluatorMap() {
-    const map = buildCommonEvaluatorMap();
-    map.set(EvalType.MATCH, (value, regex) => {
-        if (value === null || regex === null) {
-            return false;
-        }
-        const re = new RegExp(regex);
-        return re.test(value);
-    });
-    return map;
-}
-/**
- * Builds a map associating evaluator types with the evaluator functions, for
- * the case of a column of type 'Object'.
- * NOTE: Only lf.eval.Type.EQ and NEQ are available for objects.
- */
-function buildObjectEvaluatorMap() {
-    const map = new Map();
-    const checkNull = (value) => {
-        if (value !== null) {
-            // 550: where() clause includes an invalid predicate, can't compare
-            // lf.Type.OBJECT to anything other than null.
-            throw new Exception(ErrorCode.INVALID_PREDICATE);
-        }
-    };
-    map.set(EvalType.EQ, (a, b) => {
-        checkNull(b);
-        return a === null;
-    });
-    map.set(EvalType.NEQ, (a, b) => {
-        checkNull(b);
-        return a !== null;
-    });
-    return map;
-}
-/**
- * Builds a map associating evaluator types with the evaluator functions, for
- * the case of a column of type 'Date'.
- * NOTE: lf.eval.Type.MATCH is not available for Date objects.
- */
-function buildDateEvaluatorMap() {
-    const map = new Map();
-    map.set(EvalType.BETWEEN, (a, range) => {
-        return a === null || range[0] === null || range[1] === null
-            ? false
-            : a.getTime() >= range[0].getTime() && a.getTime() <= range[1].getTime();
-    });
-    map.set(EvalType.EQ, (a, b) => {
-        const aTime = a === null ? -1 : a.getTime();
-        const bTime = b === null ? -1 : b.getTime();
-        return aTime === bTime;
-    });
-    map.set(EvalType.GTE, (a, b) => {
-        return a === null || b === null ? false : a.getTime() >= b.getTime();
-    });
-    map.set(EvalType.GT, (a, b) => {
-        return a === null || b === null ? false : a.getTime() > b.getTime();
-    });
-    map.set(EvalType.IN, (targetValue, values) => {
-        return values.some(value => value.getTime() === targetValue.getTime());
-    });
-    map.set(EvalType.LTE, (a, b) => {
-        return a === null || b === null ? false : a.getTime() <= b.getTime();
-    });
-    map.set(EvalType.LT, (a, b) => {
-        return a === null || b === null ? false : a.getTime() < b.getTime();
-    });
-    map.set(EvalType.NEQ, (a, b) => {
-        const aTime = a === null ? -1 : a.getTime();
-        const bTime = b === null ? -1 : b.getTime();
-        return aTime !== bTime;
-    });
-    return map;
-}
-class EvalRegistry {
-    constructor() {
-        this.keyOfIndexConversionMap = buildKeyOfIndexConversionMap();
-        this.evalMaps = new Map();
-        const numberOrIntegerEvalMap = buildNumberEvaluatorMap();
-        this.evalMaps.set(Type.BOOLEAN, buildBooleanEvaluatorMap());
-        this.evalMaps.set(Type.DATE_TIME, buildDateEvaluatorMap());
-        this.evalMaps.set(Type.NUMBER, numberOrIntegerEvalMap);
-        this.evalMaps.set(Type.INTEGER, numberOrIntegerEvalMap);
-        this.evalMaps.set(Type.STRING, buildStringEvaluatorMap());
-        this.evalMaps.set(Type.OBJECT, buildObjectEvaluatorMap());
-    }
-    static get() {
-        EvalRegistry.instance = EvalRegistry.instance || new EvalRegistry();
-        return EvalRegistry.instance;
-    }
-    getEvaluator(columnType, evaluatorType) {
-        const evaluationMap = this.evalMaps.get(columnType) || null;
-        if (evaluationMap === null) {
-            // 550: where() clause includes an invalid predicate. Could not find
-            // evaluation map for the given column type.
-            throw new Exception(ErrorCode.INVALID_PREDICATE);
-        }
-        const evaluatorFn = evaluationMap.get(evaluatorType) || null;
-        if (evaluatorFn === null) {
-            // 550: where() clause includes an invalid predicate. Could not find
-            // evaluation map for the given column type.
-            throw new Exception(ErrorCode.INVALID_PREDICATE);
-        }
-        return evaluatorFn;
-    }
-    getKeyOfIndexEvaluator(columnType) {
-        const fn = this.keyOfIndexConversionMap.get(columnType) || null;
-        if (fn === null) {
-            // 300: Not supported
-            throw new Exception(ErrorCode.NOT_SUPPORTED);
-        }
-        return fn;
-    }
-}
-
-/**
- * Copyright 2016 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-// Unbound is used to denote an unbound key range boundary.
-class UnboundKey {
-}
-
-/**
- * Copyright 2016 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-// A SingleKeyRange represents a key range of a single column.
-class SingleKeyRange {
-    constructor(from, to, excludeLower, excludeUpper) {
-        this.from = from;
-        this.to = to;
-        this.excludeLower = !SingleKeyRange.isUnbound(this.from)
-            ? excludeLower
-            : false;
-        this.excludeUpper = !SingleKeyRange.isUnbound(this.to)
-            ? excludeUpper
-            : false;
-    }
-    static isUnbound(value) {
-        return value === SingleKeyRange.UNBOUND_VALUE;
-    }
-    static upperBound(key, shouldExclude = false) {
-        return new SingleKeyRange(SingleKeyRange.UNBOUND_VALUE, key, false, shouldExclude);
-    }
-    static lowerBound(key, shouldExclude = false) {
-        return new SingleKeyRange(key, SingleKeyRange.UNBOUND_VALUE, shouldExclude, false);
-    }
-    // Creates a range that includes a single key.
-    static only(key) {
-        return new SingleKeyRange(key, key, false, false);
-    }
-    // Creates a range that includes all keys.
-    static all() {
-        return new SingleKeyRange(SingleKeyRange.UNBOUND_VALUE, SingleKeyRange.UNBOUND_VALUE, false, false);
-    }
-    static xor(a, b) {
-        return a ? !b : b;
-    }
-    // Compares two ranges, meant to be used in Array#sort.
-    static compare(lhs, rhs) {
-        let result = SingleKeyRange.compareKey(lhs.from, rhs.from, true, lhs.excludeLower, rhs.excludeLower);
-        if (result === Favor.TIE) {
-            result = SingleKeyRange.compareKey(lhs.to, rhs.to, false, lhs.excludeUpper, rhs.excludeUpper);
-        }
-        return result;
-    }
-    // Returns a new range that is the minimum range that covers both ranges
-    // given.
-    static getBoundingRange(r1, r2) {
-        let from = SingleKeyRange.UNBOUND_VALUE;
-        let to = SingleKeyRange.UNBOUND_VALUE;
-        let excludeLower = false;
-        let excludeUpper = false;
-        if (!SingleKeyRange.isUnbound(r1.from) &&
-            !SingleKeyRange.isUnbound(r2.from)) {
-            const favor = SingleKeyRange.compareKey(r1.from, r2.from, true);
-            if (favor !== Favor.LHS) {
-                from = r1.from;
-                excludeLower =
-                    favor !== Favor.TIE
-                        ? r1.excludeLower
-                        : r1.excludeLower && r2.excludeLower;
-            }
-            else {
-                from = r2.from;
-                excludeLower = r2.excludeLower;
-            }
-        }
-        if (!SingleKeyRange.isUnbound(r1.to) && !SingleKeyRange.isUnbound(r2.to)) {
-            const favor = SingleKeyRange.compareKey(r1.to, r2.to, false);
-            if (favor !== Favor.RHS) {
-                to = r1.to;
-                excludeUpper =
-                    favor !== Favor.TIE
-                        ? r1.excludeUpper
-                        : r1.excludeUpper && r2.excludeUpper;
-            }
-            else {
-                to = r2.to;
-                excludeUpper = r2.excludeUpper;
-            }
-        }
-        return new SingleKeyRange(from, to, excludeLower, excludeUpper);
-    }
-    // Intersects two ranges and return their intersection.
-    // Returns null if intersection is empty.
-    static and(r1, r2) {
-        if (!r1.overlaps(r2)) {
-            return null;
-        }
-        let favor = SingleKeyRange.compareKey(r1.from, r2.from, true);
-        const left = favor === Favor.TIE
-            ? r1.excludeLower
-                ? r1
-                : r2
-            : favor !== Favor.RHS
-                ? r1
-                : r2;
-        // right side boundary test is different, null is considered greater.
-        let right;
-        if (SingleKeyRange.isUnbound(r1.to) || SingleKeyRange.isUnbound(r2.to)) {
-            right = SingleKeyRange.isUnbound(r1.to) ? r2 : r1;
-        }
-        else {
-            favor = SingleKeyRange.compareKey(r1.to, r2.to, false);
-            right =
-                favor === Favor.TIE
-                    ? r1.excludeUpper
-                        ? r1
-                        : r2
-                    : favor === Favor.RHS
-                        ? r1
-                        : r2;
-        }
-        return new SingleKeyRange(left.from, right.to, left.excludeLower, right.excludeUpper);
-    }
-    // Calculates the complement key ranges of the input key ranges.
-    // NOTE: The key ranges passed in this method must satisfy "isOnly() == true",
-    // and none of from/to should be null.
-    static complement(keyRanges) {
-        if (keyRanges.length === 0) {
-            return SingleKeyRange.EMPTY_RANGE;
-        }
-        keyRanges.sort(SingleKeyRange.compare);
-        const complementKeyRanges = new Array(keyRanges.length + 1);
-        for (let i = 0; i < complementKeyRanges.length; i++) {
-            if (i === 0) {
-                complementKeyRanges[i] = SingleKeyRange.upperBound(keyRanges[i].from, true);
-            }
-            else if (i === complementKeyRanges.length - 1) {
-                complementKeyRanges[i] = SingleKeyRange.lowerBound(keyRanges[i - 1].to, true);
-            }
-            else {
-                complementKeyRanges[i] = new SingleKeyRange(keyRanges[i - 1].to, keyRanges[i].from, true, true);
-            }
-        }
-        return complementKeyRanges;
-    }
-    static compareKey(l, r, isLeftHandSide, excludeL = false, excludeR = false) {
-        const flip = (favor) => isLeftHandSide ? favor : favor === Favor.LHS ? Favor.RHS : Favor.LHS;
-        // The following logic is implemented for LHS. RHS is achieved using flip().
-        const tieLogic = () => !SingleKeyRange.xor(excludeL, excludeR)
-            ? Favor.TIE
-            : excludeL
-                ? flip(Favor.LHS)
-                : flip(Favor.RHS);
-        if (SingleKeyRange.isUnbound(l)) {
-            return !SingleKeyRange.isUnbound(r) ? flip(Favor.RHS) : tieLogic();
-        }
-        return SingleKeyRange.isUnbound(r)
-            ? flip(Favor.LHS)
-            : l < r
-                ? Favor.RHS
-                : l === r
-                    ? tieLogic()
-                    : Favor.LHS;
-    }
-    // A text representation of this key range, useful for tests.
-    // Example: [a, b] means from a to b, with both a and b included in the range.
-    // Example: (a, b] means from a to b, with a excluded, b included.
-    // Example: (a, b) means from a to b, with both a and b excluded.
-    // Example: [unbound, b) means anything less than b, with b not included.
-    // Example: [a, unbound] means anything greater than a, with a included.
-    toString() {
-        return ((this.excludeLower ? '(' : '[') +
-            (SingleKeyRange.isUnbound(this.from) ? 'unbound' : this.from) +
-            ', ' +
-            (SingleKeyRange.isUnbound(this.to) ? 'unbound' : this.to) +
-            (this.excludeUpper ? ')' : ']'));
-    }
-    // Finds the complement key range. Note that in some cases the complement is
-    // composed of two disjoint key ranges. For example complementing [10, 20]
-    // would result in [unbound, 10) and (20, unbound]. An empty array will be
-    // returned in the case where the complement is empty.
-    complement() {
-        // Complement of SingleKeyRange.all() is empty.
-        if (this.isAll()) {
-            return SingleKeyRange.EMPTY_RANGE;
-        }
-        let keyRangeLow = null;
-        let keyRangeHigh = null;
-        if (!SingleKeyRange.isUnbound(this.from)) {
-            keyRangeLow = new SingleKeyRange(SingleKeyRange.UNBOUND_VALUE, this.from, false, !this.excludeLower);
-        }
-        if (!SingleKeyRange.isUnbound(this.to)) {
-            keyRangeHigh = new SingleKeyRange(this.to, SingleKeyRange.UNBOUND_VALUE, !this.excludeUpper, false);
-        }
-        return [keyRangeLow, keyRangeHigh].filter(keyRange => keyRange !== null);
-    }
-    // Reverses a keyRange such that "lower" refers to larger values and "upper"
-    // refers to smaller values. Note: This is different than what complement()
-    // does.
-    reverse() {
-        return new SingleKeyRange(this.to, this.from, this.excludeUpper, this.excludeLower);
-    }
-    // Determines if this range overlaps with the given one.
-    overlaps(range) {
-        const favor = SingleKeyRange.compareKey(this.from, range.from, true, this.excludeLower, range.excludeLower);
-        if (favor === Favor.TIE) {
-            return true;
-        }
-        const left = favor === Favor.RHS ? this : range;
-        const right = favor === Favor.LHS ? this : range;
-        return (SingleKeyRange.isUnbound(left.to) ||
-            left.to > right.from ||
-            (left.to === right.from && !left.excludeUpper && !right.excludeLower));
-    }
-    // Returns whether the range is all.
-    isAll() {
-        return (SingleKeyRange.isUnbound(this.from) && SingleKeyRange.isUnbound(this.to));
-    }
-    // Returns if the range is only.
-    isOnly() {
-        return (this.from === this.to &&
-            !SingleKeyRange.isUnbound(this.from) &&
-            !this.excludeLower &&
-            !this.excludeUpper);
-    }
-    contains(key) {
-        const left = SingleKeyRange.isUnbound(this.from) ||
-            key > this.from ||
-            (key === this.from && !this.excludeLower);
-        const right = SingleKeyRange.isUnbound(this.to) ||
-            key < this.to ||
-            (key === this.to && !this.excludeUpper);
-        return left && right;
-    }
-    // Bound the range with [min, max] and return the newly bounded range.
-    // When the given bound has no intersection with this range, or the
-    // range/bound is reversed, return null.
-    getBounded(min, max) {
-        // Eliminate out of range scenarios.
-        if ((SingleKeyRange.isUnbound(this.from) && !this.contains(min)) ||
-            (SingleKeyRange.isUnbound(this.to) && !this.contains(max))) {
-            return null;
-        }
-        let from = min;
-        let to = max;
-        let excludeLower = false;
-        let excludeUpper = false;
-        if (!SingleKeyRange.isUnbound(this.from) && this.from >= min) {
-            from = this.from;
-            excludeLower = this.excludeLower;
-        }
-        if (!SingleKeyRange.isUnbound(this.to) && this.to <= max) {
-            to = this.to;
-            excludeUpper = this.excludeUpper;
-        }
-        if (from > to || (from === to && (excludeUpper || excludeLower))) {
-            return null;
-        }
-        return new SingleKeyRange(from, to, excludeLower, excludeUpper);
-    }
-    equals(range) {
-        return (this.from === range.from &&
-            this.excludeLower === range.excludeLower &&
-            this.to === range.to &&
-            this.excludeUpper === range.excludeUpper);
-    }
-}
-SingleKeyRange.UNBOUND_VALUE = new UnboundKey();
-SingleKeyRange.EMPTY_RANGE = [];
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-class SingleKeyRangeSet {
-    constructor(ranges) {
-        this.ranges = [];
-        if (ranges) {
-            this.add(ranges);
-        }
-    }
-    // Intersection of two range sets.
-    static intersect(s0, s1) {
-        const ranges = s0.getValues().map(r0 => {
-            return s1.getValues().map(r1 => SingleKeyRange.and(r0, r1));
-        });
-        let results = [];
-        ranges.forEach(dimension => (results = results.concat(dimension)));
-        return new SingleKeyRangeSet(results.filter(r => r !== null));
-    }
-    toString() {
-        return this.ranges.map(r => r.toString()).join(',');
-    }
-    containsKey(key) {
-        return this.ranges.some(r => r.contains(key));
-    }
-    getValues() {
-        return this.ranges;
-    }
-    add(keyRanges) {
-        if (keyRanges.length === 0) {
-            return;
-        }
-        const ranges = this.ranges.concat(keyRanges);
-        if (ranges.length === 1) {
-            this.ranges = ranges;
-            return;
-        }
-        ranges.sort(SingleKeyRange.compare);
-        const results = [];
-        let start = ranges[0];
-        for (let i = 1; i < ranges.length; ++i) {
-            if (start.overlaps(ranges[i])) {
-                start = SingleKeyRange.getBoundingRange(start, ranges[i]);
-            }
-            else {
-                results.push(start);
-                start = ranges[i];
-            }
-        }
-        results.push(start);
-        this.ranges = results;
-    }
-    equals(set) {
-        if (this.ranges.length === set.ranges.length) {
-            return (this.ranges.length === 0 ||
-                this.ranges.every((r, index) => r.equals(set.ranges[index])));
-        }
-        return false;
-    }
-    // Returns the boundary of this set, null if range set is empty.
-    getBoundingRange() {
-        if (this.ranges.length <= 1) {
-            return this.ranges.length === 0 ? null : this.ranges[0];
-        }
-        const last = this.ranges.length - 1;
-        return SingleKeyRange.getBoundingRange(this.ranges[0], this.ranges[last]);
-    }
-}
-
-/**
- * Copyright 2016 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-// Whether set2 is a subset of set1
-function isSubset(set1, set2) {
-    if (set2.size > set1.size) {
-        return false;
-    }
-    let result = true;
-    set2.forEach(value => (result = result && set1.has(value)));
-    return result;
-}
-function setEquals(set1, set2) {
-    return set1.size === set2.size && isSubset(set1, set2);
-}
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-/**
- * Each RelationEntry represents a row that is passed from one execution step
- * to another and does not necessarily correspond to a physical row in a DB
- * table (as it can be the result of a cross-product/join operation).
- */
-class RelationEntry {
-    // |isPrefixApplied| Whether the payload in this entry is using prefixes for
-    // each attribute. This happens when this entry is the result of a relation
-    // join.
-    constructor(row, isPrefixApplied) {
-        this.row = row;
-        this.isPrefixApplied = isPrefixApplied;
-        this.id = RelationEntry.getNextId();
-    }
-    // Combines two entries into a single entry.
-    static combineEntries(leftEntry, leftEntryTables, rightEntry, rightEntryTables) {
-        const result = {};
-        const mergeEntry = (entry, entryTables) => {
-            if (entry.isPrefixApplied) {
-                const payload = entry.row.payload();
-                Array.from(Object.keys(payload)).forEach(prefix => {
-                    result[prefix] = payload[prefix];
-                });
-            }
-            else {
-                assert(!Object.prototype.hasOwnProperty.call(result, entryTables[0]), 'Attempted to join table with itself, without using table alias, ' +
-                    'or same alias ' +
-                    entryTables[0] +
-                    'is reused for multiple tables.');
-                // Since the entry is not prefixed, all attributes come from a single
-                // table.
-                result[entryTables[0]] = entry.row.payload();
-            }
-        };
-        mergeEntry(leftEntry, leftEntryTables);
-        mergeEntry(rightEntry, rightEntryTables);
-        const row = new Row(Row.DUMMY_ID, result);
-        return new RelationEntry(row, true);
-    }
-    static getNextId() {
-        return RelationEntry.nextId++;
-    }
-    getField(col) {
-        // Attempting to get the field from the aliased location first, since it is
-        // not guaranteed that setField() has been called for this instance. If not
-        // found then look for it in its normal location.
-        const column = col;
-        const alias = column.getAlias();
-        if (alias !== null &&
-            Object.prototype.hasOwnProperty.call(this.row.payload(), alias)) {
-            return this.row.payload()[alias];
-        }
-        if (this.isPrefixApplied) {
-            return this.row.payload()[column.getTable().getEffectiveName()][column.getName()];
-        }
-        else {
-            return this.row.payload()[column.getName()];
-        }
-    }
-    setField(col, value) {
-        const column = col;
-        const alias = column.getAlias();
-        if (alias !== null) {
-            this.row.payload()[alias] = value;
-            return;
-        }
-        if (this.isPrefixApplied) {
-            const tableName = column.getTable().getEffectiveName();
-            let containerObj = this.row.payload()[tableName];
-            if (!(containerObj !== undefined && containerObj !== null)) {
-                containerObj = {};
-                this.row.payload()[tableName] = containerObj;
-            }
-            containerObj[column.getName()] = value;
-        }
-        else {
-            this.row.payload()[column.getName()] = value;
-        }
-    }
-}
-// The ID to assign to the next entry that will be created.
-RelationEntry.nextId = 0;
-
-/**
- * Copyright 2016 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-class Relation {
-    constructor(entries, tables) {
-        this.entries = entries;
-        this.tables = new Set(tables);
-        this.aggregationResults = null;
-    }
-    // Creates an empty Relation instance. Since a relation is immutable, a
-    // singleton "empty" relation instance is lazily instantiated and returned in
-    // all subsequent calls.
-    static createEmpty() {
-        if (Relation.emptyRelation === null) {
-            Relation.emptyRelation = new Relation([], []);
-        }
-        return Relation.emptyRelation;
-    }
-    // Finds the intersection of a given list of relations.
-    static intersect(relations) {
-        if (relations.length === 0) {
-            return Relation.createEmpty();
-        }
-        const totalCount = relations.reduce((soFar, relation) => {
-            Relation.assertCompatible(relations[0], relation);
-            return soFar + relation.entries.length;
-        }, 0);
-        const allEntries = new Array(totalCount);
-        let entryCounter = 0;
-        // Creating a map [entry.id --> entry] for each relation, and at the same
-        // time populating the allEntries array.
-        const relationMaps = relations.map(relation => {
-            const map = new Map();
-            relation.entries.forEach(entry => {
-                allEntries[entryCounter++] = entry;
-                map.set(entry.id, entry);
-            });
-            return map;
-        });
-        const intersection = new Map();
-        allEntries.forEach(entry => {
-            const existsInAll = relationMaps.every(relation => relation.has(entry.id));
-            if (existsInAll) {
-                intersection.set(entry.id, entry);
-            }
-        });
-        return new Relation(Array.from(intersection.values()), Array.from(relations[0].tables.values()));
-    }
-    // Finds the union of a given list of relations.
-    static union(relations) {
-        if (relations.length === 0) {
-            return Relation.createEmpty();
-        }
-        const union = new Map();
-        relations.forEach(relation => {
-            Relation.assertCompatible(relations[0], relation);
-            relation.entries.forEach(entry => union.set(entry.id, entry));
-        });
-        return new Relation(Array.from(union.values()), Array.from(relations[0].tables.values()));
-    }
-    // Creates an lf.proc.Relation instance from a set of lf.Row instances.
-    static fromRows(rows, tables) {
-        const isPrefixApplied = tables.length > 1;
-        const entries = rows.map(row => new RelationEntry(row, isPrefixApplied));
-        return new Relation(entries, tables);
-    }
-    // Asserts that two relations are compatible with regards to
-    // union/intersection operations.
-    static assertCompatible(lhs, rhs) {
-        assert(lhs.isCompatible(rhs), 'Intersection/union operations only apply to compatible relations.');
-    }
-    // Whether this is compatible with given relation in terms of calculating
-    // union/intersection.
-    isCompatible(relation) {
-        return setEquals(this.tables, relation.tables);
-    }
-    // Returns the names of all source tables of this relation.
-    getTables() {
-        return Array.from(this.tables.values());
-    }
-    // Whether prefixes have been applied to the payloads in this relation.
-    isPrefixApplied() {
-        return this.tables.size > 1;
-    }
-    getPayloads() {
-        return this.entries.map(entry => entry.row.payload());
-    }
-    getRowIds() {
-        return this.entries.map(entry => entry.row.id());
-    }
-    // Adds an aggregated result to this relation.
-    setAggregationResult(column, result) {
-        if (this.aggregationResults === null) {
-            this.aggregationResults = new Map();
-        }
-        this.aggregationResults.set(column.getNormalizedName(), result);
-    }
-    // Gets an already calculated aggregated result for this relation.
-    getAggregationResult(column) {
-        assert(this.aggregationResults !== null, 'getAggregationResult called before any results have been calculated.');
-        const colName = column.getNormalizedName();
-        const result = this.aggregationResults.get(colName);
-        assert(result !== undefined, `Could not find result for ${colName}`);
-        return result;
-    }
-    // Whether an aggregation result for the given aggregated column has been
-    // calculated.
-    hasAggregationResult(column) {
-        return (this.aggregationResults !== null &&
-            this.aggregationResults.has(column.getNormalizedName()));
-    }
-}
-Relation.emptyRelation = null;
-
-/**
- * Copyright 2016 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-class TreeNode {
-    constructor() {
-        this.parent = null;
-        this.children = null;
-    }
-    getParent() {
-        return this.parent;
-    }
-    setParent(parentNode) {
-        this.parent = parentNode;
-    }
-    getRoot() {
-        // eslint-disable-next-line @typescript-eslint/no-this-alias
-        let root = this;
-        while (root.parent !== null) {
-            root = root.parent;
-        }
-        return root;
-    }
-    getDepth() {
-        let depth = 0;
-        // eslint-disable-next-line @typescript-eslint/no-this-alias
-        let node = this;
-        while (node.parent !== null) {
-            depth++;
-            node = node.parent;
-        }
-        return depth;
-    }
-    isLeaf() {
-        return this.children === null;
-    }
-    getChildren() {
-        return this.children || TreeNode.EMPTY_ARRAY;
-    }
-    getChildAt(index) {
-        return this.children && index >= 0 && index < this.children.length
-            ? this.getChildren()[index]
-            : null;
-    }
-    getChildCount() {
-        return this.getChildren().length;
-    }
-    addChildAt(child, index) {
-        assert(child.parent === null);
-        child.parent = this;
-        if (this.children === null) {
-            // assert(index == 0);
-            this.children = [child];
-        }
-        else {
-            assert(index >= 0 && index <= this.children.length);
-            this.children.splice(index, 0, child);
-        }
-    }
-    addChild(child) {
-        assert(child.parent === null);
-        child.parent = this;
-        if (this.children === null) {
-            this.children = [child];
-        }
-        else {
-            this.children.push(child);
-        }
-    }
-    // Returns removed node at index, if any.
-    removeChildAt(index) {
-        if (this.children) {
-            const child = this.children[index];
-            if (child) {
-                child.parent = null;
-                this.children.splice(index, 1);
-                if (this.children.length === 0) {
-                    this.children = null;
-                }
-                return child;
-            }
-        }
-        return null;
-    }
-    // Returns removed node, if any.
-    removeChild(child) {
-        return this.children
-            ? this.removeChildAt(this.children.indexOf(child))
-            : null;
-    }
-    // Returns original node, if any.
-    replaceChildAt(newChild, index) {
-        assert(newChild.parent === null);
-        if (this.children) {
-            const oldChild = this.getChildAt(index);
-            if (oldChild) {
-                oldChild.parent = null;
-                newChild.parent = this;
-                this.children[index] = newChild;
-                return oldChild;
-            }
-        }
-        return null;
-    }
-    // Traverses the subtree with the possibility to skip branches. Starts with
-    // this node, and visits the descendant nodes depth-first, in preorder.
-    traverse(f) {
-        if (f(this) !== false) {
-            this.getChildren().forEach(child => child.traverse(f));
-        }
-    }
-}
-TreeNode.EMPTY_ARRAY = [];
-
-/**
- * Copyright 2016 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-class PredicateNode extends TreeNode {
-    constructor() {
-        super();
-        this.id = PredicateNode.nextId++;
-    }
-    setId(id) {
-        this.id = id;
-    }
-    getId() {
-        return this.id;
-    }
-}
-// The ID to assign to the next predicate that will be created. Note that
-// predicates are constructed with unique IDs, but when a predicate is cloned
-//  the ID is also purposefully cloned.
-PredicateNode.nextId = 0;
-
-/**
- * Copyright 2016 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-class ValuePredicate extends PredicateNode {
-    constructor(column, value, evaluatorType) {
-        super();
-        this.column = column;
-        this.value = value;
-        this.evaluatorType = evaluatorType;
-        this.evaluatorFn = EvalRegistry.get().getEvaluator(this.column.getType(), this.evaluatorType);
-        this.isComplement = false;
-        this.binder = value;
-    }
-    eval(relation) {
-        this.checkBinding();
-        // Ignoring this.evaluatorFn_() for the case of the IN, in favor of a faster
-        // evaluation implementation.
-        if (this.evaluatorType === EvalType.IN) {
-            return this.evalAsIn(relation);
-        }
-        const entries = relation.entries.filter(entry => {
-            return (this.evaluatorFn(entry.getField(this.column), this.value) !==
-                this.isComplement);
-        });
-        return new Relation(entries, relation.getTables());
-    }
-    setComplement(isComplement) {
-        this.isComplement = isComplement;
-    }
-    copy() {
-        const clone = new ValuePredicate(this.column, this.value, this.evaluatorType);
-        clone.binder = this.binder;
-        clone.isComplement = this.isComplement;
-        clone.setId(this.getId());
-        return clone;
-    }
-    getColumns(results) {
-        if (results) {
-            results.push(this.column);
-            return results;
-        }
-        return [this.column];
-    }
-    getTables(results) {
-        const tables = results ? results : new Set();
-        tables.add(this.column.getTable());
-        return tables;
-    }
-    setBinder(binder) {
-        this.binder = binder;
-    }
-    bind(values) {
-        const checkIndexWithinRange = (index) => {
-            if (values.length <= index) {
-                // 510: Cannot bind to given array: out of range.
-                throw new Exception(ErrorCode.BIND_ARRAY_OUT_OF_RANGE);
-            }
-        };
-        if (this.binder instanceof Binder) {
-            const index = this.binder.index;
-            checkIndexWithinRange(index);
-            this.value = values[index];
-        }
-        else if (Array.isArray(this.binder)) {
-            const array = this.binder;
-            this.value = array.map(val => {
-                if (val instanceof Binder) {
-                    checkIndexWithinRange(val.index);
-                    return values[val.index];
-                }
-                else {
-                    return val;
-                }
-            });
-        }
-    }
-    toString() {
-        return ('value_pred(' +
-            this.column.getNormalizedName() +
-            ' ' +
-            this.evaluatorType +
-            (this.isComplement ? '(complement)' : '') +
-            ' ' +
-            this.value +
-            ')');
-    }
-    // This is used to enable unit test.
-    peek() {
-        return this.value;
-    }
-    // Whether this predicate can be converted to a KeyRange instance.
-    isKeyRangeCompatible() {
-        this.checkBinding();
-        return (this.value !== null &&
-            (this.evaluatorType === EvalType.BETWEEN ||
-                this.evaluatorType === EvalType.IN ||
-                this.evaluatorType === EvalType.EQ ||
-                this.evaluatorType === EvalType.GT ||
-                this.evaluatorType === EvalType.GTE ||
-                this.evaluatorType === EvalType.LT ||
-                this.evaluatorType === EvalType.LTE));
-    }
-    // Converts this predicate to a key range.
-    // NOTE: Not all predicates can be converted to a key range, callers must call
-    // isKeyRangeCompatible() before calling this method.
-    toKeyRange() {
-        assert(this.isKeyRangeCompatible(), 'Could not convert predicate to key range.');
-        let keyRange = null;
-        if (this.evaluatorType === EvalType.BETWEEN) {
-            const val = this.value;
-            keyRange = new SingleKeyRange(this.getValueAsKey(val[0]), this.getValueAsKey(val[1]), false, false);
-        }
-        else if (this.evaluatorType === EvalType.IN) {
-            const val = this.value;
-            const keyRanges = val.map(v => SingleKeyRange.only(v));
-            return new SingleKeyRangeSet(this.isComplement ? SingleKeyRange.complement(keyRanges) : keyRanges);
-        }
-        else {
-            const value = this.getValueAsKey(this.value);
-            if (this.evaluatorType === EvalType.EQ) {
-                keyRange = SingleKeyRange.only(value);
-            }
-            else if (this.evaluatorType === EvalType.GTE) {
-                keyRange = SingleKeyRange.lowerBound(value);
-            }
-            else if (this.evaluatorType === EvalType.GT) {
-                keyRange = SingleKeyRange.lowerBound(value, true);
-            }
-            else if (this.evaluatorType === EvalType.LTE) {
-                keyRange = SingleKeyRange.upperBound(value);
-            }
-            else {
-                // Must be this.evaluatorType === EvalType.LT.
-                keyRange = SingleKeyRange.upperBound(value, true);
-            }
-        }
-        return new SingleKeyRangeSet(this.isComplement ? keyRange.complement() : [keyRange]);
-    }
-    checkBinding() {
-        let bound = false;
-        if (!(this.value instanceof Binder)) {
-            if (Array.isArray(this.value)) {
-                const array = this.value;
-                bound = !array.some(val => val instanceof Binder);
-            }
-            else {
-                bound = true;
-            }
-        }
-        if (!bound) {
-            // 501: Value is not bounded.
-            throw new Exception(ErrorCode.UNBOUND_VALUE);
-        }
-    }
-    evalAsIn(relation) {
-        assert(this.evaluatorType === EvalType.IN, 'ValuePredicate#evalAsIn_() called for wrong predicate type.');
-        const valueSet = new Set(this.value);
-        const evaluatorFn = (rowValue) => {
-            return rowValue === null
-                ? false
-                : valueSet.has(rowValue) !== this.isComplement;
-        };
-        const entries = relation.entries.filter(entry => evaluatorFn(entry.getField(this.column)));
-        return new Relation(entries, relation.getTables());
-    }
-    // Converts value in this predicate to index key.
-    getValueAsKey(value) {
-        if (this.column.getType() === Type.DATE_TIME) {
-            return value.getTime();
-        }
-        return value;
-    }
-}
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-// Base context for all query types.
-class Context extends UniqueId {
-    constructor(schema) {
-        super();
-        this.schema = schema;
-        this.clonedFrom = null;
-        this.where = null;
-        this.predicateMap = null;
-    }
-    // Creates predicateMap such that predicates can be located by ID.
-    static buildPredicateMap(rootPredicate) {
-        const predicateMap = new Map();
-        rootPredicate.traverse(n => {
-            const node = n;
-            predicateMap.set(node.getId(), node);
-        });
-        return predicateMap;
-    }
-    getPredicate(id) {
-        if (this.predicateMap === null && this.where !== null) {
-            this.predicateMap = Context.buildPredicateMap(this.where);
-        }
-        const predicate = this.predicateMap.get(id);
-        assert(predicate !== undefined);
-        return predicate;
-    }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    bind(values) {
-        assert(this.clonedFrom === null);
-        return this;
-    }
-    bindValuesInSearchCondition(values) {
-        const searchCondition = this.where;
-        if (searchCondition !== null) {
-            searchCondition.traverse(node => {
-                if (node instanceof ValuePredicate) {
-                    node.bind(values);
-                }
-            });
-        }
-    }
-    cloneBase(context) {
-        if (context.where) {
-            this.where = context.where.copy();
-        }
-        this.clonedFrom = context;
-    }
-}
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-// Internal representation of SELECT query.
-class SelectContext extends Context {
-    constructor(dbSchema) {
-        super(dbSchema);
-    }
-    static orderByToString(orderBy) {
-        let out = '';
-        orderBy.forEach((orderByEl, index) => {
-            out += orderByEl.column.getNormalizedName() + ' ';
-            out += orderByEl.order === Order.ASC ? 'ASC' : 'DESC';
-            if (index < orderBy.length - 1) {
-                out += ', ';
-            }
-        });
-        return out;
-    }
-    getScope() {
-        return new Set(this.from);
-    }
-    clone() {
-        const context = new SelectContext(this.schema);
-        context.cloneBase(this);
-        if (this.columns) {
-            context.columns = this.columns.slice();
-        }
-        if (this.from) {
-            context.from = this.from.slice();
-        }
-        context.limit = this.limit;
-        context.skip = this.skip;
-        if (this.orderBy) {
-            context.orderBy = this.orderBy.slice();
-        }
-        if (this.groupBy) {
-            context.groupBy = this.groupBy.slice();
-        }
-        if (this.limitBinder) {
-            context.limitBinder = this.limitBinder;
-        }
-        if (this.skipBinder) {
-            context.skipBinder = this.skipBinder;
-        }
-        context.outerJoinPredicates = this.outerJoinPredicates;
-        return context;
-    }
-    bind(values) {
-        super.bind(values);
-        if (this.limitBinder !== undefined && this.limitBinder !== null) {
-            this.limit = values[this.limitBinder.index];
-        }
-        if (this.skipBinder !== undefined && this.skipBinder !== null) {
-            this.skip = values[this.skipBinder.index];
-        }
-        this.bindValuesInSearchCondition(values);
-        return this;
-    }
-}
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-class PhysicalQueryPlan {
-    constructor(rootNode, scope) {
-        this.rootNode = rootNode;
-        this.scope = scope;
-    }
-    // Calculates the combined scope of the given list of physical query plans.
-    static getCombinedScope(plans) {
-        const tableSet = new Set();
-        plans.forEach(plan => {
-            plan.getScope().forEach(tableSet.add.bind(tableSet));
-        });
-        return tableSet;
-    }
-    getRoot() {
-        return this.rootNode;
-    }
-    // Returns scope of this plan (i.e. tables involved)
-    getScope() {
-        return this.scope;
-    }
-}
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-// A QueryTask represents a collection of queries that should be executed as
-// part of a single transaction.
-class QueryTask extends UniqueId {
-    constructor(global, items) {
-        super();
-        this.global = global;
-        this.backStore = global.getService(Service.BACK_STORE);
-        this.queries = items.map(item => item.context);
-        this.plans = items.map(item => item.plan);
-        this.combinedScope = PhysicalQueryPlan.getCombinedScope(this.plans);
-        this.txType = this.detectType();
-        this.resolver = new Resolver();
-    }
-    exec() {
-        const journal = this.txType === TransactionType.READ_ONLY
-            ? undefined
-            : new Journal(this.global, this.combinedScope);
-        const results = [];
-        const remainingPlans = this.plans.slice();
-        const queries = this.queries;
-        const sequentiallyExec = () => {
-            const plan = remainingPlans.shift();
-            if (plan) {
-                const queryContext = queries[results.length];
-                return plan
-                    .getRoot()
-                    .exec(journal, queryContext)
-                    .then(relations => {
-                        results.push(relations[0]);
-                        return sequentiallyExec();
-                    });
-            }
-            return Promise.resolve(results);
-        };
-        return sequentiallyExec()
-            .then(() => {
-                this.tx = this.backStore.createTx(this.txType, Array.from(this.combinedScope.values()), journal);
-                return this.tx.commit();
-            })
-            .then(() => {
-                this.onSuccess(results);
-                return results;
-            }, e => {
-                if (journal) {
-                    journal.rollback();
-                }
-                throw e;
-            });
-    }
-    getType() {
-        return this.txType;
-    }
-    getScope() {
-        return this.combinedScope;
-    }
-    getResolver() {
-        return this.resolver;
-    }
-    getId() {
-        return this.getUniqueNumber();
-    }
-    // Returns stats for the task. Used in transaction.exec([queries]).
-    stats() {
-        let results = null;
-        if (this.tx) {
-            results = this.tx.stats();
-        }
-        return results === null ? TransactionStatsImpl.getDefault() : results;
-    }
-    // Executes after all queries have finished successfully. Default
-    // implementation is a no-op. Subclasses should override this method as
-    // necessary.
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    onSuccess(results) {
-        // Default implementation is a no-op.
-    }
-    detectType() {
-        return this.queries.some(query => !(query instanceof SelectContext))
-            ? TransactionType.READ_WRITE
-            : TransactionType.READ_ONLY;
-    }
-}
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-class ObserverQueryTask extends QueryTask {
-    constructor(global, items) {
-        super(global, items);
-        this.observerRegistry = global.getService(Service.OBSERVER_REGISTRY);
-    }
-    getPriority() {
-        return TaskPriority.OBSERVER_QUERY_TASK;
-    }
-    onSuccess(results) {
-        this.queries.forEach((query, index) => {
-            this.observerRegistry.updateResultsForQuery(query, results[index]);
-        });
-    }
-}
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-class ExternalChangeTask extends UniqueId {
-    constructor(global, tableDiffs) {
-        super();
-        this.global = global;
-        this.tableDiffs = tableDiffs;
-        this.observerRegistry = this.global.getService(Service.OBSERVER_REGISTRY);
-        this.runner = this.global.getService(Service.RUNNER);
-        this.inMemoryUpdater = new InMemoryUpdater(this.global);
-        const dbSchema = this.global.getService(Service.SCHEMA);
-        const tableSchemas = this.tableDiffs.map(td => dbSchema.table(td.getName()));
-        this.scope = new Set(tableSchemas);
-        this.resolver = new Resolver();
-    }
-    exec() {
-        this.inMemoryUpdater.update(this.tableDiffs);
-        this.scheduleObserverTask();
-        return Promise.resolve([]);
-    }
-    getType() {
-        return TransactionType.READ_WRITE;
-    }
-    getScope() {
-        return this.scope;
-    }
-    getResolver() {
-        return this.resolver;
-    }
-    getId() {
-        return this.getUniqueNumber();
-    }
-    getPriority() {
-        return TaskPriority.EXTERNAL_CHANGE_TASK;
-    }
-    // Schedules an ObserverTask for any observed queries that need to be
-    // re-executed, if any.
-    scheduleObserverTask() {
-        const items = this.observerRegistry.getTaskItemsForTables(Array.from(this.scope.values()));
-        if (items.length !== 0) {
-            const observerTask = new ObserverQueryTask(this.global, items);
-            this.runner.scheduleTask(observerTask);
-        }
-    }
-}
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-class ExternalChangeObserver {
-    constructor(global) {
-        this.global = global;
-        this.backStore = global.getService(Service.BACK_STORE);
-        this.runner = global.getService(Service.RUNNER);
-    }
-    // Starts observing the backing store for any external changes.
-    startObserving() {
-        this.backStore.subscribe(this.onChange.bind(this));
-    }
-    // Stops observing the backing store.
-    stopObserving() {
-        this.backStore.unsubscribe(this.onChange.bind(this));
-    }
-    // Executes every time a change is reported by the backing store. It is
-    // responsible for scheduling a task that will updated the in-memory data
-    // layers (indices and cache) accordingly.
-    onChange(tableDiffs) {
-        // Note: Current logic does not check for any conflicts between external
-        // changes and in-flight READ_WRITE queries. It assumes that no conflicts
-        // exist (single writer, multiple readers model).
-        const externalChangeTask = new ExternalChangeTask(this.global, tableDiffs);
-        this.runner.scheduleTask(externalChangeTask);
-    }
-}
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-// The base page class for bundled rows. Each page is a physical row in
-// IndexedDB, and contains 2^BUNDLE_EXPONENT logical rows.
-class Page {
-    constructor(id, payload = {}) {
-        this.id = id;
-        this.payload = payload;
-    }
-    //  Creates a new Page instance from DB data.
-    static deserialize(data) {
-        return new Page(data.id, JSON.parse(data.value));
-    }
-    // Returns distinct page ids containing given row ids.
-    static toPageIds(rowIds) {
-        const pageIds = new Set();
-        rowIds.forEach(id => pageIds.add(Page.toPageId(id)));
-        return Array.from(pageIds.values());
-    }
-    static toPageId(rowId) {
-        return rowId >> Page.BUNDLE_EXPONENT;
-    }
-    // Returns range of page's row id [from, to].
-    static getPageRange(pageId) {
-        return [
-            pageId << Page.BUNDLE_EXPONENT,
-            ((pageId + 1) << Page.BUNDLE_EXPONENT) - 1,
-        ];
-    }
-    getId() {
-        return this.id;
-    }
-    getPayload() {
-        return this.payload;
-    }
-    setRows(rows) {
-        rows.forEach(row => (this.payload[row.id()] = row.serialize()));
-    }
-    removeRows(ids) {
-        ids.forEach(id => delete this.payload[id]);
-    }
-    serialize() {
-        return {
-            id: this.id,
-            value: JSON.stringify(this.payload),
-        };
-    }
-}
-// Power factor of bundle size, e.g. 9 means 2^9 = 512.
-Page.BUNDLE_EXPONENT = 9;
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-class IndexedDBRawBackStore {
-    constructor(version, db, tx, bundleMode) {
-        this.version = version;
-        this.db = db;
-        this.tx = tx;
-        this.bundleMode = bundleMode;
-    }
-    static convert(value) {
-        let ret = null;
-        if (value instanceof ArrayBuffer) {
-            ret = Row.binToHex(value);
-        }
-        else if (value instanceof Date) {
-            ret = value.getTime();
-        }
-        else {
-            ret = value;
-        }
-        return ret;
-    }
-    getRawDBInstance() {
-        return this.db;
-    }
-    getRawTransaction() {
-        return this.tx;
-    }
-    dropTable(tableName) {
-        return new Promise((resolve, reject) => {
-            try {
-                this.db.deleteObjectStore(tableName);
-            }
-            catch (e) {
-                reject(e);
-                return;
-            }
-            resolve();
-        });
-    }
-    addTableColumn(tableName, columnName, defaultValue) {
-        const value = IndexedDBRawBackStore.convert(defaultValue);
-        return this.transformRows(tableName, (row) => {
-            row.payload()[columnName] = value;
-        });
-    }
-    dropTableColumn(tableName, columnName) {
-        return this.transformRows(tableName, (row) => {
-            delete row.payload()[columnName];
-        });
-    }
-    renameTableColumn(tableName, oldColumnName, newColumnName) {
-        return this.transformRows(tableName, (row) => {
-            row.payload()[newColumnName] = row.payload()[oldColumnName];
-            delete row.payload()[oldColumnName];
-        });
-    }
-    createRow(payload) {
-        const data = {};
-        Object.keys(payload).forEach(key => {
-            data[key] = IndexedDBRawBackStore.convert(payload[key]);
-        });
-        return Row.create(data);
-    }
-    getVersion() {
-        return this.version;
-    }
-    dump() {
-        const tables = this.db.objectStoreNames;
-        const promises = [];
-        for (let i = 0; i < tables.length; ++i) {
-            const tableName = tables.item(i);
-            promises.push(this.dumpTable(tableName));
-        }
-        return Promise.all(promises).then(tableDumps => {
-            const results = {};
-            tableDumps.forEach((tableDump, index) => {
-                results[tables.item(index)] = tableDump;
-            });
-            return results;
-        });
-    }
-    openCursorForWrite(tableName, loopFunc, endFunc) {
-        return new Promise((resolve, reject) => {
-            let req;
-            let store;
-            try {
-                store = this.tx.objectStore(tableName);
-                req = store.openCursor();
-            }
-            catch (e) {
-                reject(e);
-                return;
-            }
-            req.onsuccess = () => {
-                const cursor = req.result;
-                if (cursor) {
-                    loopFunc(cursor);
-                    cursor.continue();
-                }
-                else {
-                    endFunc(store);
-                    resolve();
-                }
-            };
-            req.onerror = reject;
-        });
-    }
-    transformRows(tableName, rowFn) {
-        const loopFunc = (cursor) => {
-            const row = Row.deserialize(cursor.value);
-            rowFn(row);
-            cursor.update(row.serialize());
-        };
-        const loopFuncBundle = (cursor) => {
-            const page = Page.deserialize(cursor.value);
-            const data = page.getPayload();
-            Object.keys(data).forEach(rowId => {
-                const row = Row.deserialize(data[rowId]);
-                rowFn(row);
-                data[rowId] = row.serialize();
-            });
-            cursor.update(page.serialize());
-        };
-        const endFunc = () => {
-            return;
-        };
-        return this.openCursorForWrite(tableName, this.bundleMode ? loopFuncBundle : loopFunc, endFunc);
-    }
-    getTableRows(tableName) {
-        const results = [];
-        return new Promise((resolve, reject) => {
-            let req;
-            try {
-                req = this.tx.objectStore(tableName).openCursor();
-            }
-            catch (e) {
-                reject(e);
-                return;
-            }
-            req.onsuccess = () => {
-                const cursor = req.result;
-                if (cursor) {
-                    if (this.bundleMode) {
-                        const page = Page.deserialize(cursor.value);
-                        const data = page.getPayload();
-                        Object.keys(data).forEach(rowId => {
-                            results.push(data[rowId]);
-                        });
-                    }
-                    else {
-                        results.push(cursor.value);
-                    }
-                    cursor.continue();
-                }
-                else {
-                    resolve(results);
-                }
-            };
-            req.onerror = reject;
-        });
-    }
-    dumpTable(tableName) {
-        return this.getTableRows(tableName).then(rawRows => rawRows.map(rawRow => rawRow.value));
-    }
-}
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-// A base class for all native DB transactions wrappers to subclass.
-class BaseTx {
-    constructor(txType, journal) {
-        this.txType = txType;
-        this.journal = journal || null;
-        this.resolver = new Resolver();
-        this.success = false;
-        this.statsObject = null;
-    }
-    getJournal() {
-        return this.journal;
-    }
-    commit() {
-        const promise = this.txType === TransactionType.READ_ONLY
-            ? this.commitInternal()
-            : this.commitReadWrite();
-        return promise.then((results) => {
-            this.success = true;
-            return results;
-        });
-    }
-    stats() {
-        if (this.statsObject === null) {
-            if (!this.success) {
-                this.statsObject = TransactionStatsImpl.getDefault();
-            }
-            else if (this.txType === TransactionType.READ_ONLY) {
-                this.statsObject = new TransactionStatsImpl(true, 0, 0, 0, 0);
-            }
-            else {
-                const diff = this.journal.getDiff();
-                let insertedRows = 0;
-                let deletedRows = 0;
-                let updatedRows = 0;
-                let tablesChanged = 0;
-                diff.forEach(tableDiff => {
-                    tablesChanged++;
-                    insertedRows += tableDiff.getAdded().size;
-                    updatedRows += tableDiff.getModified().size;
-                    deletedRows += tableDiff.getDeleted().size;
-                });
-                this.statsObject = new TransactionStatsImpl(true, insertedRows, updatedRows, deletedRows, tablesChanged);
-            }
-        }
-        return this.statsObject;
-    }
-    commitReadWrite() {
-        try {
-            this.journal.checkDeferredConstraints();
-        }
-        catch (e) {
-            return Promise.reject(e);
-        }
-        return this.mergeIntoBackstore().then(results => {
-            this.journal.commit();
-            return results;
-        });
-    }
-    // Flushes all changes currently in this transaction's journal to the backing
-    // store. Returns a promise firing after all changes have been successfully
-    // written to the backing store.
-    mergeIntoBackstore() {
-        this.mergeTableChanges();
-        this.mergeIndexChanges();
-        // When all DB operations have finished, this.whenFinished will fire.
-        return this.commitInternal();
-    }
-    // Flushes the changes currently in this transaction's journal that refer to
-    // user-defined tables to the backing store.
-    mergeTableChanges() {
-        const journal = this.journal;
-        const diff = journal.getDiff();
-        diff.forEach((tableDiff, tableName) => {
-            const tableSchema = journal.getScope().get(tableName);
-            const table = this.getTable(tableSchema.getName(), tableSchema.deserializeRow.bind(tableSchema), TableType.DATA);
-            const toDeleteRowIds = Array.from(tableDiff.getDeleted().values()).map(row => row.id());
-            const toPut = Array.from(tableDiff.getModified().values())
-                .map(modification => modification[1])
-                .concat(Array.from(tableDiff.getAdded().values()));
-            // If we have things to put and delete in the same transaction then we
-            // need to disable the clear table optimization the backing store might
-            // want to do. Otherwise we have possible races between the put and
-            // count/clear.
-            const shouldDisableClearTableOptimization = toPut.length > 0;
-            if (toDeleteRowIds.length > 0) {
-                table.remove(toDeleteRowIds, shouldDisableClearTableOptimization).then(() => { }, (e) => this.resolver.reject(e));
-            }
-            table.put(toPut).then(() => { }, (e) => this.resolver.reject(e));
-        }, this);
-    }
-    // Flushes the changes currently in this transaction's journal that refer to
-    // persisted indices to the backing store.
-    mergeIndexChanges() {
-        const indices = this.journal.getIndexDiff();
-        indices.forEach(index => {
-            const indexTable = this.getTable(index.getName(), Row.deserialize, TableType.INDEX);
-            // Since there is no index diff implemented yet, the entire index needs
-            // to be overwritten on disk.
-            indexTable.remove([]);
-            indexTable.put(index.serialize());
-        }, this);
-    }
-}
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-// Table stream based on a given IndexedDB Object Store.
-class BundledObjectStore {
-    constructor(store, deserializeFn, retrievePageFn) {
-        this.store = store;
-        this.deserializeFn = deserializeFn;
-        this.retrievePageFn = retrievePageFn;
-    }
-    static forTableType(global, store, deserializeFn, tableType) {
-        const retrievePageFn = tableType === TableType.DATA
-            ? BundledObjectStore.getDataTablePage.bind(null, global)
-            : BundledObjectStore.getIndexTablePage;
-        return new BundledObjectStore(store, deserializeFn, retrievePageFn);
-    }
-    // Retrieves a page for the case of a DATA table. It uses the Cache to
-    // retrieve the rows that belong to the requested page.
-    static getDataTablePage(global, tableName, pageId) {
-        const cache = global.getService(Service.CACHE);
-        const range = Page.getPageRange(pageId);
-        const rows = cache.getRange(tableName, range[0], range[1]);
-        const page = new Page(pageId);
-        page.setRows(rows);
-        return page;
-    }
-    // Retrieves a page for the case of an INDEX table. It is basically a no-op
-    // since the full index contents are rewritten every time.
-    static getIndexTablePage(tableName, pageId) {
-        return new Page(pageId);
-    }
-    get(ids) {
-        if (ids.length === 0) {
-            return this.getAll();
-        }
-        return this.getPagesByRowIds(ids).then(pages => {
-            return ids.map(id => {
-                const page = pages.get(Page.toPageId(id));
-                assert(page !== undefined, 'Containing page is empty');
-                return this.deserializeFn(page.getPayload()[id]);
-            });
-        });
-    }
-    put(rows) {
-        if (rows.length === 0) {
-            return Promise.resolve();
-        }
-        const pages = new Map();
-        rows.forEach(row => {
-            const pageId = Page.toPageId(row.id());
-            let page = pages.get(pageId) || null;
-            if (page === null) {
-                page = this.retrievePageFn(this.store.name, pageId);
-            }
-            page.setRows([row]);
-            pages.set(pageId, page);
-        }, this);
-        const promises = Array.from(pages.values()).map(page => {
-            return this.performWriteOp(() => {
-                return this.store.put(page.serialize());
-            });
-        }, this);
-        return Promise.all(promises).then(() => {
-            return;
-        });
-    }
-    remove(ids,
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        disableClearTableOptimization) {
-        if (ids.length === 0) {
-            // Remove all
-            return this.performWriteOp(() => this.store.clear());
-        }
-        const pages = new Map();
-        ids.forEach(id => {
-            const pageId = Page.toPageId(id);
-            let page = pages.get(pageId) || null;
-            if (page === null) {
-                page = this.retrievePageFn(this.store.name, pageId);
-            }
-            page.removeRows([id]);
-            pages.set(pageId, page);
-        }, this);
-        const promises = Array.from(pages.values()).map(page => {
-            return this.performWriteOp(() => {
-                return Object.keys(page.getPayload()).length === 0
-                    ? this.store.delete(page.getId())
-                    : this.store.put(page.serialize());
-            });
-        }, this);
-        return Promise.all(promises).then(() => {
-            return;
-        });
-    }
-    getPagesByRowIds(rowIds) {
-        const results = new Map();
-        const resolver = new Resolver();
-        const pageIds = Page.toPageIds(rowIds);
-        // Chrome IndexedDB is slower when using a cursor to iterate through a big
-        // table. A faster way is to just get everything individually within a
-        // transaction.
-        const promises = pageIds.map(id => {
-            return new Promise((resolve, reject) => {
-                let request;
-                try {
-                    request = this.store.get(id);
-                }
-                catch (e) {
-                    reject(e);
-                    return;
-                }
-                request.onerror = reject;
-                request.onsuccess = ev => {
-                    const page = Page.deserialize(ev.target.result);
-                    results.set(page.getId(), page);
-                    resolve();
-                };
-            });
-        }, this);
-        Promise.all(promises).then(() => resolver.resolve(results));
-        return resolver.promise;
-    }
-    // Reads everything from the data store
-    getAll() {
-        return new Promise((resolve, reject) => {
-            const rows = [];
-            let request;
-            try {
-                request = this.store.openCursor();
-            }
-            catch (e) {
-                reject(e);
-                return;
-            }
-            request.onerror = reject;
-            request.onsuccess = () => {
-                const cursor = request.result;
-                if (cursor) {
-                    const page = Page.deserialize(cursor.value);
-                    const data = page.getPayload();
-                    Object.keys(data).forEach(key => rows.push(this.deserializeFn(data[key])));
-                    cursor.continue();
-                }
-                else {
-                    resolve(rows);
-                }
-            };
-        });
-    }
-    performWriteOp(reqFactory) {
-        return new Promise((resolve, reject) => {
-            let request;
-            try {
-                request = reqFactory();
-            }
-            catch (e) {
-                reject(e);
-                return;
-            }
-            request.onsuccess = () => resolve();
-            request.onerror = reject;
-        });
-    }
-}
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-class ObjectStore {
-    constructor(store, deserializeFn) {
-        this.store = store;
-        this.deserializeFn = deserializeFn;
-    }
-    get(ids) {
-        if (ids.length === 0) {
-            const options = Global.get().getOptions();
-            return options.useGetAll ? this.getAllBulk() : this.getAllWithCursor();
-        }
-        // Chrome IndexedDB is slower when using a cursor to iterate through a big
-        // table. A faster way is to just get everything individually within a
-        // transaction.
-        const promises = ids.map(id => {
-            return new Promise((resolve, reject) => {
-                let request;
-                try {
-                    request = this.store.get(id);
-                }
-                catch (e) {
-                    reject(e);
-                    return;
-                }
-                request.onerror = reject;
-                request.onsuccess = ev => {
-                    resolve(this.deserializeFn(ev.target.result));
-                };
-            });
-        }, this);
-        return Promise.all(promises);
-    }
-    put(rows) {
-        if (rows.length === 0) {
-            return Promise.resolve();
-        }
-        const promises = rows.map(row => {
-            return this.performWriteOp(() => {
-                // TODO(dpapad): Surround this with try catch, otherwise some errors
-                // don't surface to the console.
-                return this.store.put(row.serialize());
-            });
-        }, this);
-        return Promise.all(promises).then(() => {
-            return;
-        });
-    }
-    remove(ids, disableClearTableOptimization) {
-        const deleteByIdsFn = () => {
-            const promises = ids.map(id => this.performWriteOp(() => this.store.delete(id)));
-            return Promise.all(promises).then(() => {
-                return;
-            });
-        };
-        if (disableClearTableOptimization) {
-            return deleteByIdsFn();
-        }
-        return new Promise((resolve, reject) => {
-            const request = this.store.count();
-            request.onsuccess = ev => {
-                if (ids.length === 0 ||
-                    ev.target.result === ids.length) {
-                    // Remove all
-                    this.performWriteOp(() => this.store.clear()).then(resolve, reject);
-                    return;
-                }
-                deleteByIdsFn().then(resolve, reject);
-            };
-            request.onerror = reject;
-        });
-    }
-    // Reads everything from data store, using a cursor.
-    getAllWithCursor() {
-        return new Promise((resolve, reject) => {
-            const rows = [];
-            let request;
-            try {
-                request = this.store.openCursor();
-            }
-            catch (e) {
-                reject(e);
-                return;
-            }
-            request.onerror = reject;
-            request.onsuccess = () => {
-                const cursor = request.result;
-                if (cursor) {
-                    rows.push(this.deserializeFn(cursor.value));
-                    cursor.continue();
-                }
-                else {
-                    resolve(rows);
-                }
-            };
-        });
-    }
-    // Reads everything from data store, using IDBObjectStore#getAll.
-    getAllBulk() {
-        return new Promise((resolve, reject) => {
-            let request;
-            try {
-                // TODO(dpapad): getAll is still experimental (and hidden behind a flag)
-                // on both Chrome and Firefox. Add it to the externs once a flag is no
-                // longer required.
-                request = this.store.getAll();
-            }
-            catch (e) {
-                reject(new Exception(ErrorCode.CANT_LOAD_IDB, e.name, e.message));
-                return;
-            }
-            request.onerror = reject;
-            request.onsuccess = () => {
-                try {
-                    const rows = request.result.map((rawRow) => this.deserializeFn(rawRow));
-                    resolve(rows);
-                }
-                catch (e) {
-                    reject(new Exception(ErrorCode.CANT_READ_IDB, e.name, e.message));
-                }
-            };
-        });
-    }
-    performWriteOp(reqFactory) {
-        return new Promise((resolve, reject) => {
-            let request;
-            try {
-                request = reqFactory();
-            }
-            catch (e) {
-                reject(e);
-                return;
-            }
-            request.onsuccess = () => resolve();
-            request.onerror = reject;
-        });
-    }
-}
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-class IndexedDBTx extends BaseTx {
-    constructor(global, tx, txType, bundleMode, journal) {
-        super(txType, journal);
-        this.global = global;
-        this.tx = tx;
-        this.bundleMode = bundleMode;
-        this.tx.oncomplete = () => {
-            this.resolver.resolve();
-        };
-        this.tx.onabort = (ev) => {
-            this.resolver.reject(ev);
-        };
-    }
-    getTable(tableName, deserializeFn, type) {
-        if (this.bundleMode) {
-            const tableType = type !== undefined && type !== null ? type : TableType.DATA;
-            return BundledObjectStore.forTableType(this.global, this.tx.objectStore(tableName), deserializeFn, tableType);
-        }
-        else {
-            return new ObjectStore(this.tx.objectStore(tableName), deserializeFn);
-        }
-    }
-    abort() {
-        this.tx.abort();
-    }
-    commitInternal() {
-        return this.resolver.promise;
-    }
-}
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-// IndexedDB-backed back store.
-//
-// The backstore supports "Bundle Mode", which will bundle 2^BUNDLE_EXPONENT
-// logical rows into a physical row (called bundled page) and store it in DB.
-// The reason behind this is to workaround IndexedDB spec design flaw in loading
-// large tables. Say one wanted to load all rows from table, the implementation
-// based on current spec is
-//
-// var req = objectStore.openCursor();
-// req.onsuccess = function() {
-//   if (cursor) {
-//     // get one row by using cursor.value
-//     cursor.continue();
-//   } else {
-//     // finished
-//   }
-// };
-//
-// Which involves N calls of cursor.continue and N eventing of onsuccess. This
-// is very expensive when N is big. WebKit needs 57us for firing an event on an
-// HP Z620, and the wall clock time for loading 100K rows will be 5.7s just for
-// firing N onsuccess events.
-//
-// As a result, the bundle mode is created to bundle many rows into a physical
-// row to workaround overhead caused by number of rows.
-//
-// And yes, after 4 years when this comment was originally written (2014->2018),
-// not much has changed and the statement above is still true.
-class IndexedDB {
-    constructor(global, schema) {
-        this.global = global;
-        this.schema = schema;
-        this.bundledMode = this.schema.pragma().enableBundledMode || false;
-    }
-    init(upgrade) {
-        const indexedDB = window.indexedDB;
-        if (indexedDB === undefined || indexedDB === null) {
-            // 352: IndexedDB is not supported by platform.
-            throw new Exception(ErrorCode.IDB_NOT_PROVIDED);
-        }
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const onUpgrade = upgrade || ((rawDb) => Promise.resolve());
-        return new Promise((resolve, reject) => {
-            let request;
-            try {
-                request = indexedDB.open(this.schema.name(), this.schema.version());
-            }
-            catch (e) {
-                reject(e);
-                return;
-            }
-            // Event sequence for IndexedDB database upgrade:
-            // indexedDB.open found version mismatch
-            //   --> onblocked (maybe, see http://www.w3.org/TR/IndexedDB 3.3.7)
-            //   --> onupgradeneeded (when IndexedDB is ready to handle the
-            //   connection)
-            //   --> onsuccess
-            // As a result the onblocked event is not handled deliberately.
-            request.onerror = e => {
-                const error = e.target
-                    .error;
-                // 361: Unable to open IndexedDB database.
-                reject(new Exception(ErrorCode.CANT_OPEN_IDB, error.name, error.message));
-            };
-            request.onupgradeneeded = ev => {
-                this.onUpgradeNeeded(onUpgrade, ev).then(() => {
-                    return;
-                }, reject);
-            };
-            request.onsuccess = ev => {
-                this.db = ev.target.result;
-                this.scanRowId().then(rowId => {
-                    Row.setNextIdIfGreater(rowId + 1);
-                    resolve(this.db);
-                });
-            };
-        });
-    }
-    createTx(type, scope, journal) {
-        const nativeTx = this.db.transaction(this.getIndexedDBScope(scope), type === TransactionType.READ_ONLY ? 'readonly' : 'readwrite');
-        return new IndexedDBTx(this.global, nativeTx, type, this.bundledMode, journal);
-    }
-    close() {
-        this.db.close();
-    }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    getTableInternal(tableName) {
-        // 511: IndexedDB tables needs to be acquired from transactions.
-        throw new Exception(ErrorCode.CANT_GET_IDB_TABLE);
-    }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    subscribe(handler) {
-        // Not supported yet.
-    }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    unsubscribe(handler) {
-        // Not supported yet.
-    }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    notify(changes) {
-        // Not supported yet.
-    }
-    supportsImport() {
-        return true;
-    }
-    peek() {
-        return this.db;
-    }
-    onUpgradeNeeded(onUpgrade, ev) {
-        const db = ev.target.result;
-        const tx = ev.target.transaction;
-        const rawDb = new IndexedDBRawBackStore(ev.oldVersion, db, tx, this.bundledMode);
-        this.removeIndexTables(db, tx);
-        this.createTables(db);
-        return onUpgrade(rawDb);
-    }
-    // Removes Lovefield-created index tables.
-    removeIndexTables(db, tx) {
-        const storeNames = [];
-        for (let i = 0; i < db.objectStoreNames.length; ++i) {
-            const name = db.objectStoreNames.item(i);
-            // Remove all persisted indices.
-            if (name.indexOf('.') !== -1) {
-                storeNames.push(name);
-            }
-        }
-        storeNames.forEach(store => {
-            try {
-                db.deleteObjectStore(store);
-            }
-            catch (e) {
-                // Ignore the error.
-            }
-        });
-    }
-    // Creates tables if they had not existed in the database.
-    createTables(db) {
-        this.schema.tables().forEach(table => {
-            this.createObjectStoresForTable(db, table);
-        }, this);
-    }
-    createObjectStoresForTable(db, tableSchema) {
-        if (!db.objectStoreNames.contains(tableSchema.getName())) {
-            db.createObjectStore(tableSchema.getName(), { keyPath: 'id' });
-        }
-        if (tableSchema.persistentIndex()) {
-            const tableIndices = tableSchema.getIndices();
-            tableIndices.forEach(indexSchema => {
-                this.createIndexTable(db, indexSchema.getNormalizedName());
-            }, this);
-            // Creating RowId index table.
-            this.createIndexTable(db, tableSchema.getRowIdIndexName());
-        }
-    }
-    // Creates a backing store corresponding to a persisted index.
-    createIndexTable(db, indexName) {
-        if (!db.objectStoreNames.contains(indexName)) {
-            db.createObjectStore(indexName, { keyPath: 'id' });
-        }
-    }
-    getIndexedDBScope(scope) {
-        const indexedDBScope = new Set();
-        scope.forEach(tableSchema => {
-            // Adding user-defined table to the scope.
-            indexedDBScope.add(tableSchema.getName());
-            // If the table has persisted indices, adding the corresponding backing
-            // store tables to the scope too.
-            if (tableSchema.persistentIndex()) {
-                const tableIndices = tableSchema.getIndices();
-                tableIndices.forEach(indexSchema => indexedDBScope.add(indexSchema.getNormalizedName()));
-                // Adding RowId backing store name to the scope.
-                indexedDBScope.add(tableSchema.getRowIdIndexName());
-            }
-        });
-        return Array.from(indexedDBScope.values());
-    }
-    scanRowId(txIn) {
-        const tableNames = this.schema.tables().map(table => table.getName());
-        const db = this.db;
-        let maxRowId = 0;
-        const extractRowId = (cursor) => {
-            if (this.bundledMode) {
-                const page = Page.deserialize(cursor.value);
-                return Object.keys(page.getPayload()).reduce((prev, cur) => {
-                    return Math.max(prev, Number(cur));
-                }, 0);
-            }
-            return cursor.key;
-        };
-        const scanTableRowId = (tableName) => {
-            return new Promise((resolve, reject) => {
-                let req;
-                try {
-                    const tx = txIn || db.transaction([tableName]);
-                    req = tx.objectStore(tableName).openCursor(undefined, 'prev');
-                }
-                catch (e) {
-                    reject(e);
-                    return;
-                }
-                req.onsuccess = ev => {
-                    const cursor = ev.target.result;
-                    if (cursor) {
-                        // Since the cursor is traversed in the reverse direction, only the
-                        // first record needs to be examined to determine the max row ID.
-                        maxRowId = Math.max(maxRowId, extractRowId(cursor));
-                    }
-                    resolve(maxRowId);
-                };
-                req.onerror = () => resolve(maxRowId);
-            });
-        };
-        const execSequentially = () => {
-            if (tableNames.length === 0) {
-                return Promise.resolve();
-            }
-            const tableName = tableNames.shift();
-            return scanTableRowId(tableName).then(execSequentially);
-        };
-        return new Promise(resolve => {
-            execSequentially().then(() => resolve(maxRowId));
-        });
-    }
-}
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-class MemoryTable {
-    constructor() {
-        this.data = new Map();
-    }
-    getSync(ids) {
-        // Empty array is treated as "return all rows".
-        if (ids.length === 0) {
-            return Array.from(this.data.values());
-        }
-        const results = [];
-        ids.forEach(id => {
-            const row = this.data.get(id) || null;
-            if (row !== null) {
-                results.push(row);
-            }
-        }, this);
-        return results;
-    }
-    getData() {
-        return this.data;
-    }
-    get(ids) {
-        return Promise.resolve(this.getSync(ids));
-    }
-    putSync(rows) {
-        rows.forEach(row => this.data.set(row.id(), row));
-    }
-    put(rows) {
-        this.putSync(rows);
-        return Promise.resolve();
-    }
-    removeSync(ids) {
-        if (ids.length === 0 || ids.length === this.data.size) {
-            // Remove all.
-            this.data.clear();
-        }
-        else {
-            ids.forEach(id => this.data.delete(id));
-        }
-    }
-    remove(ids) {
-        this.removeSync(ids);
-        return Promise.resolve();
-    }
-    getMaxRowId() {
-        if (this.data.size === 0) {
-            return 0;
-        }
-        return Array.from(this.data.keys()).reduce((prev, cur) => {
-            return prev > cur ? prev : cur;
-        }, 0);
-    }
-}
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-class MemoryTx extends BaseTx {
-    constructor(store, type, journal) {
-        super(type, journal);
-        this.store = store;
-        if (type === TransactionType.READ_ONLY) {
-            this.resolver.resolve();
-        }
-    }
-    getTable(tableName,
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        deserializeFn,
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        tableType) {
-        return this.store.getTableInternal(tableName);
-    }
-    abort() {
-        this.resolver.reject();
-    }
-    commitInternal() {
-        this.resolver.resolve();
-        return this.resolver.promise;
-    }
-}
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-class Memory {
-    constructor(schema) {
-        this.schema = schema;
-        this.tables = new Map();
-    }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    init(onUpgrade) {
-        // Memory does not uses raw back store, just ignore the onUpgrade function.
-        this.schema.tables().forEach(table => this.initTable(table), this);
-        return Promise.resolve();
-    }
-    getTableInternal(tableName) {
-        const table = this.tables.get(tableName) || null;
-        if (table === null) {
-            // 101: Table {0} not found.
-            throw new Exception(ErrorCode.TABLE_NOT_FOUND, tableName);
-        }
-        return table;
-    }
-    createTx(type, scope, journal) {
-        return new MemoryTx(this, type, journal);
-    }
-    close() {
-        // No op.
-    }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    subscribe(handler) {
-        // Not supported.
-    }
-    // Unsubscribe current change handler.
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    unsubscribe(handler) {
-        // Not supported.
-    }
-    // Notifies registered observers with table diffs.
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    notify(changes) {
-        // Not supported.
-    }
-    supportsImport() {
-        return true;
-    }
-    peek() {
-        return this.tables;
-    }
-    // Creates a new empty table in the database. It is a no-op if a table with
-    // the given name already exists.
-    // NOTE: the return value is not ported because it's not used.
-    createTable(tableName) {
-        if (!this.tables.has(tableName)) {
-            this.tables.set(tableName, new MemoryTable());
-        }
-    }
-    initTable(tableSchema) {
-        this.createTable(tableSchema.getName());
-        if (tableSchema.persistentIndex()) {
-            tableSchema.getIndices().forEach(indexSchema => {
-                this.createTable(indexSchema.getNormalizedName());
-            }, this);
-            // Creating RowId index table.
-            this.createTable(tableSchema.getRowIdIndexName());
-        }
-    }
-}
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-// A backing store implementation that holds all data in-memory, without
-// persisting anything to disk, and can be observed. This only makes sense
-// during testing where external changes are simulated on a MemoryDB.
-class ObservableStore extends Memory {
-    constructor(schema) {
-        super(schema);
-        this.observer = null;
-    }
-    subscribe(handler) {
-        // Currently only one observer is supported.
-        if (this.observer === null) {
-            this.observer = handler;
-        }
-    }
-    // Unsubscribe current change handler.
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    unsubscribe(handler) {
-        this.observer = null;
-    }
-    // Notifies registered observers with table diffs.
-    notify(changes) {
-        if (this.observer !== null) {
-            this.observer(changes);
-        }
-    }
-    supportsImport() {
-        return false;
-    }
-}
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-// Table stream based on a given WebSQL table.
-class WebSqlTable {
-    constructor(tx, name, deserializeFn) {
-        this.tx = tx;
-        this.deserializeFn = deserializeFn;
-        // Escape name string by default.
-        this.name = `"${name}"`;
-    }
-    get(ids) {
-        const where = ids.length === 0 ? '' : `WHERE id IN (${ids.join(',')})`;
-        const sql = `SELECT id, value FROM ${this.name} ${where}`;
-        const deserializeFn = this.deserializeFn;
-        const transformer = (res) => {
-            const results = res;
-            const length = results.rows.length;
-            const rows = new Array(length);
-            for (let i = 0; i < length; ++i) {
-                rows[i] = deserializeFn({
-                    id: results.rows.item(i)['id'],
-                    value: JSON.parse(results.rows.item(i)['value']),
-                });
-            }
-            return rows;
-        };
-        return this.tx.queue(sql, [], transformer);
-    }
-    put(rows) {
-        if (rows.length === 0) {
-            return Promise.resolve();
-        }
-        const sql = `INSERT OR REPLACE INTO ${this.name} (id, value) VALUES (?, ?)`;
-        rows.forEach(row => {
-            this.tx.queue(sql, [row.id(), JSON.stringify(row.payload())]);
-        }, this);
-        return Promise.resolve();
-    }
-    remove(ids,
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        disableClearTableOptimization) {
-        const where = ids.length === 0 ? '' : `WHERE id IN (${ids.join(',')})`;
-        const sql = `DELETE FROM ${this.name} ${where}`;
-        this.tx.queue(sql, []);
-        return Promise.resolve();
-    }
-}
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-// Wrapper for Transaction object obtained from WebSQL.
-class WebSqlTx extends BaseTx {
-    constructor(db, txType, journal) {
-        super(txType, journal);
-        this.db = db;
-        this.tables = new Map();
-        this.commands = [];
-    }
-    // SQL standards disallow "." and "#" in the name of table. However, Lovefield
-    // will name index tables using their canonical name, which contains those
-    // illegal characters. As a result, we need to escape the table name.
-    static escapeTableName(tableName) {
-        return tableName.replace('.', WebSqlTx.INDEX_MARK).replace('#', '__s__');
-    }
-    getTable(tableName, deserializeFn,
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        tableType) {
-        let table = this.tables.get(tableName) || null;
-        if (table === null) {
-            table = new WebSqlTable(this, WebSqlTx.escapeTableName(tableName), deserializeFn);
-            this.tables.set(tableName, table);
-        }
-        return table;
-    }
-    // Queues a SQL statement for the transaction.
-    queue(statement, params, transform) {
-        const resolver = new Resolver();
-        this.commands.push({
-            params,
-            resolver,
-            statement,
-            transform,
-        });
-        return resolver.promise;
-    }
-    abort() {
-        this.commands = [];
-    }
-    commitInternal() {
-        let lastCommand = null;
-        const onTxError = this.resolver.reject.bind(this.resolver);
-        const onExecError = (tx, e) => {
-            this.resolver.reject(e);
-            return false;
-        };
-        const results = [];
-        const callback = (tx, res) => {
-            if (lastCommand !== null) {
-                let ret = res;
-                if (lastCommand.transform && res !== null && res !== undefined) {
-                    ret = lastCommand.transform(res);
-                }
-                results.push(ret);
-                lastCommand.resolver.resolve(ret);
-            }
-            if (this.commands.length > 0) {
-                const command = this.commands.shift();
-                lastCommand = command;
-                tx.executeSql(command.statement, command.params, callback, onExecError);
-            }
-            else {
-                this.resolver.resolve(results);
-            }
-        };
-        if (this.txType === TransactionType.READ_ONLY) {
-            this.db.readTransaction(callback, onTxError);
-        }
-        else {
-            this.db.transaction(callback, onTxError);
-        }
-        return this.resolver.promise;
-    }
-}
-WebSqlTx.INDEX_MARK = '__d__';
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-// WebSQL raw back store. Please note that all altering functions will commit
-// immediately due to implementation restrictions. This is different from the
-// IndexedDB raw back store.
-class WebSqlRawBackStore {
-    constructor(global, version, db) {
-        this.global = global;
-        this.version = version;
-        this.db = db;
-    }
-    static queueListTables(tx) {
-        const GET_TABLE_NAMES = 'SELECT tbl_name FROM sqlite_master WHERE type="table"';
-        tx.queue(GET_TABLE_NAMES, [], (results) => {
-            const rows = results['rows'];
-            const tableNames = new Array(rows.length);
-            for (let i = 0; i < tableNames.length; ++i) {
-                tableNames[i] = rows.item(i)['tbl_name'];
-            }
-            return tableNames;
-        });
-    }
-    getRawDBInstance() {
-        return this.db;
-    }
-    getRawTransaction() {
-        // 356: Use WebSQL instance to create transaction instead.
-        throw new Exception(ErrorCode.NO_WEBSQL_TX);
-    }
-    dropTable(tableName) {
-        const tx = this.createTx();
-        tx.queue(`DROP TABLE ${tableName}`, []);
-        return tx.commit();
-    }
-    addTableColumn(tableName, columnName, defaultValue) {
-        const value = IndexedDBRawBackStore.convert(defaultValue);
-        return this.transformColumn(tableName, row => {
-            row.value[columnName] = value;
-            return row;
-        });
-    }
-    dropTableColumn(tableName, columnName) {
-        return this.transformColumn(tableName, row => {
-            delete row.value[columnName];
-            return row;
-        });
-    }
-    renameTableColumn(tableName, oldColumnName, newColumnName) {
-        return this.transformColumn(tableName, row => {
-            row.value[newColumnName] = row.value[oldColumnName];
-            delete row.value[oldColumnName];
-            return row;
-        });
-    }
-    createRow(payload) {
-        const data = {};
-        Object.keys(payload).forEach(key => {
-            data[key] = IndexedDBRawBackStore.convert(payload[key]);
-        });
-        return Row.create(data);
-    }
-    getVersion() {
-        return this.version;
-    }
-    dump() {
-        const resolver = new Resolver();
-        const tx = this.createTx();
-        WebSqlRawBackStore.queueListTables(tx);
-        const ret = {};
-        tx.commit().then(res => {
-            const results = res;
-            const tables = results[0].filter((name) => {
-                return name !== '__lf_ver' && name !== '__WebKitDatabaseInfoTable__';
-            });
-            const promises = tables.map(tableName => {
-                return this.dumpTable(tableName).then(rows => (ret[tableName] = rows));
-            }, this);
-            Promise.all(promises).then(() => resolver.resolve(ret));
-        });
-        return resolver.promise;
-    }
-    createTx() {
-        return new WebSqlTx(this.db, TransactionType.READ_WRITE, new Journal(this.global, new Set()));
-    }
-    dumpTable(tableName) {
-        const tx = this.createTx();
-        tx.queue(`SELECT id, value FROM ${tableName}`, []);
-        return tx.commit().then(res => {
-            const results = res;
-            const length = results[0].rows.length;
-            const rows = new Array(length);
-            for (let i = 0; i < length; ++i) {
-                rows[i] = {
-                    id: results[0].rows.item(i)['id'],
-                    value: JSON.parse(results[0].rows.item(i)['value']),
-                };
-            }
-            return Promise.resolve(rows);
-        });
-    }
-    transformColumn(tableName, transformer) {
-        const tx = this.createTx();
-        const sql = `UPDATE ${tableName} SET value=? WHERE id=?`;
-        return this.dumpTable(tableName).then(rows => {
-            rows.forEach(row => {
-                const newRow = transformer(row);
-                tx.queue(sql, [JSON.stringify(newRow.value), newRow.id]);
-            });
-            return tx.commit();
-        });
-    }
-}
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-class WebSql {
-    constructor(global, schema, size) {
-        this.global = global;
-        this.schema = schema;
-        // Estimated size of WebSQL store. It is defaulted to 1 for a reason:
-        // http://pouchdb.com/2014/10/26/10-things-i-learned-from-reading-and-writing-the-pouchdb-source.html
-        this.size = size || 1;
-    }
-    // Escapes table name so that table name can be reserved words.
-    static escape(tableName) {
-        return `"${tableName}"`;
-    }
-    init(upgrade) {
-        if (!window.openDatabase) {
-            // 353: WebSQL not supported by platform.
-            throw new Exception(ErrorCode.WEBSQL_NOT_PROVIDED);
-        }
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const defaultUpgrade = (rawDb) => Promise.resolve();
-        const onUpgrade = upgrade || defaultUpgrade;
-        return new Promise((resolve, reject) => {
-            const db = window.openDatabase(this.schema.name(), '', // Just open it with any version
-                this.schema.name(), this.size);
-            if (db) {
-                this.db = db;
-                this.checkVersion(onUpgrade).then(() => {
-                    this.scanRowId().then(resolve, reject);
-                }, e => {
-                    if (e instanceof Exception) {
-                        throw e;
-                    }
-                    // 354: Unable to open WebSQL database.
-                    throw new Exception(ErrorCode.CANT_OPEN_WEBSQL_DB, e.message);
-                });
-            }
-            else {
-                // 354: Unable to open WebSQL database.
-                throw new Exception(ErrorCode.CANT_OPEN_WEBSQL_DB);
-            }
-        });
-    }
-    initialized() {
-        return this.db !== undefined && this.db !== null;
-    }
-    createTx(type, scope, journal) {
-        if (this.db) {
-            return new WebSqlTx(this.db, type, journal);
-        }
-        // 2: The database has not initialized yet.
-        throw new Exception(ErrorCode.CONNECTION_CLOSED);
-    }
-    close() {
-        // WebSQL does not support closing a database connection.
-    }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    getTableInternal(tableName) {
-        // 512: WebSQL tables needs to be acquired from transactions.
-        throw new Exception(ErrorCode.CANT_GET_WEBSQL_TABLE);
-    }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    subscribe(handler) {
-        this.notSupported();
-    }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    unsubscribe(handler) {
-        this.notSupported();
-    }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    notify(changes) {
-        this.notSupported();
-    }
-    supportsImport() {
-        return true;
-    }
-    getEmptyJournal() {
-        return new Journal(this.global, new Set());
-    }
-    // Workaround Chrome's changeVersion problem.
-    // WebSQL changeVersion function is not working on Chrome. As a result,
-    // creating a .version table to save database version.
-    checkVersion(onUpgrade) {
-        const CREATE_VERSION = 'CREATE TABLE IF NOT EXISTS __lf_ver(' +
-            'id INTEGER PRIMARY KEY, v INTEGER)';
-        const GET_VERSION = 'SELECT v FROM __lf_ver WHERE id = 0';
-        const resolver = new Resolver();
-        const tx = new WebSqlTx(this.db, TransactionType.READ_WRITE, this.getEmptyJournal());
-        tx.queue(CREATE_VERSION, []);
-        tx.queue(GET_VERSION, []);
-        tx.commit().then((res) => {
-            const results = res;
-            let version = 0;
-            if (results[1].rows.length) {
-                version = results[1].rows.item(0)['v'];
-            }
-            if (version < this.schema.version()) {
-                this.onUpgrade(onUpgrade, version).then(resolver.resolve.bind(resolver));
-            }
-            else if (version > this.schema.version()) {
-                // 108: Attempt to open a newer database with old code
-                resolver.reject(new Exception(ErrorCode.INCOMPATIBLE_DB));
-            }
-            else {
-                resolver.resolve();
-            }
-        }, resolver.reject.bind(resolver));
-        return resolver.promise;
-    }
-    notSupported() {
-        // 355: WebSQL does not support change notification.
-        throw new Exception(ErrorCode.NO_CHANGE_NOTIFICATION);
-    }
-    onUpgrade(upgrade, oldVersion) {
-        return this.preUpgrade().then(() => {
-            const rawDb = new WebSqlRawBackStore(this.global, oldVersion, this.db);
-            return upgrade(rawDb);
-        });
-    }
-    // Deletes persisted indices and creates new tables.
-    preUpgrade() {
-        const tables = this.schema.tables();
-        const tx = new WebSqlTx(this.db, TransactionType.READ_WRITE, this.getEmptyJournal());
-        const tx2 = new WebSqlTx(this.db, TransactionType.READ_WRITE, this.getEmptyJournal());
-        tx.queue('INSERT OR REPLACE INTO __lf_ver VALUES (0, ?)', [
-            this.schema.version(),
-        ]);
-        WebSqlRawBackStore.queueListTables(tx);
-        return tx.commit().then(res => {
-            const results = res;
-            const existingTables = results[1];
-            // Delete all existing persisted indices.
-            existingTables
-                .filter(name => name.indexOf(WebSqlTx.INDEX_MARK) !== -1)
-                .forEach(name => tx2.queue('DROP TABLE ' + WebSql.escape(name), []));
-            // Create new tables.
-            const newTables = [];
-            tables.map(table => {
-                if (existingTables.indexOf(table.getName()) === -1) {
-                    newTables.push(table.getName());
-                }
-                if (table.persistentIndex()) {
-                    table.getIndices().forEach(index => {
-                        const idxTableName = WebSqlTx.escapeTableName(index.getNormalizedName());
-                        newTables.push(idxTableName);
-                    });
-                    const rowIdTableName = WebSqlTx.escapeTableName(table.getRowIdIndexName());
-                    newTables.push(rowIdTableName);
-                }
-            });
-            newTables.forEach(name => {
-                tx2.queue(`CREATE TABLE ${WebSql.escape(name)}` +
-                    '(id INTEGER PRIMARY KEY, value TEXT)', []);
-            });
-            return tx2.commit();
-        });
-    }
-    // Scans existing database and find the maximum row id.
-    scanRowId() {
-        let maxRowId = 0;
-        const resolver = new Resolver();
-        const selectIdFromTable = (tableName) => {
-            const tx = new WebSqlTx(this.db, TransactionType.READ_ONLY);
-            tx.queue(`SELECT MAX(id) FROM ${WebSql.escape(tableName)}`, []);
-            return tx.commit().then(res => {
-                const results = res;
-                const id = results[0].rows.item(0)['MAX(id)'];
-                maxRowId = Math.max(id, maxRowId);
-            });
-        };
-        const promises = this.schema
-            .tables()
-            .map(table => selectIdFromTable(table.getName()));
-        Promise.all(promises).then(() => {
-            Row.setNextIdIfGreater(maxRowId + 1);
-            resolver.resolve();
-        }, e => {
-            resolver.reject(e);
-        });
-        return resolver.promise;
-    }
-}
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-// @export
-class Capability {
-    constructor() {
-        this.supported = false;
-        this.indexedDb = false;
-        this.webSql = false;
-        this.localStorage = false;
-        this.agent = '';
-        this.browser = '';
-        this.version = [];
-        this.versionMap = new Map();
-        this.detect();
-    }
-    static get() {
-        if (Capability.instance === undefined) {
-            Capability.instance = new Capability();
-        }
-        return Capability.instance;
-    }
-    getDetection() {
-        return `${this.browser} ${this.version.join('.')}`;
-    }
-    detect() {
-        if (!this.detectNodeJS()) {
-            if (navigator) {
-                this.agent = navigator.userAgent;
-                this.detectBrowser();
-            }
-        }
-    }
-    convertVersion(version) {
-        if (version === undefined) {
-            return;
-        }
-        this.version = version.split('.').map(v => {
-            let n = 0;
-            try {
-                n = Number(v);
-            }
-            catch (e) {
-                // Swallow error.
-            }
-            return n;
-        });
-    }
-    detectNodeJS() {
-        if (typeof process !== typeof undefined && process.version) {
-            // Assume this is NodeJS.
-            this.convertVersion(process.version.slice(1));
-            // Support only Node.js >= 7.0.
-            this.supported = this.version[0] >= 7;
-            this.browser = 'nodejs';
-            this.indexedDb = false;
-            this.webSql = false;
-            return true;
-        }
-        return false;
-    }
-    detectBrowser() {
-        if (this.isIE() || this.isAndroid()) {
-            return;
-        }
-        this.localStorage = true;
-        this.detectVersion();
-        const checkSequence = [
-            this.isEdge.bind(this),
-            this.isFirefox.bind(this),
-            this.isChrome.bind(this),
-            this.isSafari.bind(this),
-            this.isIOS.bind(this), // this must be placed after Safari
-        ];
-        checkSequence.some(fn => fn());
-    }
-    detectVersion() {
-        const regex = new RegExp(
-            // Key. Note that a key may have a space.
-            // (i.e. 'Mobile Safari' in 'Mobile Safari/5.0')
-            '(\\w[\\w ]+)' +
-            '/' + // slash
-            '([^\\s]+)' + // version (i.e. '5.0b')
-            '\\s*' + // whitespace
-            '(?:\\((.*?)\\))?', // parenthetical info. parentheses not matched.
-            'g');
-        let match = null;
-        do {
-            match = regex.exec(this.agent);
-            if (match) {
-                const version = match[0];
-                this.versionMap.set(match[1], version.slice(version.indexOf('/') + 1));
-            }
-        } while (match);
-    }
-    isChrome() {
-        let detected = false;
-        if (this.agent.indexOf('Chrome') !== -1) {
-            detected = true;
-            this.convertVersion(this.versionMap.get('Chrome'));
-        }
-        else if (this.agent.indexOf('CriOS') !== -1) {
-            detected = true;
-            this.convertVersion(this.versionMap.get('CriOS'));
-        }
-        if (detected) {
-            this.browser = 'chrome';
-            this.supported = this.version[0] > 60;
-            this.indexedDb = true;
-            this.webSql = true;
-            this.localStorage = true;
-            return true;
-        }
-        return false;
-    }
-    isEdge() {
-        if (this.agent.indexOf('Edge') !== -1) {
-            this.browser = 'edge';
-            this.supported = true;
-            this.indexedDb = true;
-            this.webSql = false;
-            this.convertVersion(this.versionMap.get('Edge'));
-            return true;
-        }
-        return false;
-    }
-    isFirefox() {
-        if (this.agent.indexOf('Firefox') !== -1) {
-            this.browser = 'firefox';
-            this.convertVersion('Firefox');
-            this.supported = this.version[0] > 60;
-            this.indexedDb = true;
-            this.webSql = false;
-            this.localStorage = true;
-            return true;
-        }
-        return false;
-    }
-    isIE() {
-        if (this.agent.indexOf('Trident') !== -1 ||
-            this.agent.indexOf('MSIE') !== -1) {
-            this.browser = 'ie';
-            return true;
-        }
-        return false;
-    }
-    isAndroid() {
-        if (this.agent.indexOf('Android') !== -1 &&
-            !this.isChrome() &&
-            !this.isFirefox()) {
-            this.browser = 'legacy_android';
-            return true;
-        }
-        return false;
-    }
-    isSafari() {
-        if (this.agent.indexOf('Safari') !== -1) {
-            this.browser = 'safari';
-            this.convertVersion(this.versionMap.get('Version'));
-            this.supported = this.version[0] >= 10;
-            this.indexedDb = this.supported;
-            this.webSql = true;
-            return true;
-        }
-        return false;
-    }
-    isIOS() {
-        if (this.agent.indexOf('AppleWebKit') !== -1 &&
-            (this.agent.indexOf('iPad') !== -1 || this.agent.indexOf('iPhone') !== -1)) {
-            this.browser = 'ios_webview';
-            this.convertVersion(this.versionMap.get('Version'));
-            this.supported = this.version[0] >= 10;
-            this.indexedDb = this.supported;
-            this.webSql = true;
-            return true;
-        }
-        return false;
-    }
-}
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-class Inspector {
-    // Returns requested results as string for inspector to use.
-    // |dbName|: Database name, if null then return list of DB.
-    // |tableName|: Table name, if null then return list of tables. Honored only
-    // if |dbName| is provided.
-    // |limit| and |skip| controls rows to return, honored only if both |dbName|
-    // and |tableName| are provided.
-    static inspect(dbName, tableName, limit, skip) {
-        if (dbName === null) {
-            return Inspector.listDb();
-        }
-        if (tableName === null) {
-            return Inspector.listTables(dbName);
-        }
-        return Inspector.inspectTable(dbName, tableName, limit, skip);
-    }
-    // Return stringified object.
-    static toString(data) {
-        let value = '';
-        try {
-            value = JSON.stringify(data);
-        }
-        catch (e) {
-            // Ignore all errors.
-        }
-        return value;
-    }
-    // Returns global object by database name.
-    static getGlobal(dbName) {
-        const global = Global.get();
-        const ns = new ServiceId(`ns_${dbName}`);
-        return global.isRegistered(ns) ? global.getService(ns) : null;
-    }
-    // Returns a stringified object, whose key is DB name and value is version.
-    static listDb() {
-        const global = Global.get();
-        const dbList = {};
-        global.listServices().forEach(service => {
-            if (service.substring(0, 3) === 'ns_') {
-                const dbName = service.substring(3);
-                dbList[dbName] = Inspector.getGlobal(dbName)
-                    .getService(Service.SCHEMA)
-                    .version();
-            }
-        });
-        return Inspector.toString(dbList);
-    }
-    // Returns a stringified object, whose key is table name and value is number
-    // of rows in that table.
-    static listTables(dbName) {
-        const global = Inspector.getGlobal(dbName);
-        const tables = {};
-        if (global !== undefined && global !== null) {
-            const indexStore = global.getService(Service.INDEX_STORE);
-            global
-                .getService(Service.SCHEMA)
-                .tables()
-                .forEach(t => {
-                    const table = t;
-                    tables[table.getName()] = indexStore.get(table.getRowIdIndexName()).stats().totalRows;
-                });
-        }
-        return Inspector.toString(tables);
-    }
-    // Returns a stringified array of rows.
-    static inspectTable(dbName, tableName, limit, skip) {
-        const global = Inspector.getGlobal(dbName);
-        let contents = [];
-        if (global !== undefined && global !== null) {
-            let table = null;
-            try {
-                table = global.getService(Service.SCHEMA).table(tableName);
-            }
-            catch (e) {
-                // Ignore all errors.
-            }
-            if (table !== undefined && table !== null) {
-                const indexStore = global.getService(Service.INDEX_STORE);
-                const cache = global.getService(Service.CACHE);
-                const rowIds = indexStore.get(table.getRowIdIndexName()).getRange(undefined, false, limit, skip);
-                if (rowIds.length) {
-                    contents = cache.getMany(rowIds).map(row => row.payload());
-                }
-            }
-        }
-        return Inspector.toString(contents);
-    }
-}
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-// A DiffCalculator is responsible for detecting and applying the difference
-// between old and new results for a given query.
-class DiffCalculator {
-    constructor(query, observableResults) {
-        this.query = query;
-        this.observableResults = observableResults;
-        this.evalRegistry = EvalRegistry.get();
-        this.columns = this.detectColumns();
-    }
-    // Detects the diff between old and new results, and applies it to the
-    // observed array, which triggers observers to be notified.
-    // NOTE: Following logic does not detect modifications. A modification is
-    // detected as a deletion and an insertion.
-    // Also the implementation below is calculating longestCommonSubsequence
-    // twice, with different collectorFn each time, because comparisons are done
-    // based on object reference, there might be a cheaper way, such that
-    // longestCommonSubsequence is only called once.
-    applyDiff(oldResults, newResults) {
-        const oldEntries = oldResults === null ? [] : oldResults.entries;
-        // Detecting and applying deletions.
-        const longestCommonSubsequenceLeft = MathHelper.longestCommonSubsequence(oldEntries, newResults.entries, this.comparator.bind(this),
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            (indexLeft, indexRight) => oldEntries[indexLeft]);
-        const changeRecords = [];
-        let commonIndex = 0;
-        for (let i = 0; i < oldEntries.length; i++) {
-            const entry = oldEntries[i];
-            if (longestCommonSubsequenceLeft[commonIndex] === entry) {
-                commonIndex++;
-                continue;
-            }
-            else {
-                const removed = this.observableResults.splice(commonIndex, 1);
-                const changeRecord = this.createChangeRecord(i, removed, 0, this.observableResults);
-                changeRecords.push(changeRecord);
-            }
-        }
-        // Detecting and applying additions.
-        const longestCommonSubsequenceRight = MathHelper.longestCommonSubsequence(oldEntries, newResults.entries, this.comparator.bind(this), (indexLeft, indexRight) => newResults.entries[indexRight]);
-        commonIndex = 0;
-        for (let i = 0; i < newResults.entries.length; i++) {
-            const entry = newResults.entries[i];
-            if (longestCommonSubsequenceRight[commonIndex] === entry) {
-                commonIndex++;
-                continue;
-            }
-            else {
-                this.observableResults.splice(i, 0, entry.row.payload());
-                const changeRecord = this.createChangeRecord(i, [], 1, this.observableResults);
-                changeRecords.push(changeRecord);
-            }
-        }
-        return changeRecords;
-    }
-    // Detects the columns present in each result entry.
-    detectColumns() {
-        if (this.query.columns.length > 0) {
-            return this.query.columns;
-        }
-        else {
-            // Handle the case where all columns are being projected.
-            const columns = [];
-            this.query.from.forEach(t => {
-                const table = t;
-                table.getColumns().forEach(column => columns.push(column));
-            });
-            return columns;
-        }
-    }
-    // The comparator function to use for determining whether two entries are the
-    // same. Returns whether the two entries are identical, taking only into
-    // account the columns that are being projected.
-    comparator(left, right) {
-        return this.columns.every(column => {
-            // For OBJECT and ARRAY_BUFFER columns, don't bother detecting changes
-            // within the object. Trigger observers only if the object reference
-            // changed.
-            if (column.getType() === Type.OBJECT ||
-                column.getType() === Type.ARRAY_BUFFER) {
-                return left.getField(column) === right.getField(column);
-            }
-            const evalFn = this.evalRegistry.getEvaluator(column.getType(), EvalType.EQ);
-            return evalFn(left.getField(column), right.getField(column));
-        }, this);
-    }
-    // Creates a new change record object.
-    // |index| is the index that was affected.
-    // |removed| is an array holding the elements that were removed.
-    // |addedCount| is the number of elements added to the observed array.
-    // |object| is the array that is being observed.
-    createChangeRecord(index, removed, addedCount, object) {
-        return {
-            addedCount,
-            index,
-            object,
-            removed,
-            type: 'splice',
-        };
-    }
-}
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-class ObserverRegistryEntry {
-    constructor(builder) {
-        this.builder = builder;
-        this.builder = builder;
-        this.observers = new Set();
-        this.observable = [];
-        this.lastResults = null;
-        const context = builder.getObservableQuery();
-        this.diffCalculator = new DiffCalculator(context, this.observable);
-    }
-    addObserver(callback) {
-        if (this.observers.has(callback)) {
-            assert(false, 'Attempted to register observer twice.');
-            return;
-        }
-        this.observers.add(callback);
-    }
-    // Returns whether the callback was found and removed.
-    removeObserver(callback) {
-        return this.observers.delete(callback);
-    }
-    getTaskItem() {
-        return this.builder.getObservableTaskItem();
-    }
-    hasObservers() {
-        return this.observers.size > 0;
-    }
-    // Updates the results for this query, which causes observes to be notified.
-    updateResults(newResults) {
-        const changeRecords = this.diffCalculator.applyDiff(this.lastResults, newResults);
-        this.lastResults = newResults;
-        if (changeRecords.length > 0) {
-            this.observers.forEach(observerFn => observerFn(changeRecords));
-        }
-    }
-}
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-// A class responsible for keeping track of all observers as well as all arrays
-// that are being observed.
-class ObserverRegistry {
-    constructor() {
-        this.entries = new Map();
-    }
-    // Registers an observer for the given query.
-    addObserver(query, callback) {
-        const builder = query;
-        const queryId = this.getQueryId(builder.getObservableQuery());
-        let entry = this.entries.get(queryId) || null;
-        if (entry === null) {
-            entry = new ObserverRegistryEntry(builder);
-            this.entries.set(queryId, entry);
-        }
-        entry.addObserver(callback);
-    }
-    // Unregister an observer for the given query.
-    removeObserver(query, callback) {
-        const builder = query;
-        const queryId = this.getQueryId(builder.getObservableQuery());
-        const entry = this.entries.get(queryId);
-        assert(entry !== undefined && entry !== null, 'Attempted to unobserve a query that was not observed.');
-        const didRemove = entry.removeObserver(callback);
-        assert(didRemove, 'removeObserver: Inconsistent state detected.');
-        if (!entry.hasObservers()) {
-            this.entries.delete(queryId);
-        }
-    }
-    // Finds all the observed queries that reference at least one of the given
-    // tables.
-    getTaskItemsForTables(tables) {
-        const tableSet = new Set();
-        tables.forEach(table => tableSet.add(table.getName()));
-        const items = [];
-        this.entries.forEach(entry => {
-            const item = entry.getTaskItem();
-            const refersToTables = item.context.from.some(table => tableSet.has(table.getName()));
-            if (refersToTables) {
-                items.push(item);
-            }
-        });
-        return items;
-    }
-    // Updates the results of a given query. It is ignored if the query is no
-    // longer being observed.
-    updateResultsForQuery(query, results) {
-        const queryId = this.getQueryId(query.clonedFrom !== undefined && query.clonedFrom !== null
-            ? query.clonedFrom
-            : query);
-        const entry = this.entries.get(queryId) || null;
-        if (entry !== null) {
-            entry.updateResults(results);
-            return true;
-        }
-        return false;
-    }
-    // Returns a unique ID of the given query.
-    getQueryId(query) {
-        return query.getUniqueId();
-    }
-}
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-class DefaultCache {
-    constructor(dbSchema) {
-        this.map = new Map();
-        this.tableRows = new Map();
-        dbSchema.tables().forEach(table => {
-            this.tableRows.set(table.getName(), new Set());
-        }, this);
-    }
-    set(tableName, row) {
-        this.map.set(row.id(), row);
-        this.getTableRowSet(tableName).add(row.id());
-    }
-    setMany(tableName, rows) {
-        const tableSet = this.getTableRowSet(tableName);
-        rows.forEach(row => {
-            this.map.set(row.id(), row);
-            tableSet.add(row.id());
-        }, this);
-    }
-    get(id) {
-        return this.map.get(id) || null;
-    }
-    getMany(ids) {
-        return ids.map(id => this.get(id));
-    }
-    getRange(tableName, fromId, toId) {
-        const data = [];
-        const min = Math.min(fromId, toId);
-        const max = Math.max(fromId, toId);
-        const tableSet = this.getTableRowSet(tableName);
-        // Ensure the least number of keys are iterated.
-        if (tableSet.size < max - min) {
-            tableSet.forEach(key => {
-                if (key >= min && key <= max) {
-                    const value = this.map.get(key);
-                    assert(value !== null && value !== undefined, 'Inconsistent cache 1');
-                    data.push(value);
-                }
-            }, this);
-        }
-        else {
-            for (let i = min; i <= max; ++i) {
-                if (!tableSet.has(i)) {
-                    continue;
-                }
-                const value = this.map.get(i);
-                assert(value !== null && value !== undefined, 'Inconsistent cache 2');
-                data.push(value);
-            }
-        }
-        return data;
-    }
-    remove(tableName, id) {
-        this.map.delete(id);
-        this.getTableRowSet(tableName).delete(id);
-    }
-    removeMany(tableName, ids) {
-        const tableSet = this.getTableRowSet(tableName);
-        ids.forEach(id => {
-            this.map.delete(id);
-            tableSet.delete(id);
-        }, this);
-    }
-    getCount(tableName) {
-        return tableName ? this.getTableRowSet(tableName).size : this.map.size;
-    }
-    clear() {
-        this.map.clear();
-        this.tableRows.clear();
-    }
-    getTableRowSet(tableName) {
-        const ret = this.tableRows.get(tableName);
-        return ret;
-    }
-}
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-// Helper functions for index structures.
-class IndexHelper {
-    // Java's String.hashCode method.
-    //
-    // for each character c in string
-    //   hash = hash * 31 + c
-    static hashCode(value) {
-        let hash = 0;
-        for (let i = 0; i < value.length; ++i) {
-            hash = (hash << 5) - hash + value.charCodeAt(i);
-            hash = hash & hash; // Convert to 32-bit integer.
-        }
-        return hash;
-    }
-    // Compute hash key for an array.
-    static hashArray(values) {
-        const keys = values.map(value => {
-            return value !== undefined && value !== null
-                ? IndexHelper.hashCode(value.toString()).toString(32)
-                : '';
-        });
-        return keys.join('_');
-    }
-    // Slice result array by limit and skip.
-    // Note: For performance reasons the input array might be modified in place.
-    static slice(rawArray, reverseOrder, limit, skip) {
-        const array = reverseOrder ? rawArray.reverse() : rawArray;
-        // First handling case where no limit and no skip parameters have been
-        // specified, such that no copying of the input array is performed. This is
-        // an optimization such that unnecessary copying can be avoided for the
-        // majority case (no limit/skip params).
-        if ((limit === undefined || limit === null) &&
-            (skip === undefined || skip === null)) {
-            return array;
-        }
-        // Handling case where at least one of limit/skip parameters has been
-        // specified. The input array will have to be sliced.
-        const actualLimit = Math.min(limit !== undefined ? limit : array.length, array.length);
-        if (actualLimit === 0) {
-            return [];
-        }
-        const actualSkip = Math.min(skip || 0, array.length);
-        return array.slice(actualSkip, actualSkip + actualLimit);
-    }
-}
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-class IndexStats {
-    constructor() {
-        this.totalRows = 0;
-        this.maxKeyEncountered = 0;
-    }
-    // Signals that a row had been added to index.
-    add(key, rowCount) {
-        this.totalRows += rowCount;
-        this.maxKeyEncountered =
-            this.maxKeyEncountered === null
-                ? key
-                : key > this.maxKeyEncountered
-                    ? key
-                    : this.maxKeyEncountered;
-    }
-    // Signals that row(s) had been removed from index.
-    remove(key, removedCount) {
-        this.totalRows -= removedCount;
-    }
-    // Signals that the index had been cleared.
-    clear() {
-        this.totalRows = 0;
-        // this.maxKeyEncountered shall not be updated.
-    }
-    // Combines stats given and put the results into current object.
-    updateFromList(statsList) {
-        this.clear();
-        statsList.forEach(stats => (this.totalRows += stats.totalRows));
-    }
-}
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-// Wrapper of the BTree.
-class BTree {
-    constructor(name, comparatorObj, uniqueKeyOnly, data) {
-        this.name = name;
-        this.comparatorObj = comparatorObj;
-        this.uniqueKeyOnly = uniqueKeyOnly;
-        this.root = undefined;
-        this.statsObj = new IndexStats();
-        if (data) {
-            this.root = BTreeNode.fromData(this, data);
-        }
-        else {
-            this.clear();
-        }
-    }
-    // Creates tree from serialized leaves.
-    static deserialize(comparator, name, uniqueKeyOnly, rows) {
-        const tree = new BTree(name, comparator, uniqueKeyOnly);
-        const newRoot = BTreeNode.deserialize(rows, tree);
-        tree.root = newRoot;
-        return tree;
-    }
-    getName() {
-        return this.name;
-    }
-    toString() {
-        return this.root.toString();
-    }
-    add(key, value) {
-        this.root = this.root.insert(key, value);
-    }
-    set(key, value) {
-        this.root = this.root.insert(key, value, true);
-    }
-    remove(key, rowId) {
-        this.root = this.root.remove(key, rowId);
-    }
-    get(key) {
-        return this.root.get(key);
-    }
-    cost(keyRange) {
-        if (keyRange === undefined || keyRange === null) {
-            return this.stats().totalRows;
-        }
-        if (keyRange instanceof SingleKeyRange) {
-            if (keyRange.isAll()) {
-                return this.stats().totalRows;
-            }
-            if (keyRange.isOnly()) {
-                // TODO(arthurhsu): this shall be further optimized
-                return this.get(keyRange.from).length;
-            }
-        }
-        // TODO(arthurhsu): implement better cost calculation for ranges.
-        return this.getRange([keyRange]).length;
-    }
-    stats() {
-        return this.statsObj;
-    }
-    getRange(keyRanges, reverseOrder, rawLimit, rawSkip) {
-        const leftMostKey = this.root.getLeftMostNode().keys[0];
-        if (leftMostKey === undefined || rawLimit === 0) {
-            // Tree is empty or fake fetch to make query plan cached.
-            return BTree.EMPTY;
-        }
-        const reverse = reverseOrder || false;
-        const limit = rawLimit !== undefined && rawLimit !== null
-            ? Math.min(rawLimit, this.stats().totalRows)
-            : this.stats().totalRows;
-        const skip = rawSkip || 0;
-        const maxCount = Math.min(Math.max(this.stats().totalRows - skip, 0), limit);
-        if (maxCount === 0) {
-            return BTree.EMPTY;
-        }
-        if (keyRanges === undefined ||
-            (keyRanges.length === 1 &&
-                keyRanges[0] instanceof SingleKeyRange &&
-                keyRanges[0].isAll())) {
-            return this.getAll(maxCount, reverse, limit, skip);
-        }
-        const sortedKeyRanges = this.comparator().sortKeyRanges(keyRanges);
-        // TODO(arthurhsu): Currently we did not traverse in reverse order so that
-        //     the results array needs to be maxCount. Need further optimization.
-        const results = new Array(reverse ? this.stats().totalRows : maxCount);
-        const params = {
-            count: 0,
-            limit: results.length,
-            reverse,
-            skip,
-        };
-        // For all cross-column indices, use filter to handle non-continuous blocks.
-        const useFilter = this.comparator().keyDimensions() > 1;
-        sortedKeyRanges.forEach(range => {
-            const keys = this.comparator().rangeToKeys(range);
-            const key = this.comparator().isLeftOpen(range) ? leftMostKey : keys[0];
-            let start = this.root.getContainingLeaf(key);
-            // Need to have two strikes to stop.
-            // Reason: say the nodes are [12, 15], [16, 18], when look for >15,
-            //         first node will return empty, but we shall not stop there.
-            let strikeCount = 0;
-            while (start !== undefined &&
-                start !== null &&
-                params.count < params.limit) {
-                if (useFilter) {
-                    start.getRangeWithFilter(range, params, results);
-                }
-                else {
-                    start.getRange(range, params, results);
-                }
-                if (params.skip === 0 &&
-                    !start.isFirstKeyInRange(range)) {
-                    strikeCount++;
-                }
-                else {
-                    strikeCount = 0;
-                }
-                start = strikeCount === 2 ? null : start.next;
-            }
-        }, this);
-        if (results.length > params.count) {
-            // There are extra elements in results, truncate them.
-            results.splice(params.count, results.length - params.count);
-        }
-        return reverse ? IndexHelper.slice(results, reverse, limit, skip) : results;
-    }
-    clear() {
-        this.root = BTreeNode.create(this);
-        this.stats().clear();
-    }
-    containsKey(key) {
-        return this.root.containsKey(key);
-    }
-    min() {
-        return this.minMax(this.comparatorObj.min.bind(this.comparatorObj));
-    }
-    max() {
-        return this.minMax(this.comparatorObj.max.bind(this.comparatorObj));
-    }
-    isUniqueKey() {
-        return this.uniqueKeyOnly;
-    }
-    comparator() {
-        return this.comparatorObj;
-    }
-    eq(lhs, rhs) {
-        if (lhs !== undefined && lhs !== null) {
-            return this.comparator().compare(lhs, rhs) === Favor.TIE;
-        }
-        return false;
-    }
-    // Converts the tree leaves into serializable rows that can be written into
-    // persistent stores. Each leaf node is one row.
-    serialize() {
-        return BTreeNode.serialize(this.root.getLeftMostNode());
-    }
-    // Special optimization for get all values.
-    // |maxCount|: max possible number of rows
-    // |reverse|: retrieve the results in the reverse ordering of the comparator.
-    getAll(maxCount, reverse, limit, skip) {
-        const off = reverse ? this.stats().totalRows - maxCount - skip : skip;
-        const results = new Array(maxCount);
-        const params = {
-            count: maxCount,
-            offset: off,
-            startIndex: 0,
-        };
-        this.root.fill(params, results);
-        return reverse ? results.reverse() : results;
-    }
-    // If the first dimension of key is null, returns null, otherwise returns the
-    // results for min()/max().
-    checkNullKey(node, index) {
-        if (!this.comparator().comparable(node.keys[index])) {
-            if (Array.isArray(node.keys[index])) {
-                if (node.keys[index][0] === null) {
-                    return null;
-                }
-            }
-            else {
-                return null;
-            }
-        }
-        return [
-            node.keys[index],
-            this.uniqueKeyOnly ? [node.values[index]] : node.values[index],
-        ];
-    }
-    findLeftMost() {
-        let node = this.root.getLeftMostNode();
-        let index = 0;
-        do {
-            if (index >= node.keys.length) {
-                node = node.next;
-                index = 0;
-                continue;
-            }
-            const results = this.checkNullKey(node, index);
-            if (results !== null) {
-                return results;
-            }
-            index++;
-        } while (node !== null);
-        return null;
-    }
-    findRightMost() {
-        let node = this.root.getRightMostNode();
-        let index = node.keys.length - 1;
-        do {
-            if (index < 0) {
-                node = node.prev;
-                index = 0;
-                continue;
-            }
-            const results = this.checkNullKey(node, index);
-            if (results !== null) {
-                return results;
-            }
-            index--;
-        } while (node !== null);
-        return null;
-    }
-    minMax(compareFn) {
-        const leftMost = this.findLeftMost();
-        const rightMost = this.findRightMost();
-        if (leftMost === null || rightMost === null) {
-            return null;
-        }
-        return compareFn(leftMost[0], rightMost[0]) === Favor.LHS
-            ? leftMost
-            : rightMost;
-    }
-}
-BTree.EMPTY = [];
-class BTreeNode {
-    constructor(id, tree) {
-        this.id = id;
-        this.tree = tree;
-        this.height = 0;
-        this.parent = null;
-        this.prev = null;
-        this.next = null;
-        this.keys = [];
-        this.values = [];
-        this.children = [];
-        this.getContainingLeaf =
-            tree.comparator().keyDimensions() === 1
-                ? this.getContainingLeafSingleKey
-                : this.getContainingLeafMultiKey;
-    }
-    static create(tree) {
-        // TODO(arthurhsu): Should distinguish internal nodes from leaf nodes to
-        // avoid unnecessary row id wasting.
-        return new BTreeNode(Row.getNextId(), tree);
-    }
-    static serialize(start) {
-        const rows = [];
-        let node = start;
-        while (node) {
-            const payload = {
-                k: node.keys,
-                v: node.values,
-            };
             rows.push(new Row(node.id, payload));
             node = node.next;
         }
@@ -16204,10 +3319,10 @@ class BTreeNode {
     // Returns new root node.
     static deserialize(rows, tree) {
         const stats = tree.stats();
-        const leaves = rows.map(row => {
+        const leaves = rows.map((row) => {
             const node = new BTreeNode(row.id(), tree);
-            node.keys = row.payload()['k'];
-            node.values = row.payload()['v'];
+            node.keys = row.payload()["k"];
+            node.values = row.payload()["v"];
             node.keys.forEach((key, index) => {
                 stats.add(key, tree.isUniqueKey() ? 1 : node.values[index].length);
             });
@@ -16235,19 +3350,19 @@ class BTreeNode {
     // |node| is the left-most in the level.
     // Returns key and contents string in pair.
     static dumpLevel(node) {
-        let key = `${node.id}[${node.keys.join('|')}]`;
-        const children = node.children.map(n => n.id).join('|');
-        const values = node.values.join('/');
+        let key = `${node.id}[${node.keys.join("|")}]`;
+        const children = node.children.map((n) => n.id).join("|");
+        const values = node.values.join("/");
         const getNodeId = (n) => {
-            return n !== null && n !== undefined ? n.id.toString() : '_';
+            return n !== null && n !== undefined ? n.id.toString() : "_";
         };
-        let contents = getNodeId(node.prev) + '{';
+        let contents = getNodeId(node.prev) + "{";
         contents += node.isLeaf() ? values : children;
-        contents = contents + '}' + getNodeId(node.parent);
+        contents = contents + "}" + getNodeId(node.parent);
         if (node.next) {
             const next = BTreeNode.dumpLevel(node.next);
-            key = key + '  ' + next[0];
-            contents = contents + '  ' + next[1];
+            key = key + "  " + next[0];
+            contents = contents + "  " + next[1];
         }
         return [key, contents];
     }
@@ -16263,11 +3378,7 @@ class BTreeNode {
     static calcNodeLen(remaining) {
         const maxLen = BTreeNode.MAX_KEY_LEN;
         const minLen = BTreeNode.MIN_KEY_LEN + 1;
-        return remaining >= maxLen + minLen
-            ? maxLen
-            : remaining >= minLen && remaining <= maxLen
-                ? remaining
-                : minLen;
+        return remaining >= maxLen + minLen ? maxLen : remaining >= minLen && remaining <= maxLen ? remaining : minLen;
     }
     // Create leaf nodes from given data.
     static createLeaves(tree, data) {
@@ -16278,8 +3389,8 @@ class BTreeNode {
         while (remaining > 0) {
             const nodeLen = BTreeNode.calcNodeLen(remaining);
             const target = data.slice(dataIndex, dataIndex + nodeLen);
-            curNode.keys = target.map(e => e.key);
-            curNode.values = target.map(e => e.value);
+            curNode.keys = target.map((e) => e.key);
+            curNode.values = target.map((e) => e.value);
             dataIndex += nodeLen;
             remaining -= nodeLen;
             if (remaining > 0) {
@@ -16340,9 +3451,7 @@ class BTreeNode {
     }
     // Returns left most key of the subtree.
     static leftMostKey(node) {
-        return node.isLeaf()
-            ? node.keys[0]
-            : BTreeNode.leftMostKey(node.children[0]);
+        return node.isLeaf() ? node.keys[0] : BTreeNode.leftMostKey(node.children[0]);
     }
     // Dump the tree as string. For example, if the tree is
     //
@@ -16373,9 +3482,9 @@ class BTreeNode {
     // left-most to right-most is used. As a result, if the right link is
     // broken, the result will be partial.
     toString() {
-        let result = '';
+        let result = "";
         const level = BTreeNode.dumpLevel(this);
-        result += level[0] + '\n' + level[1] + '\n';
+        result += level[0] + "\n" + level[1] + "\n";
         if (this.children.length) {
             result += this.children[0].toString();
         }
@@ -16385,9 +3494,7 @@ class BTreeNode {
         return this.isLeaf() ? this : this.children[0].getLeftMostNode();
     }
     getRightMostNode() {
-        return this.isLeaf()
-            ? this
-            : this.children[this.children.length - 1].getRightMostNode();
+        return this.isLeaf() ? this : this.children[this.children.length - 1].getRightMostNode();
     }
     get(key) {
         let pos = this.searchKey(key);
@@ -16415,7 +3522,6 @@ class BTreeNode {
     remove(key, value) {
         this.delete(key, -1, value);
         if (this.isRoot()) {
-            // eslint-disable-next-line @typescript-eslint/no-this-alias
             let root = this;
             if (this.children.length === 1) {
                 root = this.children[0];
@@ -16434,9 +3540,7 @@ class BTreeNode {
                 if (replace) {
                     this.tree
                         .stats()
-                        .remove(key, this.tree.isUniqueKey()
-                            ? 1
-                            : this.values[pos].length);
+                        .remove(key, this.tree.isUniqueKey() ? 1 : this.values[pos].length);
                     this.values[pos] = this.tree.isUniqueKey() ? value : [value];
                 }
                 else if (this.tree.isUniqueKey()) {
@@ -16469,9 +3573,7 @@ class BTreeNode {
                 this.children.splice(pos, 1, node.children[1]);
                 this.children.splice(pos, 0, node.children[0]);
             }
-            return this.keys.length === BTreeNode.MAX_COUNT
-                ? this.splitInternal()
-                : this;
+            return this.keys.length === BTreeNode.MAX_COUNT ? this.splitInternal() : this;
         }
     }
     // The API signature of this function is specially crafted for performance
@@ -16484,18 +3586,18 @@ class BTreeNode {
         let right = this.keys.length - 1;
         // Position of range relative to the key.
         const compare = (coverage) => {
-            return coverage[0] ? (coverage[1] ? Favor.TIE : Favor.LHS) : Favor.RHS;
+            return coverage[0] ? coverage[1] ? Favor.TIE : Favor.LHS : Favor.RHS;
         };
         const keys = this.keys; // Used to avoid binding this for recursive functions.
         const favorLeft = compare(c.compareRange(keys[left], keyRange));
         const favorRight = compare(c.compareRange(keys[right], keyRange));
         // Range is on the left of left most key or right of right most key.
-        if (favorLeft === Favor.LHS ||
-            (favorLeft === Favor.RHS && favorRight === Favor.RHS)) {
+        if (favorLeft === Favor.LHS
+            || favorLeft === Favor.RHS && favorRight === Favor.RHS) {
             return;
         }
         const getMidPoint = (l, r) => {
-            const mid = (l + r) >> 1;
+            const mid = l + r >> 1;
             return mid === l ? mid + 1 : mid;
         };
         // Find the first key that is in range. Returns index of the key, -1 if
@@ -16686,9 +3788,7 @@ class BTreeNode {
             }
             this.keys.splice(pos, 1);
             if (isLeaf) {
-                const removedLength = this.tree.isUniqueKey()
-                    ? 1
-                    : this.values[pos].length;
+                const removedLength = this.tree.isUniqueKey() ? 1 : this.values[pos].length;
                 this.values.splice(pos, 1);
                 this.tree.stats().remove(key, removedLength);
             }
@@ -16755,9 +3855,7 @@ class BTreeNode {
         else if (this.prev) {
             mergeTo = this.prev;
             keyOffset = mergeTo.keys.length;
-            childOffset = mergeTo.isLeaf()
-                ? mergeTo.values.length
-                : mergeTo.children.length;
+            childOffset = mergeTo.isLeaf() ? mergeTo.values.length : mergeTo.children.length;
         }
         else {
             throw new Exception(ErrorCode.ASSERTION);
@@ -16769,7 +3867,7 @@ class BTreeNode {
         }
         else {
             myChildren = this.children;
-            myChildren.forEach(node => (node.parent = mergeTo));
+            myChildren.forEach((node) => node.parent = mergeTo);
         }
         if (mergeTo.isLeaf()) {
             mergeTo.values.splice(childOffset, 0, ...myChildren);
@@ -16817,7 +3915,7 @@ class BTreeNode {
         right.height = this.height;
         right.keys = this.keys.splice(half);
         right.children = this.children.splice(half + 1);
-        right.children.forEach(node => (node.parent = right));
+        right.children.forEach((node) => node.parent = right);
         this.parent = root;
         BTreeNode.associate(right, this.next);
         BTreeNode.associate(this, right);
@@ -16830,7 +3928,7 @@ class BTreeNode {
         let right = this.keys.length;
         const c = this.tree.comparator();
         while (left < right) {
-            const middle = (left + right) >> 1;
+            const middle = left + right >> 1;
             if (c.compare(this.keys[middle], key) === Favor.RHS) {
                 left = middle + 1;
             }
@@ -16857,7 +3955,7 @@ class BTreeNode {
                 // Note the multi-key comparator will return TIE if compared with an
                 // unbounded key. As a result, we need to check if any dimension of the
                 // key contains unbound.
-                const hasUnbound = key.some(dimension => dimension === SingleKeyRange.UNBOUND_VALUE);
+                const hasUnbound = key.some((dimension) => dimension === SingleKeyRange.UNBOUND_VALUE);
                 if (!hasUnbound) {
                     pos++;
                 }
@@ -16910,40 +4008,16 @@ class BTreeNode {
 BTreeNode.MAX_COUNT = 512;
 BTreeNode.MAX_KEY_LEN = BTreeNode.MAX_COUNT - 1;
 BTreeNode.MIN_KEY_LEN = BTreeNode.MAX_COUNT >> 1;
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class SimpleComparator {
     constructor(order) {
-        this.compareFn =
-            order === Order.DESC
-                ? SimpleComparator.compareDescending
-                : SimpleComparator.compareAscending;
-        this.normalizeKeyRange =
-            order === Order.DESC
-                ? (keyRange) => {
-                    return keyRange !== undefined && keyRange !== null
-                        ? keyRange.reverse()
-                        : null;
-                }
-                : (keyRange) => keyRange || null;
-        this.orderRange =
-            order === Order.DESC
-                ? SimpleComparator.orderRangeDescending
-                : SimpleComparator.orderRangeAscending;
+        this.compareFn
+            = order === Order.DESC ? SimpleComparator.compareDescending : SimpleComparator.compareAscending;
+        this.normalizeKeyRange
+            = order === Order.DESC ? (keyRange) => {
+                return keyRange !== undefined && keyRange !== null ? keyRange.reverse() : null;
+            } : (keyRange) => keyRange || null;
+        this.orderRange
+            = order === Order.DESC ? SimpleComparator.orderRangeDescending : SimpleComparator.orderRangeAscending;
     }
     static compareAscending(lhs, rhs) {
         return lhs > rhs ? Favor.LHS : lhs < rhs ? Favor.RHS : Favor.TIE;
@@ -16974,19 +4048,15 @@ class SimpleComparator {
         const range = this.normalizeKeyRange(naturalRange);
         const results = [
             SingleKeyRange.isUnbound(range.from),
-            SingleKeyRange.isUnbound(range.to),
+            SingleKeyRange.isUnbound(range.to)
         ];
         if (!results[LEFT]) {
             const favor = this.compareFn(key, range.from);
-            results[LEFT] = range.excludeLower
-                ? favor === Favor.LHS
-                : favor !== Favor.RHS;
+            results[LEFT] = range.excludeLower ? favor === Favor.LHS : favor !== Favor.RHS;
         }
         if (!results[RIGHT]) {
             const favor = this.compareFn(key, range.to);
-            results[RIGHT] = range.excludeUpper
-                ? favor === Favor.RHS
-                : favor !== Favor.LHS;
+            results[RIGHT] = range.excludeUpper ? favor === Favor.RHS : favor !== Favor.LHS;
         }
         return results;
     }
@@ -17014,7 +4084,7 @@ class SimpleComparator {
     }
     sortKeyRanges(keyRanges) {
         return keyRanges
-            .filter(range => range !== null)
+            .filter((range) => range !== null)
             .sort((lhs, rhs) => this.orderKeyRange(lhs, rhs));
     }
     isLeftOpen(range) {
@@ -17031,30 +4101,12 @@ class SimpleComparator {
         return 1;
     }
     toString() {
-        return this.compare === SimpleComparator.compareDescending
-            ? 'SimpleComparator_DESC'
-            : 'SimpleComparator_ASC';
+        return this.compare === SimpleComparator.compareDescending ? "SimpleComparator_DESC" : "SimpleComparator_ASC";
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class MultiKeyComparator {
     constructor(orders) {
-        this.comparators = orders.map(order => new SimpleComparator(order));
+        this.comparators = orders.map((order) => new SimpleComparator(order));
     }
     static createOrders(numKeys, order) {
         const orders = new Array(numKeys);
@@ -17067,10 +4119,8 @@ class MultiKeyComparator {
         const lhs = lk;
         const rhs = rk;
         return this.forEach(lhs, rhs, (c, l, r) => {
-            return l === SingleKeyRange.UNBOUND_VALUE ||
-                r === SingleKeyRange.UNBOUND_VALUE
-                ? Favor.TIE
-                : c.compare(l, r);
+            return l === SingleKeyRange.UNBOUND_VALUE
+                || r === SingleKeyRange.UNBOUND_VALUE ? Favor.TIE : c.compare(l, r);
         });
     }
     min(lk, rk) {
@@ -17106,11 +4156,11 @@ class MultiKeyComparator {
         return this.comparators[0].isInRange(key[0], range[0]);
     }
     getAllRange() {
-        return this.comparators.map(c => c.getAllRange());
+        return this.comparators.map((c) => c.getAllRange());
     }
     sortKeyRanges(keyRanges) {
-        const outputKeyRanges = keyRanges.filter(range => {
-            return range.every(r => r !== undefined && r !== null);
+        const outputKeyRanges = keyRanges.filter((range) => {
+            return range.every((r) => r !== undefined && r !== null);
         });
         // Ranges are in the format of
         // [[dim0_range0, dim1_range0, ...], [dim0_range1, dim1_range1, ...], ...]
@@ -17118,7 +4168,7 @@ class MultiKeyComparator {
         // [[dim0_range0, dim0_range1, ...], [dim1_range0, dim1_range1, ...], ...]
         const keysPerDimensions = new Array(this.comparators.length);
         for (let i = 0; i < keysPerDimensions.length; i++) {
-            keysPerDimensions[i] = outputKeyRanges.map(range => range[i]);
+            keysPerDimensions[i] = outputKeyRanges.map((range) => range[i]);
         }
         // Sort ranges per dimension.
         keysPerDimensions.forEach((keys, i) => {
@@ -17130,7 +4180,7 @@ class MultiKeyComparator {
         // are properly aligned from left to right in each dimension.
         const finalKeyRanges = new Array(outputKeyRanges.length);
         for (let i = 0; i < finalKeyRanges.length; i++) {
-            finalKeyRanges[i] = keysPerDimensions.map(keys => keys[i]);
+            finalKeyRanges[i] = keysPerDimensions.map((keys) => keys[i]);
         }
         // Perform another sorting to properly arrange order of ranges with either
         // excludeLower or excludeUpper.
@@ -17164,22 +4214,6 @@ class MultiKeyComparator {
         return favor;
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 // This comparator is not used to replace existing NullableIndex wrapper
 // because of its compareAscending function requires extra null key
 // checking every time, where the wrapper does it only once. This resulted in
@@ -17189,19 +4223,15 @@ class SimpleComparatorWithNull extends SimpleComparator {
         if (lhs === null) {
             return rhs === null ? Favor.TIE : Favor.RHS;
         }
-        return rhs === null
-            ? Favor.LHS
-            : SimpleComparator.compareAscending(lhs, rhs);
+        return rhs === null ? Favor.LHS : SimpleComparator.compareAscending(lhs, rhs);
     }
     static compareDescending(lhs, rhs) {
         return SimpleComparatorWithNull.compareAscending(rhs, lhs);
     }
     constructor(order) {
         super(order);
-        this.compareFn =
-            order === Order.DESC
-                ? SimpleComparatorWithNull.compareDescending
-                : SimpleComparatorWithNull.compareAscending;
+        this.compareFn
+            = order === Order.DESC ? SimpleComparatorWithNull.compareDescending : SimpleComparatorWithNull.compareAscending;
     }
     isInRange(key, range) {
         return key === null ? range.isAll() : super.isInRange(key, range);
@@ -17221,74 +4251,24 @@ class SimpleComparatorWithNull extends SimpleComparator {
         return rhs === null ? Favor.LHS : null;
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class MultiKeyComparatorWithNull extends MultiKeyComparator {
     constructor(orders) {
         super(orders);
-        this.comparators = orders.map(order => {
+        this.comparators = orders.map((order) => {
             return new SimpleComparatorWithNull(order);
         });
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class ComparatorFactory {
     static create(indexSchema) {
         if (indexSchema.columns.length === 1) {
             return new SimpleComparator(indexSchema.columns[0].order);
         }
-        const orders = indexSchema.columns.map(col => col.order);
-        const nullable = indexSchema.columns.some(col => col.schema.isNullable());
-        return nullable
-            ? new MultiKeyComparatorWithNull(orders)
-            : new MultiKeyComparator(orders);
+        const orders = indexSchema.columns.map((col) => col.order);
+        const nullable = indexSchema.columns.some((col) => col.schema.isNullable());
+        return nullable ? new MultiKeyComparatorWithNull(orders) : new MultiKeyComparator(orders);
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 // Wraps another index which does not support NULL to accept NULL values.
 class NullableIndex {
     constructor(index) {
@@ -17310,12 +4290,12 @@ class NullableIndex {
             // 102: Data corruption detected.
             throw new Exception(ErrorCode.DATA_CORRUPTION);
         }
-        const nulls = rows[index].payload()['v'];
+        const nulls = rows[index].payload()["v"];
         const newRows = rows.slice(0);
         newRows.splice(index, 1);
         const tree = deserializeFn(newRows);
         const nullableIndex = new NullableIndex(tree);
-        nulls.forEach(rowId => nullableIndex.nulls.add(rowId));
+        nulls.forEach((rowId) => nullableIndex.nulls.add(rowId));
         return nullableIndex;
     }
     getName() {
@@ -17391,8 +4371,8 @@ class NullableIndex {
     serialize() {
         const rows = [
             new Row(NullableIndex.NULL_ROW_ID, {
-                v: Array.from(this.nulls.values()),
-            }),
+                "v": Array.from(this.nulls.values())
+            })
         ];
         return rows.concat(this.index.serialize());
     }
@@ -17408,22 +4388,6 @@ class NullableIndex {
     }
 }
 NullableIndex.NULL_ROW_ID = -2;
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 // This is actually the row id set for a given table, but in the form of
 // RuntimeIndex.
 class RowId {
@@ -17434,16 +4398,15 @@ class RowId {
     }
     static deserialize(name, rows) {
         const index = new RowId(name);
-        const rowIds = rows[0].payload()['v'];
-        rowIds.forEach(rowId => index.add(rowId, rowId));
+        const rowIds = rows[0].payload()["v"];
+        rowIds.forEach((rowId) => { index.add(rowId, rowId); });
         return index;
     }
     getName() {
         return this.name;
     }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     add(key, value) {
-        if (typeof key !== 'number') {
+        if (typeof key !== "number") {
             // 103: Row id must be numbers.
             throw new Exception(ErrorCode.INVALID_ROW_ID);
         }
@@ -17452,7 +4415,6 @@ class RowId {
     set(key, value) {
         this.add(key, value);
     }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     remove(key, rowId) {
         this.rows.delete(key);
     }
@@ -17465,17 +4427,16 @@ class RowId {
     max() {
         return this.minMax(this.comparatorObj.max.bind(this.comparatorObj));
     }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     cost(keyRange) {
         // Give the worst case so that this index is not used unless necessary.
         return this.rows.size;
     }
     getRange(range, reverseOrder, limit, skip) {
         const keyRanges = range || [
-            SingleKeyRange.all(),
+            SingleKeyRange.all()
         ];
-        const values = Array.from(this.rows.values()).filter(value => {
-            return keyRanges.some(r => this.comparatorObj.isInRange(value, r));
+        const values = Array.from(this.rows.values()).filter((value) => {
+            return keyRanges.some((r) => this.comparatorObj.isInRange(value, r));
         }, this);
         return IndexHelper.slice(values, reverseOrder, limit, skip);
     }
@@ -17486,7 +4447,7 @@ class RowId {
         return this.rows.has(key);
     }
     serialize() {
-        return [new Row(RowId.ROW_ID, { v: Array.from(this.rows.values()) })];
+        return [new Row(RowId.ROW_ID, { "v": Array.from(this.rows.values()) })];
     }
     comparator() {
         return this.comparatorObj;
@@ -17504,9 +4465,7 @@ class RowId {
             return null;
         }
         const keys = Array.from(this.rows.values()).reduce((keySoFar, key) => {
-            return keySoFar === null || compareFn(key, keySoFar) === Favor.LHS
-                ? key
-                : keySoFar;
+            return keySoFar === null || compareFn(key, keySoFar) === Favor.LHS ? key : keySoFar;
         });
         return [keys, [keys]];
     }
@@ -17515,129 +4474,6 @@ class RowId {
 // index is serialized to a single lf.Row instance with rowId set to ROW_ID.
 RowId.ROW_ID = 0;
 RowId.EMPTY_ARRAY = [];
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-// Prefetcher fetches rows from database into cache and build indices.
-class Prefetcher {
-    constructor(global) {
-        this.backStore = global.getService(Service.BACK_STORE);
-        this.indexStore = global.getService(Service.INDEX_STORE);
-        this.cache = global.getService(Service.CACHE);
-    }
-    init(schema) {
-        // Sequentially load tables
-        const tables = schema.tables();
-        const execSequentially = () => {
-            if (tables.length === 0) {
-                return Promise.resolve();
-            }
-            const table = tables.shift();
-            const whenTableFetched = table.persistentIndex()
-                ? this.fetchTableWithPersistentIndices(table)
-                : this.fetchTable(table);
-            return whenTableFetched.then(execSequentially);
-        };
-        return execSequentially();
-    }
-    fetchTable(table) {
-        const tx = this.backStore.createTx(TransactionType.READ_ONLY, [table]);
-        const store = tx.getTable(table.getName(), table.deserializeRow.bind(table), TableType.DATA);
-        const promise = store.get([]).then(results => {
-            this.cache.setMany(table.getName(), results);
-            this.reconstructNonPersistentIndices(table, results);
-        });
-        tx.commit();
-        return promise;
-    }
-    // Reconstructs a table's indices by populating them from scratch.
-    reconstructNonPersistentIndices(tableSchema, tableRows) {
-        const indices = this.indexStore.getTableIndices(tableSchema.getName());
-        tableRows.forEach(row => {
-            indices.forEach(index => {
-                const key = row.keyOfIndex(index.getName());
-                index.add(key, row.id());
-            });
-        });
-    }
-    // Fetches contents of a table with persistent indices into cache, and
-    // reconstructs the indices from disk.
-    fetchTableWithPersistentIndices(tableSchema) {
-        const tx = this.backStore.createTx(TransactionType.READ_ONLY, [
-            tableSchema,
-        ]);
-        const store = tx.getTable(tableSchema.getName(), tableSchema.deserializeRow, TableType.DATA);
-        const whenTableContentsFetched = store.get([]).then(results => {
-            this.cache.setMany(tableSchema.getName(), results);
-        });
-        const whenIndicesReconstructed = tableSchema.getIndices()
-            .map((indexSchema) => this.reconstructPersistentIndex(indexSchema, tx))
-            .concat(this.reconstructPersistentRowIdIndex(tableSchema, tx));
-        tx.commit();
-        return Promise.all(whenIndicesReconstructed.concat(whenTableContentsFetched)).then(() => {
-            return;
-        });
-    }
-    // Reconstructs a persistent index by deserializing it from disk.
-    reconstructPersistentIndex(indexSchema, tx) {
-        const indexTable = tx.getTable(indexSchema.getNormalizedName(), Row.deserialize, TableType.INDEX);
-        const comparator = ComparatorFactory.create(indexSchema);
-        return indexTable.get([]).then(serializedRows => {
-            // No need to replace the index if there is no index contents.
-            if (serializedRows.length > 0) {
-                if (indexSchema.hasNullableColumn()) {
-                    const deserializeFn = BTree.deserialize.bind(undefined, comparator, indexSchema.getNormalizedName(), indexSchema.isUnique);
-                    const nullableIndex = NullableIndex.deserialize(deserializeFn, serializedRows);
-                    this.indexStore.set(indexSchema.tableName, nullableIndex);
-                }
-                else {
-                    const btreeIndex = BTree.deserialize(comparator, indexSchema.getNormalizedName(), indexSchema.isUnique, serializedRows);
-                    this.indexStore.set(indexSchema.tableName, btreeIndex);
-                }
-            }
-        });
-    }
-    // Reconstructs a persistent RowId index by deserializing it from disk.
-    reconstructPersistentRowIdIndex(tableSchema, tx) {
-        const indexTable = tx.getTable(tableSchema.getRowIdIndexName(), Row.deserialize, TableType.INDEX);
-        return indexTable.get([]).then(serializedRows => {
-            // No need to replace the index if there is no index contents.
-            if (serializedRows.length > 0) {
-                const rowIdIndex = RowId.deserialize(tableSchema.getRowIdIndexName(), serializedRows);
-                this.indexStore.set(tableSchema.getName(), rowIdIndex);
-            }
-        });
-    }
-}
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 // In-memory index store that builds all indices at the time of init.
 class MemoryIndexStore {
     constructor() {
@@ -17646,7 +4482,7 @@ class MemoryIndexStore {
     }
     init(schema) {
         const tables = schema.tables();
-        tables.forEach(table => {
+        tables.forEach((table) => {
             const tableIndices = [];
             this.tableIndices.set(table.getName(), tableIndices);
             const rowIdIndexName = table.getRowIdIndexName();
@@ -17656,7 +4492,7 @@ class MemoryIndexStore {
                 tableIndices.push(index);
                 this.store.set(rowIdIndexName, index);
             }
-            table.getIndices().forEach(indexSchema => {
+            table.getIndices().forEach((indexSchema) => {
                 const index = this.createIndex(indexSchema);
                 tableIndices.push(index);
                 this.store.set(indexSchema.getNormalizedName(), index);
@@ -17695,74 +4531,18 @@ class MemoryIndexStore {
     createIndex(indexSchema) {
         const comparator = ComparatorFactory.create(indexSchema);
         const index = new BTree(indexSchema.getNormalizedName(), comparator, indexSchema.isUnique);
-        return indexSchema.hasNullableColumn() && indexSchema.columns.length === 1
-            ? new NullableIndex(index)
-            : index;
+        return indexSchema.hasNullableColumn() && indexSchema.columns.length === 1 ? new NullableIndex(index) : index;
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class UserQueryTask extends QueryTask {
     constructor(global, items) {
         super(global, items);
         this.runner = global.getService(Service.RUNNER);
-        this.observerRegistry = global.getService(Service.OBSERVER_REGISTRY);
     }
     getPriority() {
         return TaskPriority.USER_QUERY_TASK;
     }
-    onSuccess(results) {
-        // Depending on the type of this QueryTask either notify observers directly,
-        // or schedule on ObserverTask for queries that need to re-execute.
-        this.getType() === TransactionType.READ_ONLY
-            ? this.notifyObserversDirectly(results)
-            : this.scheduleObserverTask();
-    }
-    // Notifies observers of queries that were run as part of this task, if any.
-    notifyObserversDirectly(results) {
-        this.queries.forEach((query, index) => {
-            this.observerRegistry.updateResultsForQuery(query, results[index]);
-        });
-    }
-    // Schedules an ObserverTask for any observed queries that need to be
-    // re-executed, if any.
-    scheduleObserverTask() {
-        const items = this.observerRegistry.getTaskItemsForTables(Array.from(this.getScope().values()));
-        if (items.length > 0) {
-            this.runner.scheduleTask(new ObserverQueryTask(this.global, items));
-        }
-    }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class TreeHelper {
     // Creates a new tree with the exact same structure, where every node in the
     // tree has been replaced by a new node according to the mapping function.
@@ -17790,7 +4570,7 @@ class TreeHelper {
         // The node that should become the parent of the next traversed node.
         let nextParent = null;
         let copyRoot = null;
-        origTree.traverse(node => {
+        origTree.traverse((node) => {
             const newNode = mapFn(node);
             if (node.getParent() === null) {
                 copyRoot = newNode;
@@ -17802,15 +4582,13 @@ class TreeHelper {
             if (node.getChildCount() > 1) {
                 copyParentStack.push(newNode);
             }
-            nextParent = node.isLeaf()
-                ? copyParentStack[copyParentStack.length - 1]
-                : newNode;
+            nextParent = node.isLeaf() ? copyParentStack[copyParentStack.length - 1] : newNode;
         });
         return copyRoot;
     }
     // Finds all leafs node existing in the subtree that starts at the given node.
     static getLeafNodes(node) {
-        return TreeHelper.find(node, n => n.isLeaf());
+        return TreeHelper.find(node, (n) => n.isLeaf());
     }
     // Removes a node from a tree. It takes care of re-parenting the children of
     // the removed node with its parent (if any).
@@ -17831,8 +4609,8 @@ class TreeHelper {
             }
         });
         return {
-            children,
-            parent: parentNode,
+            "children": children,
+            "parent": parentNode
         };
     }
     // Inserts a new node under an existing node. The new node inherits all
@@ -17849,7 +4627,7 @@ class TreeHelper {
     //                  n3  n4
     static insertNodeAt(existingNode, newNode) {
         const children = existingNode.getChildren().slice();
-        children.forEach(child => {
+        children.forEach((child) => {
             existingNode.removeChild(child);
             newNode.addChild(child);
         });
@@ -17909,7 +4687,7 @@ class TreeHelper {
         const child = node.getChildAt(0);
         assert(child.getChildCount() > 1);
         const grandChildren = child.getChildren().slice();
-        const canPushDown = grandChildren.some(grandChild => shouldPushDownFn(grandChild));
+        const canPushDown = grandChildren.some((grandChild) => shouldPushDownFn(grandChild));
         if (!canPushDown) {
             return node;
         }
@@ -17948,10 +4726,10 @@ class TreeHelper {
         oldTail
             .getChildren()
             .slice()
-            .forEach(child => {
-                oldTail.removeChild(child);
-                newTail.addChild(child);
-            });
+            .forEach((child) => {
+            oldTail.removeChild(child);
+            newTail.addChild(child);
+        });
         return newHead;
     }
     // Removes a node from the tree, and replaces it with a chain of nodes where
@@ -18018,35 +4796,19 @@ class TreeHelper {
     // string. If not provided a default function will be used.
     static toString(rootNode, stringFunc) {
         const defaultStringFn = (node) => {
-            return node.toString() + '\n';
+            return node.toString() + "\n";
         };
         const stringFn = stringFunc || defaultStringFn;
-        let out = '';
-        rootNode.traverse(node => {
+        let out = "";
+        rootNode.traverse((node) => {
             for (let i = 0; i < node.getDepth(); i++) {
-                out += '-';
+                out += "-";
             }
             out += stringFn(node);
         });
         return out;
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class CombinedPredicate extends PredicateNode {
     constructor(operator) {
         super();
@@ -18057,7 +4819,7 @@ class CombinedPredicate extends PredicateNode {
         this.isComplement = false;
     }
     eval(relation) {
-        const results = this.getChildren().map(condition => condition.eval(relation));
+        const results = this.getChildren().map((condition) => condition.eval(relation));
         return this.combineResults(results);
     }
     setComplement(isComplement) {
@@ -18071,10 +4833,10 @@ class CombinedPredicate extends PredicateNode {
         // Toggling AND/OR.
         this.operator = this.operator === Operator.AND ? Operator.OR : Operator.AND;
         // Toggling children conditions.
-        this.getChildren().forEach(condition => condition.setComplement(isComplement));
+        this.getChildren().forEach((condition) => { condition.setComplement(isComplement); });
     }
     copy() {
-        const copy = TreeHelper.map(this, node => {
+        const copy = TreeHelper.map(this, (node) => {
             if (node instanceof CombinedPredicate) {
                 const tempCopy = new CombinedPredicate(node.operator);
                 tempCopy.isComplement = node.isComplement;
@@ -18089,7 +4851,7 @@ class CombinedPredicate extends PredicateNode {
     }
     getColumns(results) {
         const columns = results || [];
-        this.traverse(child => {
+        this.traverse((child) => {
             if (child === this) {
                 return;
             }
@@ -18100,7 +4862,7 @@ class CombinedPredicate extends PredicateNode {
     }
     getTables(results) {
         const tables = results ? results : new Set();
-        this.traverse(child => {
+        this.traverse((child) => {
             if (child === this) {
                 return;
             }
@@ -18115,10 +4877,10 @@ class CombinedPredicate extends PredicateNode {
     // NOTE: Not all predicates can be converted to a key range, callers must call
     // isKeyRangeCompatible() before calling this method.
     toKeyRange() {
-        assert(this.isKeyRangeCompatible(), 'Could not convert combined predicate to key range.');
+        assert(this.isKeyRangeCompatible(), "Could not convert combined predicate to key range.");
         if (this.operator === Operator.OR) {
             const keyRangeSet = new SingleKeyRangeSet();
-            this.getChildren().forEach(child => {
+            this.getChildren().forEach((child) => {
                 const childKeyRanges = child
                     .toKeyRange()
                     .getValues();
@@ -18130,7 +4892,7 @@ class CombinedPredicate extends PredicateNode {
             // this.operator.lf.pred.Operator.OR
             // Unreachable code, because the assertion above should have already
             // thrown an error if this predicate is of type AND.
-            assert(false, 'toKeyRange() called for an AND predicate.');
+            assert(false, "toKeyRange() called for an AND predicate.");
             return new SingleKeyRangeSet();
         }
     }
@@ -18163,7 +4925,7 @@ class CombinedPredicate extends PredicateNode {
     //  3) All children are key range compatible.
     isKeyRangeCompatibleOr() {
         let predicateColumn = null;
-        return this.getChildren().every(child => {
+        return this.getChildren().every((child) => {
             const isCandidate = child instanceof ValuePredicate && child.isKeyRangeCompatible();
             if (!isCandidate) {
                 return false;
@@ -18171,27 +4933,11 @@ class CombinedPredicate extends PredicateNode {
             if (predicateColumn === null) {
                 predicateColumn = child.column;
             }
-            return (predicateColumn.getNormalizedName() ===
-                child.column.getNormalizedName());
+            return (predicateColumn.getNormalizedName()
+                === child.column.getNormalizedName());
         });
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class JoinPredicate extends PredicateNode {
     constructor(leftColumn, rightColumn, evaluatorType) {
         super();
@@ -18217,9 +4963,7 @@ class JoinPredicate extends PredicateNode {
         return [this.leftColumn, this.rightColumn];
     }
     getTables(results) {
-        const tables = results !== undefined && results !== null
-            ? results
-            : new Set();
+        const tables = results !== undefined && results !== null ? results : new Set();
         tables.add(this.leftColumn.getTable());
         tables.add(this.rightColumn.getTable());
         return tables;
@@ -18246,7 +4990,7 @@ class JoinPredicate extends PredicateNode {
         return newPredicate;
     }
     eval(relation) {
-        const entries = relation.entries.filter(entry => {
+        const entries = relation.entries.filter((entry) => {
             const leftValue = entry.getField(this.leftColumn);
             const rightValue = entry.getField(this.rightColumn);
             return this.evaluatorFn(leftValue, rightValue);
@@ -18254,13 +4998,13 @@ class JoinPredicate extends PredicateNode {
         return new Relation(entries, relation.getTables());
     }
     toString() {
-        return ('join_pred(' +
-            this.leftColumn.getNormalizedName() +
-            ' ' +
-            this.evaluatorType +
-            ' ' +
-            this.rightColumn.getNormalizedName() +
-            ')');
+        return ("join_pred("
+            + this.leftColumn.getNormalizedName()
+            + " "
+            + this.evaluatorType
+            + " "
+            + this.rightColumn.getNormalizedName()
+            + ")");
     }
     // Calculates the join between the input relations using a Nested-Loop-Join
     // algorithm.
@@ -18282,7 +5026,7 @@ class JoinPredicate extends PredicateNode {
         // Since block size is a power of two, we can use bitwise operators.
         const blockNumBits = JoinPredicate.BLOCK_SIZE_EXPONENT;
         // This is equivalent to Math.ceil(rightEntriesLength/blockSize).
-        const blockCount = (rightEntriesLength + (1 << blockNumBits) - 1) >> blockNumBits;
+        const blockCount = rightEntriesLength + (1 << blockNumBits) - 1 >> blockNumBits;
         let currentBlock = 0;
         // The inner loop is executed in blocks. Blocking helps in pre-fetching
         // the next contents by CPU and also reduces cache misses as long as a block
@@ -18292,7 +5036,7 @@ class JoinPredicate extends PredicateNode {
                 let matchFound = false;
                 const leftValue = leftRelation.entries[i].getField(this.leftColumn);
                 if (leftValue !== null) {
-                    const rightLimit = Math.min((currentBlock + 1) << blockNumBits, rightEntriesLength);
+                    const rightLimit = Math.min(currentBlock + 1 << blockNumBits, rightEntriesLength);
                     for (let j = currentBlock << blockNumBits; j < rightLimit; j++) {
                         // Evaluating before combining the rows, since combining is fairly
                         // expensive.
@@ -18344,25 +5088,23 @@ class JoinPredicate extends PredicateNode {
         }
         const map = new MapSet();
         const combinedEntries = [];
-        minRelation.entries.forEach(entry => {
+        minRelation.entries.forEach((entry) => {
             const key = String(entry.getField(minColumn));
             map.set(key, entry);
         });
         const minRelationTableNames = minRelation.getTables();
         const maxRelationTableNames = maxRelation.getTables();
-        maxRelation.entries.forEach(entry => {
+        maxRelation.entries.forEach((entry) => {
             const value = entry.getField(maxColumn);
             const key = String(value);
             if (value !== null && map.has(key)) {
-                map.get(key).forEach(innerEntry => {
+                map.get(key).forEach((innerEntry) => {
                     const combinedEntry = RelationEntry.combineEntries(entry, maxRelationTableNames, innerEntry, minRelationTableNames);
                     combinedEntries.push(combinedEntry);
                 });
             }
-            else {
-                if (isOuterJoin) {
-                    combinedEntries.push(this.createCombinedEntryForUnmatched(entry, maxRelationTableNames));
-                }
+            else if (isOuterJoin) {
+                combinedEntries.push(this.createCombinedEntryForUnmatched(entry, maxRelationTableNames));
             }
         }, this);
         const srcTables = leftRelation
@@ -18371,13 +5113,13 @@ class JoinPredicate extends PredicateNode {
         return new Relation(combinedEntries, srcTables);
     }
     evalRelationsIndexNestedLoopJoin(leftRelation, rightRelation, indexJoinInfo, cache) {
-        assert(this.evaluatorType === EvalType.EQ, 'For now, index nested loop join can only be leveraged for EQ.');
+        assert(this.evaluatorType === EvalType.EQ, "For now, index nested loop join can only be leveraged for EQ.");
         // Detecting which relation should be used as outer (non-indexed) and which
         // as inner (indexed).
         const indexedTable = indexJoinInfo.indexedColumn.getTable();
         let outerRelation = leftRelation;
         let innerRelation = rightRelation;
-        if (leftRelation.getTables().indexOf(indexedTable.getEffectiveName()) !== -1) {
+        if (leftRelation.getTables().includes(indexedTable.getEffectiveName())) {
             outerRelation = rightRelation;
             innerRelation = leftRelation;
         }
@@ -18391,7 +5133,7 @@ class JoinPredicate extends PredicateNode {
             const combinedEntry = RelationEntry.combineEntries(outerEntry, outerRelationTables, innerEntry, innerRelationTables);
             combinedEntries.push(combinedEntry);
         }
-        outerRelation.entries.forEach(entry => {
+        outerRelation.entries.forEach((entry) => {
             const keyOfIndex = this.keyOfIndexFn(entry.getField(indexJoinInfo.nonIndexedColumn));
             const matchingRowIds = indexJoinInfo.index.get(keyOfIndex);
             if (matchingRowIds.length === 0) {
@@ -18405,7 +5147,7 @@ class JoinPredicate extends PredicateNode {
             }
             else {
                 const rows = cache.getMany(matchingRowIds);
-                rows.forEach(r => pushCombinedEntry(entry, r));
+                rows.forEach((r) => { pushCombinedEntry(entry, r); });
             }
         }, this);
         const srcTables = outerRelation
@@ -18413,9 +5155,8 @@ class JoinPredicate extends PredicateNode {
             .concat(innerRelation.getTables());
         return new Relation(combinedEntries, srcTables);
     }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     setComplement(isComplement) {
-        throw new Exception(ErrorCode.ASSERTION, 'Join predicate has no complement');
+        throw new Exception(ErrorCode.ASSERTION, "Join predicate has no complement");
     }
     // Swaps left and right columns and changes operator (if necessary).
     reverseSelf() {
@@ -18447,14 +5188,14 @@ class JoinPredicate extends PredicateNode {
     appliesToLeft(relation) {
         return (relation
             .getTables()
-            .indexOf(this.leftColumn.getTable().getEffectiveName()) !== -1);
+            .includes(this.leftColumn.getTable().getEffectiveName()));
     }
     // Returns whether the given relation can be used as the "right" parameter of
     // this predicate.
     appliesToRight(relation) {
         return (relation
             .getTables()
-            .indexOf(this.rightColumn.getTable().getEffectiveName()) !== -1);
+            .includes(this.rightColumn.getTable().getEffectiveName()));
     }
     // Asserts that the given relations are applicable to this join predicate.
     // Example of non-applicable relations:
@@ -18462,8 +5203,8 @@ class JoinPredicate extends PredicateNode {
     //   leftRelation.getTables() does not include photoTable, or
     //   rightRelation.getTables() does not include albumTable.
     assertRelationsApply(left, right) {
-        assert(this.appliesToLeft(left), 'Mismatch between join predicate left operand and right relation.');
-        assert(this.appliesToRight(right), 'Mismatch between join predicate right operand and right relation.');
+        assert(this.appliesToLeft(left), "Mismatch between join predicate left operand and right relation.");
+        assert(this.appliesToRight(right), "Mismatch between join predicate right operand and right relation.");
     }
     // Detects which input relation should be used as left/right. If predicate
     // order does not match with the left and right relations, left and right are
@@ -18495,7 +5236,7 @@ class JoinPredicate extends PredicateNode {
     // Creates a row with null columns with column names obtained from the table.
     createNullPayload(table) {
         const payload = {};
-        table.getColumns().forEach(column => (payload[column.getName()] = null));
+        table.getColumns().forEach((column) => payload[column.getName()] = null);
         return payload;
     }
     // Creates a combined entry with an unmatched left entry from outer join
@@ -18513,22 +5254,6 @@ class JoinPredicate extends PredicateNode {
 }
 // Exponent of block size, so the block size is 2^(BLOCK_SIZE_EXPONENT).
 JoinPredicate.BLOCK_SIZE_EXPONENT = 8;
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 // Internal representation of DELETE query.
 class DeleteContext extends Context {
     constructor(dbSchema) {
@@ -18557,27 +5282,11 @@ class DeleteContext extends Context {
         const cascadeChildTables = Info.from(this.schema).getChildTables(tableName, ConstraintAction.CASCADE);
         const childTables = Info.from(this.schema).getChildTables(tableName);
         childTables.forEach(scopeSoFar.add.bind(scopeSoFar));
-        cascadeChildTables.forEach(childTable => {
+        cascadeChildTables.forEach((childTable) => {
             this.expandTableScope(childTable.getName(), scopeSoFar);
         }, this);
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 // Internal representation of INSERT and INSERT_OR_REPLACE queries.
 class InsertContext extends Context {
     constructor(dbSchema) {
@@ -18598,8 +5307,8 @@ class InsertContext extends Context {
         context.cloneBase(this);
         context.into = this.into;
         if (this.values) {
-            context.values =
-                this.values instanceof Binder ? this.values : this.values.slice();
+            context.values
+                = this.values instanceof Binder ? this.values : this.values.slice();
         }
         context.allowReplace = this.allowReplace;
         context.binder = this.binder;
@@ -18612,7 +5321,7 @@ class InsertContext extends Context {
                 this.values = values[this.binder.index];
             }
             else {
-                this.values = this.binder.map(val => {
+                this.values = this.binder.map((val) => {
                     return (val instanceof Binder ? values[val.index] : val);
                 });
             }
@@ -18620,22 +5329,6 @@ class InsertContext extends Context {
         return this;
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 // Internal representation of UPDATE query.
 class UpdateContext extends Context {
     constructor(dbSchema) {
@@ -18644,7 +5337,7 @@ class UpdateContext extends Context {
     getScope() {
         const scope = new Set();
         scope.add(this.table);
-        const columns = this.set.map(col => col.column.getNormalizedName());
+        const columns = this.set.map((col) => col.column.getNormalizedName());
         const info = Info.from(this.schema);
         info.getParentTablesByColumns(columns).forEach(scope.add.bind(scope));
         info.getChildTablesByColumns(columns).forEach(scope.add.bind(scope));
@@ -18659,7 +5352,7 @@ class UpdateContext extends Context {
     }
     bind(values) {
         super.bind(values);
-        this.set.forEach(set => {
+        this.set.forEach((set) => {
             if (set.binding !== undefined && set.binding !== -1) {
                 set.value = values[set.binding];
             }
@@ -18668,28 +5361,12 @@ class UpdateContext extends Context {
         return this;
     }
     cloneSet(set) {
-        return set.map(src => {
+        return set.map((src) => {
             const clone = { ...src };
             return clone;
         });
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class SqlHelper {
     static toSql(builder, stripValueInfo = false) {
         const query = builder.getQuery();
@@ -18711,7 +5388,7 @@ class SqlHelper {
     static escapeSqlValue(type, val) {
         const value = val;
         if (value === undefined || value === null) {
-            return 'NULL';
+            return "NULL";
         }
         switch (type) {
             case Type.BOOLEAN:
@@ -18728,67 +5405,63 @@ class SqlHelper {
         }
     }
     static insertToSql(query, stripValueInfo) {
-        let prefix = query.allowReplace ? 'INSERT OR REPLACE' : 'INSERT';
+        let prefix = query.allowReplace ? "INSERT OR REPLACE" : "INSERT";
         const columns = query.into.getColumns();
-        prefix += ' INTO ' + query.into.getName() + '(';
-        prefix += columns.map(col => col.getName()).join(', ');
-        prefix += ') VALUES (';
-        const sqls = query.values.map(row => {
-            const values = columns.map(col => {
+        prefix += " INTO " + query.into.getName() + "(";
+        prefix += columns.map((col) => col.getName()).join(", ");
+        prefix += ") VALUES (";
+        const sqls = query.values.map((row) => {
+            const values = columns.map((col) => {
                 const rawVal = row.payload()[col.getName()];
-                return stripValueInfo
-                    ? rawVal !== undefined && rawVal !== null
-                        ? '#'
-                        : 'NULL'
-                    : SqlHelper.escapeSqlValue(col.getType(), rawVal);
+                return stripValueInfo ? rawVal !== undefined && rawVal !== null ? "#" : "NULL" : SqlHelper.escapeSqlValue(col.getType(), rawVal);
             });
-            return prefix + values.join(', ') + ');';
+            return prefix + values.join(", ") + ");";
         });
-        return sqls.join('\n');
+        return sqls.join("\n");
     }
     static evaluatorToSql(op) {
         switch (op) {
             case EvalType.BETWEEN:
-                return 'BETWEEN';
+                return "BETWEEN";
             case EvalType.EQ:
-                return '=';
+                return "=";
             case EvalType.GTE:
-                return '>=';
+                return ">=";
             case EvalType.GT:
-                return '>';
+                return ">";
             case EvalType.IN:
-                return 'IN';
+                return "IN";
             case EvalType.LTE:
-                return '<=';
+                return "<=";
             case EvalType.LT:
-                return '<';
+                return "<";
             case EvalType.MATCH:
-                return 'LIKE';
+                return "LIKE";
             case EvalType.NEQ:
-                return '<>';
+                return "<>";
             default:
-                return 'UNKNOWN';
+                return "UNKNOWN";
         }
     }
     static valueToSql(value, op, type, stripValueInfo) {
         if (value instanceof Binder) {
-            return '?' + value.getIndex().toString();
+            return "?" + value.getIndex().toString();
         }
         if (stripValueInfo) {
-            return value !== undefined && value !== null ? '#' : 'NULL';
+            return value !== undefined && value !== null ? "#" : "NULL";
         }
         else if (op === EvalType.MATCH) {
             return `'${value.toString()}'`;
         }
         else if (op === EvalType.IN) {
             const array = value;
-            const vals = array.map(e => SqlHelper.escapeSqlValue(type, e));
-            return `(${vals.join(', ')})`;
+            const vals = array.map((e) => SqlHelper.escapeSqlValue(type, e));
+            return `(${vals.join(", ")})`;
         }
         else if (op === EvalType.BETWEEN) {
-            return (SqlHelper.escapeSqlValue(type, value[0]) +
-                ' AND ' +
-                SqlHelper.escapeSqlValue(type, value[1]));
+            return (SqlHelper.escapeSqlValue(type, value[0])
+                + " AND "
+                + SqlHelper.escapeSqlValue(type, value[1]));
         }
         return SqlHelper.escapeSqlValue(type, value).toString();
     }
@@ -18796,31 +5469,31 @@ class SqlHelper {
         const column = pred.column.getNormalizedName();
         const op = SqlHelper.evaluatorToSql(pred.evaluatorType);
         const value = SqlHelper.valueToSql(pred.peek(), pred.evaluatorType, pred.column.getType(), stripValueInfo);
-        if (op === '=' && value === 'NULL') {
-            return [column, 'IS NULL'].join(' ');
+        if (op === "=" && value === "NULL") {
+            return [column, "IS NULL"].join(" ");
         }
-        else if (op === '<>' && value === 'NULL') {
-            return [column, 'IS NOT NULL'].join(' ');
+        else if (op === "<>" && value === "NULL") {
+            return [column, "IS NOT NULL"].join(" ");
         }
         else {
-            return [column, op, value].join(' ');
+            return [column, op, value].join(" ");
         }
     }
     static combinedPredicateToSql(pred, stripValueInfo) {
-        const children = pred.getChildren().map(childNode => {
-            return ('(' +
-                SqlHelper.parseSearchCondition(childNode, stripValueInfo) +
-                ')');
+        const children = pred.getChildren().map((childNode) => {
+            return ("("
+                + SqlHelper.parseSearchCondition(childNode, stripValueInfo)
+                + ")");
         });
-        const joinToken = pred.operator === Operator.AND ? ' AND ' : ' OR ';
+        const joinToken = pred.operator === Operator.AND ? " AND " : " OR ";
         return children.join(joinToken);
     }
     static joinPredicateToSql(pred) {
         return [
             pred.leftColumn.getNormalizedName(),
             SqlHelper.evaluatorToSql(pred.evaluatorType),
-            pred.rightColumn.getNormalizedName(),
-        ].join(' ');
+            pred.rightColumn.getNormalizedName()
+        ].join(" ");
     }
     static parseSearchCondition(pred, stripValueInfo) {
         if (pred instanceof ValuePredicate) {
@@ -18838,52 +5511,52 @@ class SqlHelper {
     static predicateToSql(pred, stripValueInfo) {
         const whereClause = SqlHelper.parseSearchCondition(pred, stripValueInfo);
         if (whereClause) {
-            return ' WHERE ' + whereClause;
+            return " WHERE " + whereClause;
         }
-        return '';
+        return "";
     }
     static deleteToSql(query, stripValueInfo) {
-        let sql = 'DELETE FROM ' + query.from.getName();
+        let sql = "DELETE FROM " + query.from.getName();
         if (query.where) {
             sql += SqlHelper.predicateToSql(query.where, stripValueInfo);
         }
-        sql += ';';
+        sql += ";";
         return sql;
     }
     static updateToSql(query, stripValueInfo) {
-        let sql = 'UPDATE ' + query.table.getName() + ' SET ';
+        let sql = "UPDATE " + query.table.getName() + " SET ";
         sql += query.set
-            .map(set => {
-                const c = set.column;
-                const setter = c.getNormalizedName() + ' = ';
-                if (set.binding !== -1) {
-                    return setter + '?' + set.binding.toString();
-                }
-                return (setter + SqlHelper.escapeSqlValue(c.getType(), set.value).toString());
-            })
-            .join(', ');
+            .map((set) => {
+            const c = set.column;
+            const setter = c.getNormalizedName() + " = ";
+            if (set.binding !== -1) {
+                return setter + "?" + set.binding.toString();
+            }
+            return (setter + SqlHelper.escapeSqlValue(c.getType(), set.value).toString());
+        })
+            .join(", ");
         if (query.where) {
             sql += SqlHelper.predicateToSql(query.where, stripValueInfo);
         }
-        sql += ';';
+        sql += ";";
         return sql;
     }
     static selectToSql(query, stripValueInfo) {
-        let colList = '*';
+        let colList = "*";
         if (query.columns.length) {
             colList = query.columns
-                .map(c => {
-                    const col = c;
-                    if (col.getAlias()) {
-                        return col.getNormalizedName() + ' AS ' + col.getAlias();
-                    }
-                    else {
-                        return col.getNormalizedName();
-                    }
-                })
-                .join(', ');
+                .map((c) => {
+                const col = c;
+                if (col.getAlias()) {
+                    return col.getNormalizedName() + " AS " + col.getAlias();
+                }
+                else {
+                    return col.getNormalizedName();
+                }
+            })
+                .join(", ");
         }
-        let sql = 'SELECT ' + colList + ' FROM ';
+        let sql = "SELECT " + colList + " FROM ";
         if (query.outerJoinPredicates && query.outerJoinPredicates.size !== 0) {
             sql += SqlHelper.getFromListForOuterJoin(query, stripValueInfo);
         }
@@ -18895,33 +5568,31 @@ class SqlHelper {
         }
         if (query.orderBy) {
             const orderBy = query.orderBy
-                .map(order => {
-                    return (order.column.getNormalizedName() +
-                        (order.order === Order.DESC ? ' DESC' : ' ASC'));
-                })
-                .join(', ');
-            sql += ' ORDER BY ' + orderBy;
+                .map((order) => {
+                return (order.column.getNormalizedName()
+                    + (order.order === Order.DESC ? " DESC" : " ASC"));
+            })
+                .join(", ");
+            sql += " ORDER BY " + orderBy;
         }
         if (query.groupBy) {
             const groupBy = query.groupBy
-                .map(col => col.getNormalizedName())
-                .join(', ');
-            sql += ' GROUP BY ' + groupBy;
+                .map((col) => col.getNormalizedName())
+                .join(", ");
+            sql += " GROUP BY " + groupBy;
         }
         if (query.limit) {
-            sql += ' LIMIT ' + query.limit.toString();
+            sql += " LIMIT " + query.limit.toString();
         }
         if (query.skip) {
-            sql += ' SKIP ' + query.skip.toString();
+            sql += " SKIP " + query.skip.toString();
         }
-        sql += ';';
+        sql += ";";
         return sql;
     }
     static getTableNameToSql(t) {
         const table = t;
-        return table.getEffectiveName() !== table.getName()
-            ? table.getName() + ' AS ' + table.getEffectiveName()
-            : table.getName();
+        return table.getEffectiveName() !== table.getName() ? table.getName() + " AS " + table.getEffectiveName() : table.getName();
     }
     // Handles Sql queries that have left outer join.
     static getFromListForOuterJoin(query, stripValueInfo) {
@@ -18932,45 +5603,27 @@ class SqlHelper {
         for (let i = 1; i < query.from.length; i++) {
             const fromName = SqlHelper.getTableNameToSql(query.from[i]);
             if (query.outerJoinPredicates.has(retrievedNodes[predicateString.length - i].getId())) {
-                fromList += ' LEFT OUTER JOIN ' + fromName;
+                fromList += " LEFT OUTER JOIN " + fromName;
             }
             else {
-                fromList += ' INNER JOIN ' + fromName;
+                fromList += " INNER JOIN " + fromName;
             }
-            fromList += ' ON (' + predicateString[predicateString.length - i] + ')';
+            fromList += " ON (" + predicateString[predicateString.length - i] + ")";
         }
         const node = query.where;
         const leftChild = node.getChildCount() > 0 ? node.getChildAt(0) : node;
         // The following condition checks that where has been called in the query.
         if (!(leftChild instanceof JoinPredicate)) {
-            fromList +=
-                ' WHERE ' +
-                SqlHelper.parseSearchCondition(leftChild, stripValueInfo);
+            fromList
+                += " WHERE "
+                    + SqlHelper.parseSearchCondition(leftChild, stripValueInfo);
         }
         return fromList;
     }
-    static getFromListForInnerJoin(query,
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        stripValueInfo) {
-        return query.from.map(SqlHelper.getTableNameToSql).join(', ');
+    static getFromListForInnerJoin(query, stripValueInfo) {
+        return query.from.map(SqlHelper.getTableNameToSql).join(", ");
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class BaseBuilder {
     constructor(global, context) {
         this.global = global;
@@ -18989,7 +5642,7 @@ class BaseBuilder {
             const queryTask = new UserQueryTask(this.global, [this.getTaskItem()]);
             this.runner
                 .scheduleTask(queryTask)
-                .then(results => resolve(results[0].getPayloads()), reject);
+                .then((results) => { resolve(results[0].getPayloads()); }, reject);
         });
     }
     explain() {
@@ -19016,14 +5669,14 @@ class BaseBuilder {
     }
     getTaskItem() {
         return {
-            context: this.getQuery(),
-            plan: this.getPlan(),
+            "context": this.getQuery(),
+            "plan": this.getPlan()
         };
     }
     getObservableTaskItem() {
         return {
-            context: this.getObservableQuery(),
-            plan: this.getPlan(),
+            "context": this.getObservableQuery(),
+            "plan": this.getPlan()
         };
     }
     getPlan() {
@@ -19033,22 +5686,6 @@ class BaseBuilder {
         return this.plan;
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class DeleteBuilder extends BaseBuilder {
     constructor(global) {
         super(global, new DeleteContext(global.getService(Service.SCHEMA)));
@@ -19087,22 +5724,6 @@ class DeleteBuilder extends BaseBuilder {
         }
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class InsertBuilder extends BaseBuilder {
     constructor(global, allowReplace = false) {
         super(global, new InsertContext(global.getService(Service.SCHEMA)));
@@ -19111,17 +5732,17 @@ class InsertBuilder extends BaseBuilder {
     assertExecPreconditions() {
         super.assertExecPreconditions();
         const context = this.query;
-        if (context.into === undefined ||
-            context.into === null ||
-            context.values === undefined ||
-            context.values === null) {
+        if (context.into === undefined
+            || context.into === null
+            || context.values === undefined
+            || context.values === null) {
             // 518: Invalid usage of insert().
             throw new Exception(ErrorCode.INVALID_INSERT);
         }
         // "Insert or replace" makes no sense for tables that do not have a primary
         // key.
-        if (context.allowReplace &&
-            context.into.getConstraint().getPrimaryKey() === null) {
+        if (context.allowReplace
+            && context.into.getConstraint().getPrimaryKey() === null) {
             // 519: Attempted to insert or replace in a table with no primary key.
             throw new Exception(ErrorCode.INVALID_INSERT_OR_REPLACE);
         }
@@ -19133,8 +5754,8 @@ class InsertBuilder extends BaseBuilder {
     }
     values(rows) {
         this.assertValuesPreconditions();
-        if (rows instanceof Binder ||
-            rows.some(r => r instanceof Binder)) {
+        if (rows instanceof Binder
+            || rows.some((r) => r instanceof Binder)) {
             this.query.binder = rows;
         }
         else {
@@ -19157,58 +5778,33 @@ class InsertBuilder extends BaseBuilder {
         }
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 // Base class for AggregateColumn and StarColumn which does not support
 // PredicateProvider interface.
 class NonPredicateProvider {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     eq(operand) {
         throw new Exception(ErrorCode.SYNTAX_ERROR);
     }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     neq(operand) {
         throw new Exception(ErrorCode.SYNTAX_ERROR);
     }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     lt(operand) {
         throw new Exception(ErrorCode.SYNTAX_ERROR);
     }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     lte(operand) {
         throw new Exception(ErrorCode.SYNTAX_ERROR);
     }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     gt(operand) {
         throw new Exception(ErrorCode.SYNTAX_ERROR);
     }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     gte(operand) {
         throw new Exception(ErrorCode.SYNTAX_ERROR);
     }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     match(operand) {
         throw new Exception(ErrorCode.SYNTAX_ERROR);
     }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     between(from, to) {
         throw new Exception(ErrorCode.SYNTAX_ERROR);
     }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     in(values) {
         throw new Exception(ErrorCode.SYNTAX_ERROR);
     }
@@ -19219,22 +5815,6 @@ class NonPredicateProvider {
         throw new Exception(ErrorCode.SYNTAX_ERROR);
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class AggregatedColumn extends NonPredicateProvider {
     constructor(child, aggregatorType) {
         super();
@@ -19280,7 +5860,6 @@ class AggregatedColumn extends NonPredicateProvider {
     // are of type AggregatedColumn except for the last column.
     getColumnChain() {
         const columnChain = [this];
-        // eslint-disable-next-line @typescript-eslint/no-this-alias
         let currentColumn = this;
         while (currentColumn instanceof AggregatedColumn) {
             columnChain.push(currentColumn.child);
@@ -19289,26 +5868,8 @@ class AggregatedColumn extends NonPredicateProvider {
         return columnChain;
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 // Keep lower case class name for compatibility with Lovefield API.
-/* eslint-disable @typescript-eslint/class-name-casing */
 // TODO(arthurhsu): FIXME: use public interface.
-// @export
 class op {
     static and(...predicates) {
         return op.createPredicate(Operator.AND, predicates);
@@ -19322,27 +5883,10 @@ class op {
     }
     static createPredicate(operator, predicates) {
         const condition = new CombinedPredicate(operator);
-        predicates.forEach(predicate => condition.addChild(predicate));
+        predicates.forEach((predicate) => { condition.addChild(predicate); });
         return condition;
     }
 }
-/* eslint-enable @typescript-eslint/class-name-casing */
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class SelectBuilder extends BaseBuilder {
     constructor(global, columns) {
         super(global, new SelectContext(global.getService(Service.SCHEMA)));
@@ -19359,8 +5903,8 @@ class SelectBuilder extends BaseBuilder {
             // 522: Invalid usage of select().
             throw new Exception(ErrorCode.INVALID_SELECT);
         }
-        if ((context.limitBinder && context.limit === undefined) ||
-            (context.skipBinder && context.skip === undefined)) {
+        if (context.limitBinder && context.limit === undefined
+            || context.skipBinder && context.skip === undefined) {
             // 523: Binding parameters of limit/skip without providing values.
             throw new Exception(ErrorCode.UNBOUND_LIMIT_SKIP);
         }
@@ -19412,13 +5956,13 @@ class SelectBuilder extends BaseBuilder {
             throw new Exception(ErrorCode.INVALID_WHERE);
         }
         this.query.from.push(table);
-        if (this.query.outerJoinPredicates === null ||
-            this.query.outerJoinPredicates === undefined) {
+        if (this.query.outerJoinPredicates === null
+            || this.query.outerJoinPredicates === undefined) {
             this.query.outerJoinPredicates = new Set();
         }
         let normalizedPredicate = predicate;
-        if (table.getEffectiveName() !==
-            predicate.rightColumn.getTable().getEffectiveName()) {
+        if (table.getEffectiveName()
+            !== predicate.rightColumn.getTable().getEffectiveName()) {
             normalizedPredicate = predicate.reverse();
         }
         this.query.outerJoinPredicates.add(normalizedPredicate.getId());
@@ -19466,8 +6010,8 @@ class SelectBuilder extends BaseBuilder {
             this.query.orderBy = [];
         }
         this.query.orderBy.push({
-            column,
-            order: order !== undefined && order !== null ? order : Order.ASC,
+            "column": column,
+            "order": order !== undefined && order !== null ? order : Order.ASC
         });
         return this;
     }
@@ -19496,10 +6040,10 @@ class SelectBuilder extends BaseBuilder {
     // lf.fn.distinct() column is requested, then it can't be combined with any
     // other column.
     checkDistinctColumn() {
-        const distinctColumns = this.query.columns.filter(column => column instanceof AggregatedColumn &&
-            column.aggregatorType === FnType.DISTINCT);
-        const isValidCombination = distinctColumns.length === 0 ||
-            (distinctColumns.length === 1 && this.query.columns.length === 1);
+        const distinctColumns = this.query.columns.filter((column) => column instanceof AggregatedColumn
+            && column.aggregatorType === FnType.DISTINCT);
+        const isValidCombination = distinctColumns.length === 0
+            || distinctColumns.length === 1 && this.query.columns.length === 1;
         if (!isValidCombination) {
             // 524: Invalid usage of lf.fn.distinct().
             throw new Exception(ErrorCode.INVALID_DISTINCT);
@@ -19511,13 +6055,11 @@ class SelectBuilder extends BaseBuilder {
     // 2) If GROUP_BY is not specified: Aggregate and non-aggregated columns can't
     //    be mixed (result does not make sense).
     checkProjectionList() {
-        this.query.groupBy
-            ? this.checkGroupByColumns()
-            : this.checkProjectionListNotMixed();
+        this.query.groupBy ? this.checkGroupByColumns() : this.checkProjectionListNotMixed();
     }
     // Checks that grouped columns are indexable.
     checkGroupByColumns() {
-        const isInvalid = this.query.groupBy.some(column => {
+        const isInvalid = this.query.groupBy.some((column) => {
             const type = column.getType();
             return type === Type.OBJECT || type === Type.ARRAY_BUFFER;
         });
@@ -19529,8 +6071,8 @@ class SelectBuilder extends BaseBuilder {
     // Checks that the projection list contains either only non-aggregated
     // columns, or only aggregated columns. See checkProjectionList_ for details.
     checkProjectionListNotMixed() {
-        const aggregatedColumnsExist = this.query.columns.some(column => column instanceof AggregatedColumn);
-        const nonAggregatedColumnsExist = this.query.columns.some(column => !(column instanceof AggregatedColumn)) || this.query.columns.length === 0;
+        const aggregatedColumnsExist = this.query.columns.some((column) => column instanceof AggregatedColumn);
+        const nonAggregatedColumnsExist = this.query.columns.some((column) => !(column instanceof AggregatedColumn)) || this.query.columns.length === 0;
         if (aggregatedColumnsExist && nonAggregatedColumnsExist) {
             // 526: Invalid projection list: mixing aggregated with non-aggregated
             throw new Exception(ErrorCode.INVALID_PROJECTION);
@@ -19539,9 +6081,9 @@ class SelectBuilder extends BaseBuilder {
     // Checks that the specified aggregations are valid, in terms of aggregation
     // type and column type.
     checkAggregations() {
-        this.query.columns.forEach(column => {
-            const isValidAggregation = !(column instanceof AggregatedColumn) ||
-                this.isAggregationValid(column.aggregatorType, column.getType());
+        this.query.columns.forEach((column) => {
+            const isValidAggregation = !(column instanceof AggregatedColumn)
+                || this.isAggregationValid(column.aggregatorType, column.getType());
             if (!isValidAggregation) {
                 // 527: Invalid aggregation detected: {0}.
                 throw new Exception(ErrorCode.INVALID_AGGREGATION, column.getNormalizedName());
@@ -19577,31 +6119,15 @@ class SelectBuilder extends BaseBuilder {
                 return columnType === Type.NUMBER || columnType === Type.INTEGER;
             case FnType.MAX:
             case FnType.MIN:
-                return (columnType === Type.NUMBER ||
-                    columnType === Type.INTEGER ||
-                    columnType === Type.STRING ||
-                    columnType === Type.DATE_TIME);
+                return (columnType === Type.NUMBER
+                    || columnType === Type.INTEGER
+                    || columnType === Type.STRING
+                    || columnType === Type.DATE_TIME);
             // NOT REACHED
         }
         return false;
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class UpdateBuilder extends BaseBuilder {
     constructor(global, table) {
         super(global, new UpdateContext(global.getService(Service.SCHEMA)));
@@ -19609,9 +6135,9 @@ class UpdateBuilder extends BaseBuilder {
     }
     set(column, value) {
         const set = {
-            binding: value instanceof Binder ? value.index : -1,
-            column,
-            value,
+            "binding": value instanceof Binder ? value.index : -1,
+            "column": column,
+            "value": value
         };
         if (this.query.set) {
             this.query.set.push(set);
@@ -19632,7 +6158,7 @@ class UpdateBuilder extends BaseBuilder {
             // 532: Invalid usage of update().
             throw new Exception(ErrorCode.INVALID_UPDATE);
         }
-        const notBound = this.query.set.some(set => set.value instanceof Binder);
+        const notBound = this.query.set.some((set) => set.value instanceof Binder);
         if (notBound) {
             // 501: Value is not bounded.
             throw new Exception(ErrorCode.UNBOUND_VALUE);
@@ -19645,61 +6171,13 @@ class UpdateBuilder extends BaseBuilder {
         }
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class RewritePass {
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class LogicalQueryPlanNode extends TreeNode {
     constructor() {
         super();
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class SelectNode extends LogicalQueryPlanNode {
     constructor(predicate) {
         super();
@@ -19709,29 +6187,11 @@ class SelectNode extends LogicalQueryPlanNode {
         return `select(${this.predicate.toString()})`;
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class AndPredicatePass extends RewritePass {
     constructor() {
         super();
     }
-    rewrite(rootNode,
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        context) {
+    rewrite(rootNode, context) {
         this.rootNode = rootNode;
         this.traverse(this.rootNode);
         return this.rootNode;
@@ -19740,7 +6200,7 @@ class AndPredicatePass extends RewritePass {
     // that all AND predicates are broken down to separate SelectNode instances.
     traverse(rootNode) {
         if (rootNode instanceof SelectNode) {
-            assert(rootNode.getChildCount() === 1, 'SelectNode must have exactly one child.');
+            assert(rootNode.getChildCount() === 1, "SelectNode must have exactly one child.");
             const predicates = this.breakAndPredicate(rootNode.predicate);
             const newNodes = this.createSelectNodeChain(predicates);
             TreeHelper.replaceNodeWithChain(rootNode, newNodes[0], newNodes[1]);
@@ -19749,7 +6209,7 @@ class AndPredicatePass extends RewritePass {
             }
             rootNode = newNodes[0];
         }
-        rootNode.getChildren().forEach(child => this.traverse(child));
+        rootNode.getChildren().forEach((child) => { this.traverse(child); });
     }
     // Recursively breaks down an AND predicate to its components.
     // OR predicates are unaffected, as well as other types of predicates
@@ -19767,10 +6227,10 @@ class AndPredicatePass extends RewritePass {
         const predicates = combinedPredicate
             .getChildren()
             .slice()
-            .map(childPredicate => {
-                combinedPredicate.removeChild(childPredicate);
-                return this.breakAndPredicate(childPredicate);
-            });
+            .map((childPredicate) => {
+            combinedPredicate.removeChild(childPredicate);
+            return this.breakAndPredicate(childPredicate);
+        });
         return ArrayHelper.flatten(predicates);
     }
     createSelectNodeChain(predicates) {
@@ -19788,50 +6248,18 @@ class AndPredicatePass extends RewritePass {
         }, this);
         return [
             parentNode,
-            lastNode,
+            lastNode
         ];
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class CrossProductNode extends LogicalQueryPlanNode {
     constructor() {
         super();
     }
     toString() {
-        return 'cross_product';
+        return "cross_product";
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class CrossProductPass extends RewritePass {
     constructor() {
         super();
@@ -19859,25 +6287,9 @@ class CrossProductPass extends RewritePass {
                 rootNode.addChildAt(crossProduct, 0);
             }
         }
-        rootNode.getChildren().forEach(child => this.traverse(child));
+        rootNode.getChildren().forEach((child) => { this.traverse(child); });
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 // TODO(arthurhsu): this abstract base class is not necessary. Refactor to
 // remove and simplify code structure.
 class BaseLogicalPlanGenerator {
@@ -19892,22 +6304,6 @@ class BaseLogicalPlanGenerator {
         return this.rootNode;
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class DeleteNode extends LogicalQueryPlanNode {
     constructor(table) {
         super();
@@ -19917,22 +6313,6 @@ class DeleteNode extends LogicalQueryPlanNode {
         return `delete(${this.table.getName()})`;
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 // Rewrites the logical query plan such that the resulting logical query plan is
 // faster to execute than the original "naive" plan.
 class LogicalPlanRewriter {
@@ -19942,28 +6322,12 @@ class LogicalPlanRewriter {
         this.rewritePasses = rewritePasses;
     }
     generate() {
-        this.rewritePasses.forEach(rewritePass => {
+        this.rewritePasses.forEach((rewritePass) => {
             this.rootNode = rewritePass.rewrite(this.rootNode, this.queryContext);
         }, this);
         return this.rootNode;
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class TableAccessNode extends LogicalQueryPlanNode {
     constructor(table) {
         super();
@@ -19971,26 +6335,10 @@ class TableAccessNode extends LogicalQueryPlanNode {
     }
     toString() {
         const table = this.table;
-        const postfix = table.getAlias() ? ` as ${table.getAlias()}` : '';
+        const postfix = table.getAlias() ? ` as ${table.getAlias()}` : "";
         return `table_access(${this.table.getName()}${postfix})`;
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class DeleteLogicalPlanGenerator extends BaseLogicalPlanGenerator {
     constructor(query, rewritePasses) {
         super(query);
@@ -19998,9 +6346,7 @@ class DeleteLogicalPlanGenerator extends BaseLogicalPlanGenerator {
     }
     generateInternal() {
         const deleteNode = new DeleteNode(this.query.from);
-        const selectNode = this.query.where
-            ? new SelectNode(this.query.where.copy())
-            : null;
+        const selectNode = this.query.where ? new SelectNode(this.query.where.copy()) : null;
         const tableAccessNode = new TableAccessNode(this.query.from);
         if (selectNode === null) {
             deleteNode.addChild(tableAccessNode);
@@ -20014,22 +6360,6 @@ class DeleteLogicalPlanGenerator extends BaseLogicalPlanGenerator {
         return planRewriter.generate();
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class JoinNode extends LogicalQueryPlanNode {
     constructor(predicate, isOuterJoin) {
         super();
@@ -20037,26 +6367,10 @@ class JoinNode extends LogicalQueryPlanNode {
         this.isOuterJoin = isOuterJoin;
     }
     toString() {
-        return (`join(type: ${this.isOuterJoin ? 'outer' : 'inner'}, ` +
-            `${this.predicate.toString()})`);
+        return (`join(type: ${this.isOuterJoin ? "outer" : "inner"}, `
+            + `${this.predicate.toString()})`);
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class ImplicitJoinsPass extends RewritePass {
     constructor() {
         super();
@@ -20071,14 +6385,14 @@ class ImplicitJoinsPass extends RewritePass {
         return this.rootNode;
     }
     traverse(rootNode, queryContext) {
-        if (rootNode instanceof SelectNode &&
-            rootNode.predicate instanceof JoinPredicate) {
-            assert(rootNode.getChildCount() === 1, 'SelectNode must have exactly one child.');
+        if (rootNode instanceof SelectNode
+            && rootNode.predicate instanceof JoinPredicate) {
+            assert(rootNode.getChildCount() === 1, "SelectNode must have exactly one child.");
             const predicateId = rootNode.predicate.getId();
             const child = rootNode.getChildAt(0);
             if (child instanceof CrossProductNode) {
-                const isOuterJoin = queryContext.outerJoinPredicates &&
-                    queryContext.outerJoinPredicates.has(predicateId);
+                const isOuterJoin = queryContext.outerJoinPredicates
+                    && queryContext.outerJoinPredicates.has(predicateId);
                 const joinNode = new JoinNode(rootNode.predicate, isOuterJoin);
                 TreeHelper.replaceChainWithNode(rootNode, child, joinNode);
                 if (rootNode === this.rootNode) {
@@ -20087,25 +6401,9 @@ class ImplicitJoinsPass extends RewritePass {
                 rootNode = joinNode;
             }
         }
-        rootNode.getChildren().forEach(child => this.traverse(child, queryContext));
+        rootNode.getChildren().forEach((child) => { this.traverse(child, queryContext); });
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class InsertNode extends LogicalQueryPlanNode {
     constructor(table, values) {
         super();
@@ -20116,22 +6414,6 @@ class InsertNode extends LogicalQueryPlanNode {
         return `insert(${this.table.getName()}, R${this.values.length})`;
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class InsertOrReplaceNode extends LogicalQueryPlanNode {
     constructor(table, values) {
         super();
@@ -20142,48 +6424,14 @@ class InsertOrReplaceNode extends LogicalQueryPlanNode {
         return `insertOrReplace(${this.table.getName()}, R${this.values.length})`;
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class InsertLogicalPlanGenerator extends BaseLogicalPlanGenerator {
     constructor(query) {
         super(query);
     }
     generateInternal() {
-        return this.query.allowReplace
-            ? new InsertOrReplaceNode(this.query.into, this.query.values)
-            : new InsertNode(this.query.into, this.query.values);
+        return this.query.allowReplace ? new InsertOrReplaceNode(this.query.into, this.query.values) : new InsertNode(this.query.into, this.query.values);
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class LogicalQueryPlan {
     constructor(rootNode, scope) {
         this.rootNode = rootNode;
@@ -20196,22 +6444,6 @@ class LogicalQueryPlan {
         return this.scope;
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class PushDownSelectionsPass extends RewritePass {
     constructor() {
         super();
@@ -20282,7 +6514,7 @@ class PushDownSelectionsPass extends RewritePass {
             newRoot = TreeHelper.pushNodeBelowChild(node, shouldPushDownFn, cloneFn);
             // Recursively pushing down the nodes that were just added to the tree as
             // a result of pushing down "node", if any.
-            newNodes.forEach(newNode => this.pushDownNodeRec(queryContext, newNode, shouldPushDownFn));
+            newNodes.forEach((newNode) => this.pushDownNodeRec(queryContext, newNode, shouldPushDownFn));
         }
         return newRoot;
     }
@@ -20292,7 +6524,7 @@ class PushDownSelectionsPass extends RewritePass {
         // Finding all tables that are involved in the subtree starting at the given
         // root.
         const referredTables = new Set();
-        TreeHelper.getLeafNodes(root).forEach(tableAccessNode => referredTables.add(tableAccessNode.table));
+        TreeHelper.getLeafNodes(root).forEach((tableAccessNode) => referredTables.add(tableAccessNode.table));
         if (root instanceof TableAccessNode) {
             referredTables.add(root.table);
         }
@@ -20314,8 +6546,8 @@ class PushDownSelectionsPass extends RewritePass {
         if (!(child instanceof SelectNode)) {
             return false;
         }
-        if (queryContext.outerJoinPredicates === undefined ||
-            queryContext.outerJoinPredicates === null) {
+        if (queryContext.outerJoinPredicates === undefined
+            || queryContext.outerJoinPredicates === null) {
             return true;
         }
         const nodeIsJoin = node.predicate instanceof JoinPredicate;
@@ -20327,22 +6559,6 @@ class PushDownSelectionsPass extends RewritePass {
         return nodeIsJoin || !childIsOuterJoin;
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class AggregationNode extends LogicalQueryPlanNode {
     constructor(columns) {
         super();
@@ -20352,22 +6568,6 @@ class AggregationNode extends LogicalQueryPlanNode {
         return `aggregation(${this.columns.toString()})`;
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class GroupByNode extends LogicalQueryPlanNode {
     constructor(columns) {
         super();
@@ -20377,22 +6577,6 @@ class GroupByNode extends LogicalQueryPlanNode {
         return `group_by(${this.columns.toString()})`;
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class LimitNode extends LogicalQueryPlanNode {
     constructor(limit) {
         super();
@@ -20402,22 +6586,6 @@ class LimitNode extends LogicalQueryPlanNode {
         return `limit(${this.limit})`;
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class OrderByNode extends LogicalQueryPlanNode {
     constructor(orderBy) {
         super();
@@ -20427,22 +6595,6 @@ class OrderByNode extends LogicalQueryPlanNode {
         return `order_by(${SelectContext.orderByToString(this.orderBy)})`;
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class ProjectNode extends LogicalQueryPlanNode {
     constructor(columns, groupByColumns) {
         super();
@@ -20450,29 +6602,11 @@ class ProjectNode extends LogicalQueryPlanNode {
         this.groupByColumns = groupByColumns;
     }
     toString() {
-        const columns = this.groupByColumns
-            ? this.groupByColumns.map(col => col.getNormalizedName()).join(', ')
-            : '';
-        const postfix = columns.length ? `, groupBy(${columns})` : '';
+        const columns = this.groupByColumns ? this.groupByColumns.map((col) => col.getNormalizedName()).join(", ") : "";
+        const postfix = columns.length ? `, groupBy(${columns})` : "";
         return `project(${this.columns.toString()}${postfix})`;
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class SkipNode extends LogicalQueryPlanNode {
     constructor(skip) {
         super();
@@ -20482,22 +6616,6 @@ class SkipNode extends LogicalQueryPlanNode {
         return `skip(${this.skip})`;
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class SelectLogicalPlanGenerator extends BaseLogicalPlanGenerator {
     constructor(query, rewritePasses) {
         super(query);
@@ -20543,7 +6661,7 @@ class SelectLogicalPlanGenerator extends BaseLogicalPlanGenerator {
             this.aggregationNode,
             this.groupByNode,
             this.selectNode,
-            this.crossProductNode,
+            this.crossProductNode
         ];
         let lastExistingParentIndex = -1;
         let rootNode = null;
@@ -20559,13 +6677,13 @@ class SelectLogicalPlanGenerator extends BaseLogicalPlanGenerator {
                 lastExistingParentIndex = i;
             }
         }
-        this.tableAccessNodes.forEach(tableAccessNode => {
+        this.tableAccessNodes.forEach((tableAccessNode) => {
             parentOrder[lastExistingParentIndex].addChild(tableAccessNode);
         });
         return rootNode;
     }
     generateTableAccessNodes() {
-        this.tableAccessNodes = this.query.from.map(table => new TableAccessNode(table));
+        this.tableAccessNodes = this.query.from.map((table) => new TableAccessNode(table));
     }
     generateCrossProductNode() {
         if (this.query.from.length >= 2) {
@@ -20583,7 +6701,7 @@ class SelectLogicalPlanGenerator extends BaseLogicalPlanGenerator {
         }
     }
     generateSkipNode() {
-        if ((this.query.skip && this.query.skip > 0) || this.query.skipBinder) {
+        if (this.query.skip && this.query.skip > 0 || this.query.skipBinder) {
             this.skipNode = new SkipNode(this.query.skip);
         }
     }
@@ -20598,11 +6716,11 @@ class SelectLogicalPlanGenerator extends BaseLogicalPlanGenerator {
         }
     }
     generateAggregationNode() {
-        const aggregatedColumns = this.query.columns.filter(column => {
+        const aggregatedColumns = this.query.columns.filter((column) => {
             return column instanceof AggregatedColumn;
         });
         if (this.query.orderBy) {
-            this.query.orderBy.forEach(orderBy => {
+            this.query.orderBy.forEach((orderBy) => {
                 if (orderBy.column instanceof AggregatedColumn) {
                     aggregatedColumns.push(orderBy.column);
                 }
@@ -20616,22 +6734,6 @@ class SelectLogicalPlanGenerator extends BaseLogicalPlanGenerator {
         this.projectNode = new ProjectNode(this.query.columns || [], this.query.groupBy || null);
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class UpdateNode extends LogicalQueryPlanNode {
     constructor(table) {
         super();
@@ -20641,31 +6743,13 @@ class UpdateNode extends LogicalQueryPlanNode {
         return `update(${this.table.getName()})`;
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class UpdateLogicalPlanGenerator extends BaseLogicalPlanGenerator {
     constructor(query) {
         super(query);
     }
     generateInternal() {
         const updateNode = new UpdateNode(this.query.table);
-        const selectNode = this.query.where !== null
-            ? new SelectNode(this.query.where.copy())
-            : null;
+        const selectNode = this.query.where !== null ? new SelectNode(this.query.where.copy()) : null;
         const tableAccessNode = new TableAccessNode(this.query.table);
         if (selectNode === null) {
             updateNode.addChild(tableAccessNode);
@@ -20677,22 +6761,6 @@ class UpdateLogicalPlanGenerator extends BaseLogicalPlanGenerator {
         return updateNode;
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 // A factory used to create a logical query plan corresponding to a given query.
 class LogicalPlanFactory {
     constructor() {
@@ -20700,7 +6768,7 @@ class LogicalPlanFactory {
             new AndPredicatePass(),
             new CrossProductPass(),
             new PushDownSelectionsPass(),
-            new ImplicitJoinsPass(),
+            new ImplicitJoinsPass()
         ];
         this.deleteOptimizationPasses = [new AndPredicatePass()];
     }
@@ -20726,29 +6794,13 @@ class LogicalPlanFactory {
         return new LogicalQueryPlan(rootNode, query.getScope());
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 // Pseudo table used for initializing pseudo columns.
 class UnknownTable {
     constructor() {
         this._alias = null;
     }
     getName() {
-        return '#UnknownTable';
+        return "#UnknownTable";
     }
     getColumns() {
         return [];
@@ -20766,13 +6818,11 @@ class UnknownTable {
         return this._alias || this.getName();
     }
     getRowIdIndexName() {
-        return '#UnknownTable.#';
+        return "#UnknownTable.#";
     }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     createRow(value) {
         throw new Exception(ErrorCode.NOT_SUPPORTED);
     }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     deserializeRow(dbRecord) {
         throw new Exception(ErrorCode.NOT_SUPPORTED);
     }
@@ -20783,27 +6833,10 @@ class UnknownTable {
         this._alias = alias;
         return this;
     }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     col(name) {
         return null;
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 //  A dummy Column implementation to be used as a substitute for '*',
 // for example in COUNT(*).
 class StarColumn extends NonPredicateProvider {
@@ -20813,7 +6846,7 @@ class StarColumn extends NonPredicateProvider {
         this.table = new UnknownTable();
     }
     getName() {
-        return '*';
+        return "*";
     }
     getNormalizedName() {
         return this.getName();
@@ -20854,22 +6887,6 @@ class StarColumn extends NonPredicateProvider {
         return clone;
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class AggregationCalculator {
     constructor(relation, columns) {
         this.relation = relation;
@@ -20878,7 +6895,7 @@ class AggregationCalculator {
     // Calculates all requested aggregations. Results are stored within
     // this.relation.
     calculate() {
-        this.columns.forEach(column => {
+        this.columns.forEach((column) => {
             const reverseColumnChain = column.getColumnChain().reverse();
             for (let i = 1; i < reverseColumnChain.length; i++) {
                 const currentColumn = reverseColumnChain[i];
@@ -20896,9 +6913,7 @@ class AggregationCalculator {
     // Returns the relation that should be used as input for calculating the
     // given aggregated column.
     getInputRelationFor(column) {
-        return column.child instanceof AggregatedColumn
-            ? this.relation.getAggregationResult(column.child)
-            : this.relation;
+        return column.child instanceof AggregatedColumn ? this.relation.getAggregationResult(column.child) : this.relation;
     }
     evalAggregation(aggregatorType, relation, column) {
         let result = null;
@@ -20979,15 +6994,13 @@ class AggregationCalculator {
     // returned. If the table is empty, null is returned.
     stddev(relation, column) {
         const values = [];
-        relation.entries.forEach(entry => {
+        relation.entries.forEach((entry) => {
             const value = entry.getField(column);
             if (value !== null) {
                 values.push(value);
             }
         });
-        return values.length === 0
-            ? null
-            : MathHelper.standardDeviation.apply(null, values);
+        return values.length === 0 ? null : MathHelper.standardDeviation.apply(null, values);
     }
     // Calculates the geometrical mean of the given column for the given relation.
     // Zero values are ignored. If all values given are zero, or if the input
@@ -21004,36 +7017,18 @@ class AggregationCalculator {
                 return soFar;
             }
         }, 0);
-        return nonZeroEntriesCount === 0
-            ? null
-            : Math.pow(Math.E, reduced / nonZeroEntriesCount);
+        return nonZeroEntriesCount === 0 ? null : Math.E ** (reduced / nonZeroEntriesCount);
     }
     // Keeps only distinct entries with regards to the given column.
     distinct(relation, column) {
         const distinctMap = new Map();
-        relation.entries.forEach(entry => {
+        relation.entries.forEach((entry) => {
             const value = entry.getField(column);
             distinctMap.set(value, entry);
         });
         return new Relation(Array.from(distinctMap.values()), relation.getTables());
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class PhysicalQueryPlanNode extends TreeNode {
     constructor(numRelations, execType) {
         super();
@@ -21052,39 +7047,38 @@ class PhysicalQueryPlanNode extends TreeNode {
         }
     }
     toString() {
-        return 'dummy_node';
+        return "dummy_node";
     }
     // Returns a string representation of this node taking into account the given
     // context.
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     toContextString(context) {
         return this.toString();
     }
     assertInput(relations) {
-        assert(this.numRelations === PhysicalQueryPlanNode.ANY ||
-            relations.length === this.numRelations);
+        assert(this.numRelations === PhysicalQueryPlanNode.ANY
+            || relations.length === this.numRelations);
     }
     execNoChild(journal, context) {
-        return new Promise(resolve => {
+        return new Promise((resolve) => {
             resolve(this.execInternal([], journal, context));
         });
     }
     execFirstChild(journal, context) {
         return this.getChildAt(0)
             .exec(journal, context)
-            .then(results => {
-                this.assertInput(results);
-                return this.execInternal(results, journal, context);
-            });
+            .then((results) => {
+            this.assertInput(results);
+            return this.execInternal(results, journal, context);
+        });
     }
     execAllChildren(journal, context) {
-        const promises = this.getChildren().map(child => {
+        const promises = this.getChildren().map((child) => {
             return child.exec(journal, context);
         });
-        return Promise.all(promises).then(results => {
+        return Promise.all(promises).then((results) => {
             const relations = [];
-            results.forEach(result => {
-                result.forEach(res => relations.push(res));
+            results.forEach((result) => {
+                result.forEach((res) => relations.push(res));
             });
             this.assertInput(relations);
             return this.execInternal(relations, journal, context);
@@ -21092,71 +7086,31 @@ class PhysicalQueryPlanNode extends TreeNode {
     }
 }
 PhysicalQueryPlanNode.ANY = -1;
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class AggregationStep extends PhysicalQueryPlanNode {
     constructor(aggregatedColumns) {
         super(PhysicalQueryPlanNode.ANY, ExecType.FIRST_CHILD);
         this.aggregatedColumns = aggregatedColumns;
     }
     toString() {
-        const columnNames = this.aggregatedColumns.map(column => column.getNormalizedName());
+        const columnNames = this.aggregatedColumns.map((column) => column.getNormalizedName());
         return `aggregation(${columnNames.toString()})`;
     }
-    execInternal(relations,
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        journal,
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        context) {
-        relations.forEach(relation => {
+    execInternal(relations, journal, context) {
+        relations.forEach((relation) => {
             const calculator = new AggregationCalculator(relation, this.aggregatedColumns);
             calculator.calculate();
         }, this);
         return relations;
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class CrossProductStep extends PhysicalQueryPlanNode {
     constructor() {
         super(2, ExecType.ALL);
     }
     toString() {
-        return 'cross_product';
+        return "cross_product";
     }
-    execInternal(relations,
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        journal,
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        context) {
+    execInternal(relations, journal, context) {
         return this.crossProduct(relations[0], relations[1]);
     }
     // Calculates the cross product of two relations.
@@ -21164,8 +7118,8 @@ class CrossProductStep extends PhysicalQueryPlanNode {
         const combinedEntries = [];
         const leftRelationTableNames = leftRelation.getTables();
         const rightRelationTableNames = rightRelation.getTables();
-        leftRelation.entries.forEach(le => {
-            rightRelation.entries.forEach(re => {
+        leftRelation.entries.forEach((le) => {
+            rightRelation.entries.forEach((re) => {
                 const combinedEntry = RelationEntry.combineEntries(le, leftRelationTableNames, re, rightRelationTableNames);
                 combinedEntries.push(combinedEntry);
             });
@@ -21176,22 +7130,6 @@ class CrossProductStep extends PhysicalQueryPlanNode {
         return [new Relation(combinedEntries, srcTables)];
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class DeleteStep extends PhysicalQueryPlanNode {
     constructor(table) {
         super(1, ExecType.FIRST_CHILD);
@@ -21200,33 +7138,13 @@ class DeleteStep extends PhysicalQueryPlanNode {
     toString() {
         return `delete(${this.table.getName()})`;
     }
-    execInternal(relations, journal,
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        context) {
-        const rows = relations[0].entries.map(entry => entry.row);
+    execInternal(relations, journal, context) {
+        const rows = relations[0].entries.map((entry) => entry.row);
         journal.remove(this.table, rows);
         return [Relation.createEmpty()];
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 // Keep lower case class name for compatibility with Lovefield API.
-/* eslint-disable @typescript-eslint/class-name-casing */
-// @export
 class fn {
     static avg(col) {
         return new AggregatedColumn(col, FnType.AVG);
@@ -21254,23 +7172,6 @@ class fn {
         return new AggregatedColumn(col, FnType.GEOMEAN);
     }
 }
-/* eslint-enable @typescript-eslint/class-name-casing */
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class GetRowCountStep extends PhysicalQueryPlanNode {
     constructor(global, table) {
         super(0, ExecType.NO_CHILD);
@@ -21280,35 +7181,13 @@ class GetRowCountStep extends PhysicalQueryPlanNode {
     toString() {
         return `get_row_count(${this.table.getName()})`;
     }
-    execInternal(
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        relations,
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        journal,
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        context) {
+    execInternal(relations, journal, context) {
         const rowIdIndex = this.indexStore.get(this.table.getRowIdIndexName());
         const relation = new Relation([], [this.table.getName()]);
         relation.setAggregationResult(fn.count(), rowIdIndex.stats().totalRows);
         return [relation];
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class TableAccessFullStep extends PhysicalQueryPlanNode {
     constructor(global, table) {
         super(0, ExecType.NO_CHILD);
@@ -21317,45 +7196,24 @@ class TableAccessFullStep extends PhysicalQueryPlanNode {
         this.indexStore = global.getService(Service.INDEX_STORE);
     }
     toString() {
-        let postfix = '';
+        let postfix = "";
         const table = this.table;
         if (table.getAlias()) {
             postfix = ` as ${table.getAlias()}`;
         }
         return `table_access(${this.table.getName()}${postfix})`;
     }
-    execInternal(
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        relations,
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        journal,
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        context) {
+    execInternal(relations, journal, context) {
         const table = this.table;
-        const rowIds = this.indexStore.get(table.getRowIdIndexName()).getRange();
+        const rowIds = this.indexStore.get(table.getRowIdIndexName())
+            .getRange();
         return [
             Relation.fromRows(this.cache.getMany(rowIds), [
-                table.getEffectiveName(),
-            ]),
+                table.getEffectiveName()
+            ])
         ];
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 // An optimization pass responsible for optimizing SELECT COUNT(*) queries,
 // where no LIMIT, SKIP, WHERE or GROUP_BY appears.
 class GetRowCountPass extends RewritePass {
@@ -21368,58 +7226,38 @@ class GetRowCountPass extends RewritePass {
         if (!this.canOptimize(queryContext)) {
             return rootNode;
         }
-        const tableAccessFullStep = TreeHelper.find(rootNode, node => node instanceof TableAccessFullStep)[0];
+        const tableAccessFullStep = TreeHelper.find(rootNode, (node) => node instanceof TableAccessFullStep)[0];
         const getRowCountStep = new GetRowCountStep(this.global, tableAccessFullStep.table);
         TreeHelper.replaceNodeWithChain(tableAccessFullStep, getRowCountStep, getRowCountStep);
         return this.rootNode;
     }
     canOptimize(queryContext) {
         const isDefAndNotNull = (v) => v !== null && v !== undefined;
-        const isCandidate = queryContext.columns.length === 1 &&
-            queryContext.from.length === 1 &&
-            !isDefAndNotNull(queryContext.where) &&
-            !isDefAndNotNull(queryContext.limit) &&
-            !isDefAndNotNull(queryContext.skip) &&
-            !isDefAndNotNull(queryContext.groupBy);
+        const isCandidate = queryContext.columns.length === 1
+            && queryContext.from.length === 1
+            && !isDefAndNotNull(queryContext.where)
+            && !isDefAndNotNull(queryContext.limit)
+            && !isDefAndNotNull(queryContext.skip)
+            && !isDefAndNotNull(queryContext.groupBy);
         if (isCandidate) {
             const column = queryContext.columns[0];
-            return (column instanceof AggregatedColumn &&
-                column.aggregatorType === FnType.COUNT &&
-                column.child instanceof StarColumn);
+            return (column instanceof AggregatedColumn
+                && column.aggregatorType === FnType.COUNT
+                && column.child instanceof StarColumn);
         }
         return false;
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class GroupByStep extends PhysicalQueryPlanNode {
     constructor(groupByColumns) {
         super(1, ExecType.FIRST_CHILD);
         this.groupByColumns = groupByColumns;
     }
     toString() {
-        const columnNames = this.groupByColumns.map(column => column.getNormalizedName());
+        const columnNames = this.groupByColumns.map((column) => column.getNormalizedName());
         return `groupBy(${columnNames.toString()})`;
     }
-    execInternal(relations,
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        journal,
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        ctx) {
+    execInternal(relations, journal, ctx) {
         return this.calculateGroupedRelations(relations[0]);
     }
     // Breaks down a single relation to multiple relations by grouping rows based
@@ -21427,33 +7265,17 @@ class GroupByStep extends PhysicalQueryPlanNode {
     calculateGroupedRelations(relation) {
         const groupMap = new MapSet();
         const getKey = (entry) => {
-            const keys = this.groupByColumns.map(column => entry.getField(column));
-            return keys.join(',');
+            const keys = this.groupByColumns.map((column) => entry.getField(column));
+            return keys.join(",");
         };
-        relation.entries.forEach(entry => groupMap.set(getKey(entry), entry));
-        return groupMap.keys().map(key => {
+        relation.entries.forEach((entry) => groupMap.set(getKey(entry), entry));
+        return groupMap.keys().map((key) => {
             return new Relation(groupMap.get(key), relation.getTables());
         });
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 var JoinAlgorithm;
-(function(JoinAlgorithm) {
+(function (JoinAlgorithm) {
     JoinAlgorithm["HASH"] = "hash";
     JoinAlgorithm["INDEX_NESTED_LOOP"] = "index_nested_loop";
     JoinAlgorithm["NESTED_LOOP"] = "nested_loop";
@@ -21465,34 +7287,28 @@ class JoinStep extends PhysicalQueryPlanNode {
         this.isOuterJoin = isOuterJoin;
         this.indexStore = global.getService(Service.INDEX_STORE);
         this.cache = global.getService(Service.CACHE);
-        this.algorithm =
-            this.predicate.evaluatorType === EvalType.EQ
-                ? JoinAlgorithm.HASH
-                : JoinAlgorithm.NESTED_LOOP;
+        this.algorithm
+            = this.predicate.evaluatorType === EvalType.EQ ? JoinAlgorithm.HASH : JoinAlgorithm.NESTED_LOOP;
         this.indexJoinInfo = null;
     }
     toString() {
-        return (`join(type: ${this.isOuterJoin ? 'outer' : 'inner'}, ` +
-            `impl: ${this.algorithm}, ${this.predicate.toString()})`);
+        return (`join(type: ${this.isOuterJoin ? "outer" : "inner"}, `
+            + `impl: ${this.algorithm}, ${this.predicate.toString()})`);
     }
-    execInternal(relations,
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        journal,
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        context) {
+    execInternal(relations, journal, context) {
         switch (this.algorithm) {
             case JoinAlgorithm.HASH:
                 return [
-                    this.predicate.evalRelationsHashJoin(relations[0], relations[1], this.isOuterJoin),
+                    this.predicate.evalRelationsHashJoin(relations[0], relations[1], this.isOuterJoin)
                 ];
             case JoinAlgorithm.INDEX_NESTED_LOOP:
                 return [
-                    this.predicate.evalRelationsIndexNestedLoopJoin(relations[0], relations[1], this.indexJoinInfo, this.cache),
+                    this.predicate.evalRelationsIndexNestedLoopJoin(relations[0], relations[1], this.indexJoinInfo, this.cache)
                 ];
             default:
                 // JoinAlgorithm.NESTED_LOOP
                 return [
-                    this.predicate.evalRelationsNestedLoopJoin(relations[0], relations[1], this.isOuterJoin),
+                    this.predicate.evalRelationsNestedLoopJoin(relations[0], relations[1], this.isOuterJoin)
                 ];
         }
     }
@@ -21502,30 +7318,12 @@ class JoinStep extends PhysicalQueryPlanNode {
         this.algorithm = JoinAlgorithm.INDEX_NESTED_LOOP;
         const index = this.indexStore.get(column.getIndex().getNormalizedName());
         this.indexJoinInfo = {
-            index: index,
-            indexedColumn: column,
-            nonIndexedColumn: column === this.predicate.leftColumn
-                ? this.predicate.rightColumn
-                : this.predicate.leftColumn,
+            "index": index,
+            "indexedColumn": column,
+            "nonIndexedColumn": column === this.predicate.leftColumn ? this.predicate.rightColumn : this.predicate.leftColumn
         };
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 // A dummy execution step that performs no actual work.
 class NoOpStep extends PhysicalQueryPlanNode {
     constructor(relations) {
@@ -21533,34 +7331,12 @@ class NoOpStep extends PhysicalQueryPlanNode {
         this.relations = relations;
     }
     toString() {
-        return `no_op_step(${this.relations[0].getTables().join(',')})`;
+        return `no_op_step(${this.relations[0].getTables().join(",")})`;
     }
-    execInternal(
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        relations,
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        journal,
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        context) {
+    execInternal(relations, journal, context) {
         return this.relations;
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 // An optimization pass responsible for identifying JoinSteps that can be
 // calculated as index nested loop joins. It transforms the tree by specifying
 // the algorithm to use in such JoinSteps and also by eliminating
@@ -21575,7 +7351,7 @@ class IndexJoinPass extends RewritePass {
         if (!this.canOptimize(queryContext)) {
             return rootNode;
         }
-        const joinSteps = TreeHelper.find(rootNode, node => node instanceof JoinStep);
+        const joinSteps = TreeHelper.find(rootNode, (node) => node instanceof JoinStep);
         joinSteps.forEach(this.processJoinStep, this);
         return this.rootNode;
     }
@@ -21586,16 +7362,14 @@ class IndexJoinPass extends RewritePass {
     // an index-join.
     processJoinStep(joinStep) {
         // Currently ONLY inner EQ join can be calculated using index join.
-        if (joinStep.predicate.evaluatorType !== EvalType.EQ ||
-            joinStep.isOuterJoin) {
+        if (joinStep.predicate.evaluatorType !== EvalType.EQ
+            || joinStep.isOuterJoin) {
             return;
         }
         // Finds which of the two joined columns corresponds to the given table.
         const getColumnForTable = (table) => {
-            return table.getEffectiveName() ===
-                joinStep.predicate.rightColumn.getTable().getEffectiveName()
-                ? joinStep.predicate.rightColumn
-                : joinStep.predicate.leftColumn;
+            return table.getEffectiveName()
+                === joinStep.predicate.rightColumn.getTable().getEffectiveName() ? joinStep.predicate.rightColumn : joinStep.predicate.leftColumn;
         };
         // Extracts the candidate indexed column for the given execution step node.
         const getCandidate = (executionStep) => {
@@ -21605,9 +7379,7 @@ class IndexJoinPass extends RewritePass {
                 return null;
             }
             const candidateColumn = getColumnForTable(executionStep.table);
-            return candidateColumn.getIndex() === null
-                ? null
-                : candidateColumn;
+            return candidateColumn.getIndex() === null ? null : candidateColumn;
         };
         const leftCandidate = getCandidate(joinStep.getChildAt(0));
         const rightCandidate = getCandidate(joinStep.getChildAt(1));
@@ -21625,22 +7397,6 @@ class IndexJoinPass extends RewritePass {
         joinStep.replaceChildAt(new NoOpStep([dummyRelation]), chosenColumn === leftCandidate ? 0 : 1);
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class BoundedKeyRangeCalculator {
     // |this.predicateMap| is a map where a key is the name of an indexed column
     // and the values are predicates IDs that correspond to that column. The IDs
@@ -21660,10 +7416,8 @@ class BoundedKeyRangeCalculator {
         this.fillMissingKeyRanges(keyRangeMap);
         // If this IndexRangeCandidate refers to a single column index there is no
         // need to perform cartesian product, since there is only one dimension.
-        this.combinations =
-            this.indexSchema.columns.length === 1
-                ? Array.from(keyRangeMap.values())[0].getValues()
-                : this.calculateCartesianProduct(this.getSortedKeyRangeSets(keyRangeMap));
+        this.combinations
+            = this.indexSchema.columns.length === 1 ? Array.from(keyRangeMap.values())[0].getValues() : this.calculateCartesianProduct(this.getSortedKeyRangeSets(keyRangeMap));
         this.lastQueryContext = queryContext;
         return this.combinations;
     }
@@ -21671,13 +7425,13 @@ class BoundedKeyRangeCalculator {
     // the SingleKeyRangeSet, created by considering all provided predicates.
     calculateKeyRangeMap(queryContext) {
         const keyRangeMap = new Map();
-        Array.from(this.predicateMap.keys()).forEach(columnName => {
+        Array.from(this.predicateMap.keys()).forEach((columnName) => {
             const predicateIds = this.predicateMap.get(columnName);
-            const predicates = predicateIds.map(predicateId => {
+            const predicates = predicateIds.map((predicateId) => {
                 return queryContext.getPredicate(predicateId);
             }, this);
             let keyRangeSetSoFar = new SingleKeyRangeSet([SingleKeyRange.all()]);
-            predicates.forEach(predicate => {
+            predicates.forEach((predicate) => {
                 keyRangeSetSoFar = SingleKeyRangeSet.intersect(keyRangeSetSoFar, predicate.toKeyRange());
             });
             keyRangeMap.set(columnName, keyRangeSetSoFar);
@@ -21709,12 +7463,12 @@ class BoundedKeyRangeCalculator {
     getSortedKeyRangeSets(keyRangeMap) {
         const sortHelper = new Map();
         let priority = 0;
-        this.indexSchema.columns.forEach(column => {
+        this.indexSchema.columns.forEach((column) => {
             sortHelper.set(column.schema.getName(), priority);
             priority++;
         });
         const sortedColumnNames = Array.from(keyRangeMap.keys()).sort((a, b) => (sortHelper.get(a) || 0) - (sortHelper.get(b) || 0));
-        return sortedColumnNames.map(columnName => keyRangeMap.get(columnName));
+        return sortedColumnNames.map((columnName) => keyRangeMap.get(columnName));
     }
     // Finds the cartesian product of a collection of SingleKeyRangeSets.
     // |keyRangeSets| is a SingleKeyRangeSet at position i in the input array
@@ -21723,32 +7477,16 @@ class BoundedKeyRangeCalculator {
     // index).
     // Returns the cross-column key range combinations.
     calculateCartesianProduct(keyRangeSets) {
-        assert(keyRangeSets.length > 1, 'Should only be called for cross-column indices.');
-        const keyRangeSetsAsArrays = keyRangeSets.map(keyRangeSet => keyRangeSet.getValues());
+        assert(keyRangeSets.length > 1, "Should only be called for cross-column indices.");
+        const keyRangeSetsAsArrays = keyRangeSets.map((keyRangeSet) => keyRangeSet.getValues());
         return ArrayHelper.product(keyRangeSetsAsArrays);
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class IndexRangeCandidate {
     constructor(indexStore, indexSchema) {
         this.indexStore = indexStore;
         this.indexSchema = indexSchema;
-        this.indexedColumnNames = new Set(this.indexSchema.columns.map(col => col.schema.getName()));
+        this.indexedColumnNames = new Set(this.indexSchema.columns.map((col) => col.schema.getName()));
         this.predicateMap = null;
         this.keyRangeCalculator = null;
     }
@@ -21766,7 +7504,7 @@ class IndexRangeCandidate {
     // Finds which predicates are related to the index schema corresponding to
     // this IndexRangeCandidate.
     consumePredicates(predicates) {
-        predicates.forEach(predicate => {
+        predicates.forEach((predicate) => {
             // If predicate is a ValuePredicate there in only one referred column. If
             // predicate is an OR CombinedPredicate, then it must be referring to a
             // single column (enforced by isKeyRangeCompatible()).
@@ -21792,7 +7530,7 @@ class IndexRangeCandidate {
         }
         let unboundColumnFound = false;
         let isUsable = true;
-        this.indexSchema.columns.every(column => {
+        this.indexSchema.columns.every((column) => {
             const isBound = this.predicateMap.has(column.schema.getName());
             if (unboundColumnFound && isBound) {
                 isUsable = false;
@@ -21813,22 +7551,6 @@ class IndexRangeCandidate {
         }, 0);
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 // The maximum percent of
 // 1) values an EvalType.IN predicate can have or
 // 2) children an OR CombinedPredicate can have
@@ -21875,12 +7597,12 @@ class IndexCostEstimator {
     generateIndexRangeCandidates(predicates) {
         const indexSchemas = this.tableSchema.getIndices();
         return indexSchemas
-            .map(indexSchema => {
-                const indexRangeCandidate = new IndexRangeCandidate(this.indexStore, indexSchema);
-                indexRangeCandidate.consumePredicates(predicates);
-                return indexRangeCandidate;
-            }, this)
-            .filter(indexRangeCandidate => indexRangeCandidate.isUsable());
+            .map((indexSchema) => {
+            const indexRangeCandidate = new IndexRangeCandidate(this.indexStore, indexSchema);
+            indexRangeCandidate.consumePredicates(predicates);
+            return indexRangeCandidate;
+        }, this)
+            .filter((indexRangeCandidate) => indexRangeCandidate.isUsable());
     }
     isCandidate(predicate) {
         if (predicate instanceof ValuePredicate) {
@@ -21904,33 +7626,17 @@ class IndexCostEstimator {
         return predicate.getChildCount() <= this.getIndexQueryThreshold();
     }
     isCandidateValuePredicate(predicate) {
-        if (!predicate.isKeyRangeCompatible() ||
-            predicate.column.getTable() !== this.tableSchema) {
+        if (!predicate.isKeyRangeCompatible()
+            || predicate.column.getTable() !== this.tableSchema) {
             return false;
         }
-        if (predicate.evaluatorType === EvalType.IN &&
-            predicate.peek().length > this.getIndexQueryThreshold()) {
+        if (predicate.evaluatorType === EvalType.IN
+            && predicate.peek().length > this.getIndexQueryThreshold()) {
             return false;
         }
         return true;
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class IndexRangeScanStep extends PhysicalQueryPlanNode {
     // |reverseOrder|: return the results in reverse index order.
     constructor(global, index, keyRangeCalculator, reverseOrder) {
@@ -21943,21 +7649,21 @@ class IndexRangeScanStep extends PhysicalQueryPlanNode {
         this.useSkip = false;
     }
     toString() {
-        return (`index_range_scan(${this.index.getNormalizedName()}, ?, ` +
-            (this.reverseOrder ? 'reverse' : 'natural') +
-            (this.useLimit ? ', limit:?' : '') +
-            (this.useSkip ? ', skip:?' : '') +
-            ')');
+        return (`index_range_scan(${this.index.getNormalizedName()}, ?, `
+            + (this.reverseOrder ? "reverse" : "natural")
+            + (this.useLimit ? ", limit:?" : "")
+            + (this.useSkip ? ", skip:?" : "")
+            + ")");
     }
     toContextString(context) {
         let results = this.toString();
         const keyRanges = this.keyRangeCalculator.getKeyRangeCombinations(context);
-        results = results.replace('?', keyRanges.toString());
+        results = results.replace("?", keyRanges.toString());
         if (this.useLimit) {
-            results = results.replace('?', context.limit.toString());
+            results = results.replace("?", context.limit.toString());
         }
         if (this.useSkip) {
-            results = results.replace('?', context.skip.toString());
+            results = results.replace("?", context.skip.toString());
         }
         return results;
     }
@@ -21966,46 +7672,30 @@ class IndexRangeScanStep extends PhysicalQueryPlanNode {
         const keyRanges = this.keyRangeCalculator.getKeyRangeCombinations(context);
         const index = this.indexStore.get(this.index.getNormalizedName());
         let rowIds;
-        if (keyRanges.length === 1 &&
-            keyRanges[0] instanceof SingleKeyRange &&
-            keyRanges[0].isOnly()) {
+        if (keyRanges.length === 1
+            && keyRanges[0] instanceof SingleKeyRange
+            && keyRanges[0].isOnly()) {
             rowIds = IndexHelper.slice(index.get(keyRanges[0].from), false, // Single key will never reverse order.
-                this.useLimit ? context.limit : undefined, this.useSkip ? context.skip : undefined);
+            this.useLimit ? context.limit : undefined, this.useSkip ? context.skip : undefined);
         }
         else {
             rowIds = index.getRange(keyRanges, this.reverseOrder, this.useLimit ? context.limit : undefined, this.useSkip ? context.skip : undefined);
         }
-        const rows = rowIds.map(rowId => new Row(rowId, {}));
+        const rows = rowIds.map((rowId) => new Row(rowId, {}));
         return [Relation.fromRows(rows, [this.index.tableName])];
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class SelectStep extends PhysicalQueryPlanNode {
     constructor(predicateId) {
         super(1, ExecType.FIRST_CHILD);
         this.predicateId = predicateId;
     }
     toString() {
-        return 'select(?)';
+        return "select(?)";
     }
     toContextString(context) {
         const predicate = context.getPredicate(this.predicateId);
-        return this.toString().replace('?', predicate.toString());
+        return this.toString().replace("?", predicate.toString());
     }
     execInternal(relations, journal, context) {
         // context must be provided for SelectStep.
@@ -22013,22 +7703,6 @@ class SelectStep extends PhysicalQueryPlanNode {
         return [predicate.eval(relations[0])];
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class TableAccessByRowIdStep extends PhysicalQueryPlanNode {
     constructor(global, table) {
         super(1, ExecType.FIRST_CHILD);
@@ -22038,34 +7712,14 @@ class TableAccessByRowIdStep extends PhysicalQueryPlanNode {
     toString() {
         return `table_access_by_row_id(${this.table.getName()})`;
     }
-    execInternal(relations,
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        journal,
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        ctx) {
+    execInternal(relations, journal, ctx) {
         return [
             Relation.fromRows(this.cache.getMany(relations[0].getRowIds()), [
-                this.table.getEffectiveName(),
-            ]),
+                this.table.getEffectiveName()
+            ])
         ];
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 //  An optimization pass that detects if there are any indices that can be used
 // in order to avoid full table scan.
 class IndexRangeScanPass extends RewritePass {
@@ -22075,14 +7729,14 @@ class IndexRangeScanPass extends RewritePass {
     }
     rewrite(rootNode, queryContext) {
         this.rootNode = rootNode;
-        const tableAccessFullSteps = TreeHelper.find(rootNode, node => node instanceof TableAccessFullStep);
-        tableAccessFullSteps.forEach(tableAccessFullStep => {
+        const tableAccessFullSteps = TreeHelper.find(rootNode, (node) => node instanceof TableAccessFullStep);
+        tableAccessFullSteps.forEach((tableAccessFullStep) => {
             const selectStepsCandidates = this.findSelectSteps(tableAccessFullStep);
             if (selectStepsCandidates.length === 0) {
                 return;
             }
             const costEstimator = new IndexCostEstimator(this.global, tableAccessFullStep.table);
-            const indexRangeCandidate = costEstimator.chooseIndexFor(queryContext, selectStepsCandidates.map(c => queryContext.getPredicate(c.predicateId)));
+            const indexRangeCandidate = costEstimator.chooseIndexFor(queryContext, selectStepsCandidates.map((c) => queryContext.getPredicate(c.predicateId)));
             if (indexRangeCandidate === null) {
                 // No SelectStep could be optimized for this table.
                 return;
@@ -22091,7 +7745,7 @@ class IndexRangeScanPass extends RewritePass {
             // the predicates that can be replaced by an index-range scan can be
             // mapped back to SelectStep nodes.
             const predicateToSelectStepMap = new Map();
-            selectStepsCandidates.forEach(selectStep => {
+            selectStepsCandidates.forEach((selectStep) => {
                 predicateToSelectStepMap.set(selectStep.predicateId, selectStep);
             }, this);
             this.rootNode = this.replaceWithIndexRangeScanStep(indexRangeCandidate, predicateToSelectStepMap, tableAccessFullStep);
@@ -22120,7 +7774,7 @@ class IndexRangeScanPass extends RewritePass {
     // TableAccessByRowIdStep.
     replaceWithIndexRangeScanStep(indexRangeCandidate, predicateToSelectStepMap, tableAccessFullStep) {
         const predicateIds = indexRangeCandidate.getPredicateIds();
-        const selectSteps = predicateIds.map(predicateId => {
+        const selectSteps = predicateIds.map((predicateId) => {
             return predicateToSelectStepMap.get(predicateId);
         });
         selectSteps.forEach(TreeHelper.removeNode);
@@ -22131,22 +7785,6 @@ class IndexRangeScanPass extends RewritePass {
         return indexRangeScanStep.getRoot();
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class InsertStep extends PhysicalQueryPlanNode {
     constructor(global, table) {
         super(0, ExecType.NO_CHILD);
@@ -22162,7 +7800,7 @@ class InsertStep extends PhysicalQueryPlanNode {
             const index = indexStore.get(pkIndexSchema.getNormalizedName());
             const max = index.stats().maxKeyEncountered;
             let maxKey = max === null ? 0 : max;
-            values.forEach(row => {
+            values.forEach((row) => {
                 // A value of 0, null or undefined indicates that a primary key should
                 // automatically be assigned.
                 const val = row.payload()[pkColumnName];
@@ -22183,22 +7821,6 @@ class InsertStep extends PhysicalQueryPlanNode {
         return [Relation.fromRows(values, [this.table.getName()])];
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class InsertOrReplaceStep extends PhysicalQueryPlanNode {
     constructor(global, table) {
         super(0, ExecType.NO_CHILD);
@@ -22215,31 +7837,15 @@ class InsertOrReplaceStep extends PhysicalQueryPlanNode {
         return [Relation.fromRows(queryContext.values, [this.table.getName()])];
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class LimitStep extends PhysicalQueryPlanNode {
     constructor() {
         super(1, ExecType.FIRST_CHILD);
     }
     toString() {
-        return 'limit(?)';
+        return "limit(?)";
     }
     toContextString(context) {
-        return this.toString().replace('?', context.limit.toString());
+        return this.toString().replace("?", context.limit.toString());
     }
     execInternal(relations, journal, context) {
         // opt_context must be provided for LimitStep.
@@ -22247,22 +7853,6 @@ class LimitStep extends PhysicalQueryPlanNode {
         return relations;
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class OrderByStep extends PhysicalQueryPlanNode {
     constructor(orderBy) {
         super(PhysicalQueryPlanNode.ANY, ExecType.FIRST_CHILD);
@@ -22271,19 +7861,13 @@ class OrderByStep extends PhysicalQueryPlanNode {
     toString() {
         return `order_by(${SelectContext.orderByToString(this.orderBy)})`;
     }
-    execInternal(relations,
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        journal,
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        context) {
+    execInternal(relations, journal, context) {
         if (relations.length === 1) {
             const distinctColumn = this.findDistinctColumn(relations[0]);
             // If such a column exists, sort the results of the lf.fn.distinct
             // aggregator instead, since this is what will be used in the returned
             // result.
-            const relationToSort = distinctColumn === null
-                ? relations[0]
-                : relations[0].getAggregationResult(distinctColumn);
+            const relationToSort = distinctColumn === null ? relations[0] : relations[0].getAggregationResult(distinctColumn);
             relationToSort.entries.sort(this.entryComparatorFn.bind(this));
         }
         else {
@@ -22296,7 +7880,7 @@ class OrderByStep extends PhysicalQueryPlanNode {
     // aggregated with lf.fn.distinct (if any).
     findDistinctColumn(relation) {
         let distinctColumn = null;
-        this.orderBy.every(entry => {
+        this.orderBy.every((entry) => {
             const tempDistinctColumn = fn.distinct(entry.column);
             if (relation.hasAggregationResult(tempDistinctColumn)) {
                 distinctColumn = tempDistinctColumn;
@@ -22319,8 +7903,8 @@ class OrderByStep extends PhysicalQueryPlanNode {
             order = this.orderBy[comparisonIndex].order;
             leftPayload = getLeftPayload(column);
             rightPayload = getRightPayload(column);
-        } while (leftPayload === rightPayload &&
-            comparisonIndex + 1 < this.orderBy.length);
+        } while (leftPayload === rightPayload
+            && comparisonIndex + 1 < this.orderBy.length);
         let result = leftPayload < rightPayload ? -1 : leftPayload > rightPayload ? 1 : 0;
         result = order === Order.ASC ? result : -result;
         return result;
@@ -22330,42 +7914,22 @@ class OrderByStep extends PhysicalQueryPlanNode {
         // here, and binding it once to lhs and once to rhs, because it turns out
         // that Function.bind() is significantly hurting performance (measured on
         // Chrome 40).
-        return this.comparator(column => lhs.getField(column), column => rhs.getField(column));
+        return this.comparator((column) => lhs.getField(column), (column) => rhs.getField(column));
     }
     relationComparatorFn(lhs, rhs) {
         // NOTE: See NOTE in entryComparatorFn_ on why two separate functions are
         // passed in this.comparator_ instead of using one method and binding to lhs
         // and to rhs respectively.
-        return this.comparator(column => {
+        return this.comparator((column) => {
             // If relations are sorted based on a non-aggregated column, choose
             // the last entry of each relation as a representative row (same as
             // SQLite).
-            return (column instanceof AggregatedColumn
-                ? lhs.getAggregationResult(column)
-                : lhs.entries[lhs.entries.length - 1].getField(column));
-        }, column => {
-            return (column instanceof AggregatedColumn
-                ? rhs.getAggregationResult(column)
-                : rhs.entries[rhs.entries.length - 1].getField(column));
+            return (column instanceof AggregatedColumn ? lhs.getAggregationResult(column) : lhs.entries[lhs.entries.length - 1].getField(column));
+        }, (column) => {
+            return (column instanceof AggregatedColumn ? rhs.getAggregationResult(column) : rhs.entries[rhs.entries.length - 1].getField(column));
         });
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class RelationTransformer {
     constructor(relation, columns) {
         this.relation = relation;
@@ -22377,7 +7941,7 @@ class RelationTransformer {
     // |relations|: The relations to be transformed.
     // |columns|: The columns to include in the transformed relation.
     static transformMany(relations, columns) {
-        const entries = relations.map(relation => {
+        const entries = relations.map((relation) => {
             const relationTransformer = new RelationTransformer(relation, columns);
             const singleEntryRelation = relationTransformer.getTransformed();
             return singleEntryRelation.entries[0];
@@ -22389,20 +7953,18 @@ class RelationTransformer {
     // aggregate and non-aggregate mixed up).
     getTransformed() {
         // Determine whether any aggregated columns have been requested.
-        const aggregatedColumnsExist = this.columns.some(column => column instanceof AggregatedColumn);
-        return aggregatedColumnsExist
-            ? this.handleAggregatedColumns()
-            : this.handleNonAggregatedColumns();
+        const aggregatedColumnsExist = this.columns.some((column) => column instanceof AggregatedColumn);
+        return aggregatedColumnsExist ? this.handleAggregatedColumns() : this.handleNonAggregatedColumns();
     }
     // Generates the transformed relation for the case where the requested columns
     // include any aggregated columns.
     handleAggregatedColumns() {
         // If the only aggregator that was used was DISTINCT, return the relation
         // corresponding to it.
-        if (this.columns.length === 1 &&
-            this.columns[0].aggregatorType === FnType.DISTINCT) {
+        if (this.columns.length === 1
+            && this.columns[0].aggregatorType === FnType.DISTINCT) {
             const distinctRelation = this.relation.getAggregationResult(this.columns[0]);
-            const newEntries = distinctRelation.entries.map(e => {
+            const newEntries = distinctRelation.entries.map((e) => {
                 const newEntry = new RelationEntry(new Row(Row.DUMMY_ID, {}), this.relation.isPrefixApplied());
                 newEntry.setField(this.columns[0], e.getField(this.columns[0].child));
                 return newEntry;
@@ -22412,10 +7974,8 @@ class RelationTransformer {
         // Generate a new relation where there is only one entry, and within that
         // entry there is exactly one field per column.
         const entry = new RelationEntry(new Row(Row.DUMMY_ID, {}), this.relation.isPrefixApplied());
-        this.columns.forEach(column => {
-            const value = column instanceof AggregatedColumn
-                ? this.relation.getAggregationResult(column)
-                : this.relation.entries[0].getField(column);
+        this.columns.forEach((column) => {
+            const value = column instanceof AggregatedColumn ? this.relation.getAggregationResult(column) : this.relation.entries[0].getField(column);
             entry.setField(column, value);
         }, this);
         return new Relation([entry], this.relation.getTables());
@@ -22429,29 +7989,13 @@ class RelationTransformer {
         const isPrefixApplied = this.relation.isPrefixApplied();
         this.relation.entries.forEach((entry, index) => {
             transformedEntries[index] = new RelationEntry(new Row(entry.row.id(), {}), isPrefixApplied);
-            this.columns.forEach(column => {
+            this.columns.forEach((column) => {
                 transformedEntries[index].setField(column, entry.getField(column));
             }, this);
         }, this);
         return new Relation(transformedEntries, this.relation.getTables());
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class ProjectStep extends PhysicalQueryPlanNode {
     constructor(columns, groupByColumns) {
         super(PhysicalQueryPlanNode.ANY, ExecType.FIRST_CHILD);
@@ -22459,20 +8003,16 @@ class ProjectStep extends PhysicalQueryPlanNode {
         this.groupByColumns = groupByColumns;
     }
     toString() {
-        let postfix = '';
+        let postfix = "";
         if (this.groupByColumns) {
             const groupBy = this.groupByColumns
-                .map(col => col.getNormalizedName())
-                .join(', ');
+                .map((col) => col.getNormalizedName())
+                .join(", ");
             postfix = `, groupBy(${groupBy})`;
         }
         return `project(${this.columns.toString()}${postfix})`;
     }
-    execInternal(relations,
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        journal,
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        context) {
+    execInternal(relations, journal, context) {
         if (relations.length === 0) {
             return [Relation.createEmpty()];
         }
@@ -22486,7 +8026,7 @@ class ProjectStep extends PhysicalQueryPlanNode {
     // Returns whether any aggregators (either columns or groupBy) have been
     // specified.
     hasAggregators() {
-        const hasAggregators = this.columns.some(column => {
+        const hasAggregators = this.columns.some((column) => {
             return column instanceof AggregatedColumn;
         });
         return hasAggregators || this.groupByColumns !== null;
@@ -22504,54 +8044,22 @@ class ProjectStep extends PhysicalQueryPlanNode {
         return relationTransformer.getTransformed();
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class SkipStep extends PhysicalQueryPlanNode {
     constructor() {
         super(1, ExecType.FIRST_CHILD);
     }
     toString() {
-        return 'skip(?)';
+        return "skip(?)";
     }
     toContextString(context) {
-        return this.toString().replace('?', context.skip.toString());
+        return this.toString().replace("?", context.skip.toString());
     }
     execInternal(relations, journal, context) {
         return [
-            new Relation(relations[0].entries.slice(context.skip), relations[0].getTables()),
+            new Relation(relations[0].entries.slice(context.skip), relations[0].getTables())
         ];
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class LimitSkipByIndexPass extends RewritePass {
     constructor() {
         super();
@@ -22566,8 +8074,8 @@ class LimitSkipByIndexPass extends RewritePass {
             // No IndexRangeScanStep that can be leveraged was found.
             return rootNode;
         }
-        const nodes = TreeHelper.find(rootNode, node => node instanceof LimitStep || node instanceof SkipStep);
-        nodes.forEach(node => {
+        const nodes = TreeHelper.find(rootNode, (node) => node instanceof LimitStep || node instanceof SkipStep);
+        nodes.forEach((node) => {
             this.mergeToIndexRangeScanStep(node, indexRangeScanStep);
         }, this);
         return indexRangeScanStep.getRoot();
@@ -22597,49 +8105,29 @@ class LimitSkipByIndexPass extends RewritePass {
         // not be applied.
         const stopFn = (node) => {
             const hasAggregators = node instanceof ProjectStep && node.hasAggregators();
-            return (hasAggregators ||
-                node instanceof OrderByStep ||
-                node.getChildCount() !== 1 ||
-                node instanceof SelectStep);
+            return (hasAggregators
+                || node instanceof OrderByStep
+                || node.getChildCount() !== 1
+                || node instanceof SelectStep);
         };
         const indexRangeScanSteps = TreeHelper.find(rootNode, filterFn, stopFn);
         return indexRangeScanSteps.length > 0 ? indexRangeScanSteps[0] : null;
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class MultiIndexRangeScanStep extends PhysicalQueryPlanNode {
     constructor() {
         super(PhysicalQueryPlanNode.ANY, ExecType.ALL);
     }
     toString() {
-        return 'multi_index_range_scan()';
+        return "multi_index_range_scan()";
     }
-    execInternal(relations,
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        journal,
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        ctx) {
+    execInternal(relations, journal, ctx) {
         // Calculate a new Relation that includes the union of the entries of all
         // relations. All child relations must be including rows from the same
         // table.
         const entriesUnion = new Map();
-        relations.forEach(relation => {
-            relation.entries.forEach(entry => {
+        relations.forEach((relation) => {
+            relation.entries.forEach((entry) => {
                 entriesUnion.set(entry.row.id(), entry);
             });
         });
@@ -22647,22 +8135,6 @@ class MultiIndexRangeScanStep extends PhysicalQueryPlanNode {
         return [new Relation(entries, relations[0].getTables())];
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 // An optimization pass that detects if there are any OR predicates that
 // 1) Refer to a single table.
 // 2) Refer to multiple columns.
@@ -22713,16 +8185,16 @@ class MultiColumnOrPass extends RewritePass {
                 return false;
             }
             const predicate = queryContext.getPredicate(node.predicateId);
-            return (predicate instanceof CombinedPredicate &&
-                predicate.operator === Operator.OR);
+            return (predicate instanceof CombinedPredicate
+                && predicate.operator === Operator.OR);
         };
         return TreeHelper.find(this.rootNode, filterFn);
     }
     // Find the table access step corresponding to the given table, or null if
     // such a step does not exist.
     findTableAccessFullStep(tableName) {
-        return (TreeHelper.find(this.rootNode, node => node instanceof TableAccessFullStep &&
-            node.table.getName() === tableName)[0] || null);
+        return (TreeHelper.find(this.rootNode, (node) => node instanceof TableAccessFullStep
+            && node.table.getName() === tableName)[0] || null);
     }
     // Returns the IndexRangeCandidates corresponding to the given multi-column
     // OR predicate. Null is returned if no indices can be leveraged for the
@@ -22738,12 +8210,10 @@ class MultiColumnOrPass extends RewritePass {
         const tableSchema = Array.from(tables.values())[0];
         const indexCostEstimator = new IndexCostEstimator(this.global, tableSchema);
         let indexRangeCandidates = null;
-        const allIndexed = predicate.getChildren().every(childPredicate => {
+        const allIndexed = predicate.getChildren().every((childPredicate) => {
             const indexRangeCandidate = indexCostEstimator.chooseIndexFor(queryContext, [childPredicate]);
             if (indexRangeCandidate !== null) {
-                indexRangeCandidates === null
-                    ? (indexRangeCandidates = [indexRangeCandidate])
-                    : indexRangeCandidates.push(indexRangeCandidate);
+                indexRangeCandidates === null ? indexRangeCandidates = [indexRangeCandidate] : indexRangeCandidates.push(indexRangeCandidate);
             }
             return indexRangeCandidate !== null;
         });
@@ -22755,7 +8225,7 @@ class MultiColumnOrPass extends RewritePass {
         const tableAccessByRowIdStep = new TableAccessByRowIdStep(this.global, tableAccessFullStep.table);
         const multiIndexRangeScanStep = new MultiIndexRangeScanStep();
         tableAccessByRowIdStep.addChild(multiIndexRangeScanStep);
-        indexRangeCandidates.forEach(candidate => {
+        indexRangeCandidates.forEach((candidate) => {
             const indexRangeScanStep = new IndexRangeScanStep(this.global, candidate.indexSchema, candidate.getKeyRangeCalculator(), false /* reverseOrder */);
             multiIndexRangeScanStep.addChild(indexRangeScanStep);
         }, this);
@@ -22764,50 +8234,14 @@ class MultiColumnOrPass extends RewritePass {
         return multiIndexRangeScanStep.getRoot();
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class UnboundedKeyRangeCalculator {
     constructor(indexSchema) {
         this.indexSchema = indexSchema;
     }
-    getKeyRangeCombinations(
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        queryContext) {
-        return this.indexSchema.columns.length === 1
-            ? [SingleKeyRange.all()]
-            : [this.indexSchema.columns.map(col => SingleKeyRange.all())];
+    getKeyRangeCombinations(queryContext) {
+        return this.indexSchema.columns.length === 1 ? [SingleKeyRange.all()] : [this.indexSchema.columns.map((col) => SingleKeyRange.all())];
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 // The OrderByIndexPass is responsible for modifying a tree that has a
 // OrderByStep node to an equivalent tree that leverages indices to perform
 // sorting.
@@ -22889,7 +8323,7 @@ class OrderByIndexPass extends RewritePass {
             // No ORDER BY exists.
             return null;
         }
-        return TreeHelper.find(rootNode, node => node instanceof OrderByStep)[0];
+        return TreeHelper.find(rootNode, (node) => node instanceof OrderByStep)[0];
     }
     findIndexCandidateForOrderBy(tableSchema, orderBy) {
         let indexCandidate = null;
@@ -22904,8 +8338,8 @@ class OrderByIndexPass extends RewritePass {
     getIndexCandidateForIndexSchema(indexSchema, orderBy) {
         // First find an index schema which includes all columns to be sorted in the
         // same order.
-        const columnsMatch = indexSchema.columns.length === orderBy.length &&
-            orderBy.every((singleOrderBy, j) => {
+        const columnsMatch = indexSchema.columns.length === orderBy.length
+            && orderBy.every((singleOrderBy, j) => {
                 const indexedColumn = indexSchema.columns[j];
                 return (singleOrderBy.column.getName() === indexedColumn.schema.getName());
             });
@@ -22919,8 +8353,8 @@ class OrderByIndexPass extends RewritePass {
             return null;
         }
         return {
-            indexSchema,
-            isReverse: isNaturalOrReverse[1],
+            "indexSchema": indexSchema,
+            "isReverse": isNaturalOrReverse[1]
         };
     }
     // Compares the order of each column in the orderBy and the indexSchema and
@@ -22931,35 +8365,19 @@ class OrderByIndexPass extends RewritePass {
     checkOrder(orderBy, indexSchema) {
         // Converting orderBy orders to a bitmask.
         const ordersLeftBitmask = orderBy.reduce((soFar, columnOrderBy) => {
-            return (soFar << 1) | (columnOrderBy.order === Order.DESC ? 0 : 1);
+            return soFar << 1 | (columnOrderBy.order === Order.DESC ? 0 : 1);
         }, 0);
         // Converting indexSchema orders to a bitmask.
         const ordersRightBitmask = indexSchema.columns.reduce((soFar, indexedColumn) => {
-            return (soFar << 1) | (indexedColumn.order === Order.DESC ? 0 : 1);
+            return soFar << 1 | (indexedColumn.order === Order.DESC ? 0 : 1);
         }, 0);
         const xorBitmask = ordersLeftBitmask ^ ordersRightBitmask;
         const isNatural = xorBitmask === 0;
-        const isReverse = xorBitmask ===
-            Math.pow(2, Math.max(orderBy.length, indexSchema.columns.length)) - 1;
+        const isReverse = xorBitmask
+            === 2 ** Math.max(orderBy.length, indexSchema.columns.length) - 1;
         return [isNatural, isReverse];
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 // Rewrites the logical query plan such that the resulting physical query plan
 // is faster to calculate than the original "naive" plan.
 class PhysicalPlanRewriter {
@@ -22970,28 +8388,12 @@ class PhysicalPlanRewriter {
     }
     // Rewrites the physical plan.
     generate() {
-        this.rewritePasses.forEach(rewritePass => {
+        this.rewritePasses.forEach((rewritePass) => {
             this.rootNode = rewritePass.rewrite(this.rootNode, this.queryContext);
         }, this);
         return this.rootNode;
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class UpdateStep extends PhysicalQueryPlanNode {
     constructor(table) {
         super(1, ExecType.FIRST_CHILD);
@@ -23002,11 +8404,11 @@ class UpdateStep extends PhysicalQueryPlanNode {
     }
     execInternal(relations, journal, context) {
         const table = this.table;
-        const rows = relations[0].entries.map(entry => {
+        const rows = relations[0].entries.map((entry) => {
             // Need to clone the row here before modifying it, because it is a
             // direct reference to the cache's contents.
             const clone = table.deserializeRow(entry.row.serialize());
-            context.set.forEach(update => {
+            context.set.forEach((update) => {
                 clone.payload()[update.column.getName()] = update.value;
             }, this);
             return clone;
@@ -23015,22 +8417,6 @@ class UpdateStep extends PhysicalQueryPlanNode {
         return [Relation.createEmpty()];
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class PhysicalPlanFactory {
     constructor(global) {
         this.global = global;
@@ -23040,23 +8426,23 @@ class PhysicalPlanFactory {
             new MultiColumnOrPass(global),
             new OrderByIndexPass(global),
             new LimitSkipByIndexPass(),
-            new GetRowCountPass(global),
+            new GetRowCountPass(global)
         ];
         this.deleteOptimizationPasses = [new IndexRangeScanPass(global)];
     }
     create(logicalQueryPlan, queryContext) {
         const logicalQueryPlanRoot = logicalQueryPlan.getRoot();
-        if (logicalQueryPlanRoot instanceof InsertOrReplaceNode ||
-            logicalQueryPlanRoot instanceof InsertNode) {
+        if (logicalQueryPlanRoot instanceof InsertOrReplaceNode
+            || logicalQueryPlanRoot instanceof InsertNode) {
             return this.createPlan(logicalQueryPlan, queryContext);
         }
-        if (logicalQueryPlanRoot instanceof ProjectNode ||
-            logicalQueryPlanRoot instanceof LimitNode ||
-            logicalQueryPlanRoot instanceof SkipNode) {
+        if (logicalQueryPlanRoot instanceof ProjectNode
+            || logicalQueryPlanRoot instanceof LimitNode
+            || logicalQueryPlanRoot instanceof SkipNode) {
             return this.createPlan(logicalQueryPlan, queryContext, this.selectOptimizationPasses);
         }
-        if (logicalQueryPlanRoot instanceof DeleteNode ||
-            logicalQueryPlanRoot instanceof UpdateNode) {
+        if (logicalQueryPlanRoot instanceof DeleteNode
+            || logicalQueryPlanRoot instanceof UpdateNode) {
             return this.createPlan(logicalQueryPlan, queryContext, this.deleteOptimizationPasses);
         }
         // Should never get here since all cases are handled above.
@@ -23120,22 +8506,6 @@ class PhysicalPlanFactory {
         throw new Exception(ErrorCode.UNKNOWN_NODE_TYPE);
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class DefaultQueryEngine {
     constructor(global) {
         this.logicalPlanFactory = new LogicalPlanFactory();
@@ -23146,22 +8516,6 @@ class DefaultQueryEngine {
         return this.physicalPlanFactory.create(logicalQueryPlan, query);
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class ExportTask extends UniqueId {
     constructor(global) {
         super();
@@ -23175,15 +8529,16 @@ class ExportTask extends UniqueId {
         const indexStore = this.global.getService(Service.INDEX_STORE);
         const cache = this.global.getService(Service.CACHE);
         const tables = {};
-        this.schema.tables().forEach(table => {
-            const rowIds = indexStore.get(table.getRowIdIndexName()).getRange();
-            const payloads = cache.getMany(rowIds).map(row => row.payload());
+        this.schema.tables().forEach((table) => {
+            const rowIds = indexStore.get(table.getRowIdIndexName())
+                .getRange();
+            const payloads = cache.getMany(rowIds).map((row) => row.payload());
             tables[table.getName()] = payloads;
         });
         return {
-            name: this.schema.name(),
-            tables,
-            version: this.schema.version(),
+            "name": this.schema.name(),
+            "tables": tables,
+            "version": this.schema.version()
         };
     }
     exec() {
@@ -23207,22 +8562,6 @@ class ExportTask extends UniqueId {
         return TaskPriority.EXPORT_TASK;
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 // Imports table/rows from given JavaScript object to an empty database.
 class ImportTask extends UniqueId {
     constructor(global, data) {
@@ -23246,12 +8585,12 @@ class ImportTask extends UniqueId {
             // 110: Attempt to import into a non-empty database.
             throw new Exception(ErrorCode.IMPORT_TO_NON_EMPTY_DB);
         }
-        if (this.schema.name() !== this.data['name'] ||
-            this.schema.version() !== this.data['version']) {
+        if (this.schema.name() !== this.data["name"]
+            || this.schema.version() !== this.data["version"]) {
             // 111: Database name/version mismatch for import.
             throw new Exception(ErrorCode.DB_MISMATCH);
         }
-        if (this.data['tables'] === undefined || this.data['tables'] === null) {
+        if (this.data["tables"] === undefined || this.data["tables"] === null) {
             // 112: Import data not found.
             throw new Exception(ErrorCode.IMPORT_DATA_NOT_FOUND);
         }
@@ -23273,7 +8612,7 @@ class ImportTask extends UniqueId {
         return TaskPriority.IMPORT_TASK;
     }
     isEmptyDB() {
-        return this.schema.tables().every(t => {
+        return this.schema.tables().every((t) => {
             const table = t;
             const index = this.indexStore.get(table.getRowIdIndexName());
             if (index.stats().totalRows > 0) {
@@ -23285,15 +8624,15 @@ class ImportTask extends UniqueId {
     import() {
         const journal = new Journal(this.global, this.scope);
         const tx = this.backStore.createTx(this.getType(), Array.from(this.scope.values()), journal);
-        Object.keys(this.data['tables']).forEach(tableName => {
+        Object.keys(this.data["tables"]).forEach((tableName) => {
             const tableSchema = this.schema.table(tableName);
-            const payloads = this.data['tables'][tableName];
+            const payloads = this.data["tables"][tableName];
             const rows = payloads.map((value) => tableSchema.createRow(value));
             const table = tx.getTable(tableName, tableSchema.deserializeRow, TableType.DATA);
             this.cache.setMany(tableName, rows);
             const indices = this.indexStore.getTableIndices(tableName);
-            rows.forEach(row => {
-                indices.forEach(index => {
+            rows.forEach((row) => {
+                indices.forEach((index) => {
                     const key = row.keyOfIndex(index.getName());
                     index.add(key, row.id());
                 });
@@ -23303,22 +8642,6 @@ class ImportTask extends UniqueId {
         return tx.commit();
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class LockTableEntry {
     constructor() {
         this.exclusiveLock = null;
@@ -23341,30 +8664,30 @@ class LockTableEntry {
         }
     }
     canAcquireLock(taskId, lockType) {
-        const noReservedReadOnlyLocksExist = this.reservedReadOnlyLocks === null ||
-            this.reservedReadOnlyLocks.size === 0;
+        const noReservedReadOnlyLocksExist = this.reservedReadOnlyLocks === null
+            || this.reservedReadOnlyLocks.size === 0;
         if (lockType === LockType.EXCLUSIVE) {
             const noSharedLocksExist = this.sharedLocks === null || this.sharedLocks.size === 0;
-            return (noSharedLocksExist &&
-                noReservedReadOnlyLocksExist &&
-                this.exclusiveLock === null &&
-                this.reservedReadWriteLock !== null &&
-                this.reservedReadWriteLock === taskId);
+            return (noSharedLocksExist
+                && noReservedReadOnlyLocksExist
+                && this.exclusiveLock === null
+                && this.reservedReadWriteLock !== null
+                && this.reservedReadWriteLock === taskId);
         }
         else if (lockType === LockType.SHARED) {
-            return (this.exclusiveLock === null &&
-                this.reservedReadWriteLock === null &&
-                this.reservedReadOnlyLocks !== null &&
-                this.reservedReadOnlyLocks.has(taskId));
+            return (this.exclusiveLock === null
+                && this.reservedReadWriteLock === null
+                && this.reservedReadOnlyLocks !== null
+                && this.reservedReadOnlyLocks.has(taskId));
         }
         else if (lockType === LockType.RESERVED_READ_ONLY) {
             return this.reservedReadWriteLock === null;
         }
         else {
             // case of lockType == lf.proc.LockType.RESERVED_READ_WRITE
-            return (noReservedReadOnlyLocksExist &&
-                (this.reservedReadWriteLock === null ||
-                    this.reservedReadWriteLock === taskId));
+            return (noReservedReadOnlyLocksExist
+                && (this.reservedReadWriteLock === null
+                    || this.reservedReadWriteLock === taskId));
         }
     }
     grantLock(taskId, lockType) {
@@ -23397,22 +8720,6 @@ class LockTableEntry {
         }
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 // LockManager is responsible for granting locks to tasks. Each lock corresponds
 // to a database table.
 //
@@ -23446,13 +8753,13 @@ class LockManager {
         return canAcquireLock;
     }
     releaseLock(taskId, dataItems) {
-        dataItems.forEach(dataItem => this.getEntry(dataItem).releaseLock(taskId));
+        dataItems.forEach((dataItem) => { this.getEntry(dataItem).releaseLock(taskId); });
     }
     // Removes any reserved locks for the given data items. This is needed in
     // order to prioritize a taskId higher than a taskId that already holds a
     // reserved lock.
     clearReservedLocks(dataItems) {
-        dataItems.forEach(dataItem => (this.getEntry(dataItem).reservedReadWriteLock = null));
+        dataItems.forEach((dataItem) => this.getEntry(dataItem).reservedReadWriteLock = null);
     }
     getEntry(dataItem) {
         let lockTableEntry = this.lockTable.get(dataItem.getName()) || null;
@@ -23463,11 +8770,11 @@ class LockManager {
         return lockTableEntry;
     }
     grantLock(taskId, dataItems, lockType) {
-        dataItems.forEach(dataItem => this.getEntry(dataItem).grantLock(taskId, lockType));
+        dataItems.forEach((dataItem) => { this.getEntry(dataItem).grantLock(taskId, lockType); });
     }
     canAcquireLock(taskId, dataItems, lockType) {
         let canAcquireLock = true;
-        dataItems.forEach(dataItem => {
+        dataItems.forEach((dataItem) => {
             if (canAcquireLock) {
                 const lockTableEntry = this.getEntry(dataItem);
                 canAcquireLock = lockTableEntry.canAcquireLock(taskId, lockType);
@@ -23476,22 +8783,6 @@ class LockManager {
         return canAcquireLock;
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class TaskQueue {
     constructor() {
         this.queue = [];
@@ -23517,22 +8808,6 @@ class TaskQueue {
         return i >= 0;
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 // Query/Transaction runner which actually runs the query in a transaction
 // (either implicit or explicit) on the back store.
 class Runner {
@@ -23542,8 +8817,8 @@ class Runner {
     }
     // Schedules a task for this runner.
     scheduleTask(task) {
-        if (task.getPriority() < TaskPriority.USER_QUERY_TASK ||
-            task.getPriority() < TaskPriority.TRANSACTION_TASK) {
+        if (task.getPriority() < TaskPriority.USER_QUERY_TASK
+            || task.getPriority() < TaskPriority.TRANSACTION_TASK) {
             // Any priority that is higher than USER_QUERY_TASK or TRANSACTION_TASK is
             // considered a "high" priority task and all held reserved locks should be
             // cleared to allow it to execute.
@@ -23557,7 +8832,7 @@ class Runner {
     // account the scope of each task and the currently occupied scopes.
     consumePending() {
         const queue = this.queue.getValues();
-        queue.forEach(task => {
+        queue.forEach((task) => {
             // Note: Iterating on a shallow copy of this.queue_, because this.queue_
             // will be modified during iteration and therefore iterating on
             // this.queue_ would not guarantee that every task in the queue will be
@@ -23608,26 +8883,10 @@ class Runner {
         this.consumePending();
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 // The following states represent the life cycle of a transaction. These states
 // are exclusive meaning that a tx can be only on one state at a given time.
 var TransactionState;
-(function(TransactionState) {
+(function (TransactionState) {
     TransactionState[TransactionState["CREATED"] = 0] = "CREATED";
     TransactionState[TransactionState["ACQUIRING_SCOPE"] = 1] = "ACQUIRING_SCOPE";
     TransactionState[TransactionState["ACQUIRED_SCOPE"] = 2] = "ACQUIRED_SCOPE";
@@ -23663,22 +8922,6 @@ class StateTransition {
         return this.map.getSet(current);
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 // A TransactionTask is used when the user explicitly starts a transaction and
 // can execute queries within this transaction at will. A TransactionTask is
 // posted to the Runner to ensure that all required locks have been acquired
@@ -23693,7 +8936,6 @@ class TransactionTask extends UniqueId {
         this.global = global;
         this.backStore = global.getService(Service.BACK_STORE);
         this.runner = global.getService(Service.RUNNER);
-        this.observerRegistry = global.getService(Service.OBSERVER_REGISTRY);
         this.scope = new Set(scope);
         this.journal = new Journal(this.global, this.scope);
         this.resolver = new Resolver();
@@ -23732,27 +8974,26 @@ class TransactionTask extends UniqueId {
         return taskItem.plan
             .getRoot()
             .exec(this.journal, taskItem.context)
-            .then(relations => {
-                return relations[0].getPayloads();
-            }, e => {
-                this.journal.rollback();
-                // Need to resolve execResolver here such that all locks acquired
-                // by this transaction task are eventually released and avoid
-                // unhandled rejected promise, which ends up in an unwanted
-                // exception showing up in the console.
-                this.execResolver.resolve();
-                // Rethrows e so that caller's catch and reject handler will have
-                // a chance to handle error instead of considering execution
-                // success.
-                throw e;
-            });
+            .then((relations) => {
+            return relations[0].getPayloads();
+        }, (e) => {
+            this.journal.rollback();
+            // Need to resolve execResolver here such that all locks acquired
+            // by this transaction task are eventually released and avoid
+            // unhandled rejected promise, which ends up in an unwanted
+            // exception showing up in the console.
+            this.execResolver.resolve();
+            // Rethrows e so that caller's catch and reject handler will have
+            // a chance to handle error instead of considering execution
+            // success.
+            throw e;
+        });
     }
     commit() {
         this.tx = this.backStore.createTx(this.getType(), Array.from(this.scope.values()), this.journal);
         this.tx.commit().then(() => {
-            this.scheduleObserverTask();
             this.execResolver.resolve();
-        }, e => {
+        }, (e) => {
             this.journal.rollback();
             this.execResolver.reject(e);
         });
@@ -23770,32 +9011,7 @@ class TransactionTask extends UniqueId {
         }
         return results === null ? TransactionStatsImpl.getDefault() : results;
     }
-    // Schedules an ObserverTask for any observed queries that need to be
-    // re-executed, if any.
-    scheduleObserverTask() {
-        const items = this.observerRegistry.getTaskItemsForTables(Array.from(this.scope.values()));
-        if (items.length !== 0) {
-            const observerTask = new ObserverQueryTask(this.global, items);
-            this.runner.scheduleTask(observerTask);
-        }
-    }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class RuntimeTransaction {
     constructor(global) {
         this.global = global;
@@ -23808,7 +9024,7 @@ class RuntimeTransaction {
         this.updateState(TransactionState.EXECUTING_AND_COMMITTING);
         const taskItems = [];
         try {
-            queryBuilders.forEach(queryBuilder => {
+            queryBuilders.forEach((queryBuilder) => {
                 queryBuilder.assertExecPreconditions();
                 taskItems.push(queryBuilder.getTaskItem());
             });
@@ -23818,10 +9034,10 @@ class RuntimeTransaction {
             return Promise.reject(e);
         }
         this.task = new UserQueryTask(this.global, taskItems);
-        return this.runner.scheduleTask(this.task).then(results => {
+        return this.runner.scheduleTask(this.task).then((results) => {
             this.updateState(TransactionState.FINALIZED);
-            return results.map(relation => relation.getPayloads());
-        }, e => {
+            return results.map((relation) => relation.getPayloads());
+        }, (e) => {
             this.updateState(TransactionState.FINALIZED);
             throw e;
         });
@@ -23831,7 +9047,7 @@ class RuntimeTransaction {
         this.task = new TransactionTask(this.global, scope);
         return this.task
             .acquireScope()
-            .then(() => this.updateState(TransactionState.ACQUIRED_SCOPE));
+            .then(() => { this.updateState(TransactionState.ACQUIRED_SCOPE); });
     }
     attach(query) {
         this.updateState(TransactionState.EXECUTING_QUERY);
@@ -23842,24 +9058,24 @@ class RuntimeTransaction {
             this.updateState(TransactionState.FINALIZED);
             return Promise.reject(e);
         }
-        return this.task.attachQuery(query).then(result => {
+        return this.task.attachQuery(query).then((result) => {
             this.updateState(TransactionState.ACQUIRED_SCOPE);
             return result;
-        }, e => {
+        }, (e) => {
             this.updateState(TransactionState.FINALIZED);
             throw e;
         });
     }
     commit() {
         this.updateState(TransactionState.COMMITTING);
-        return this.task.commit().then(res => {
+        return this.task.commit().then((res) => {
             this.updateState(TransactionState.FINALIZED);
             return res;
         });
     }
     rollback() {
         this.updateState(TransactionState.ROLLING_BACK);
-        return this.task.rollback().then(res => {
+        return this.task.rollback().then((res) => {
             this.updateState(TransactionState.FINALIZED);
             return res;
         });
@@ -23883,32 +9099,12 @@ class RuntimeTransaction {
         }
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class RuntimeDatabase {
     constructor(global) {
         this.global = global;
         this.schema = global.getService(Service.SCHEMA);
         // Whether this connection to the database is active.
         this.isActive = false;
-        // Observe external changes, set for non-local persistence storage.
-        // This was for Firebase but the TypeScript version does not support it.
-        // Kept to allow future integration with other cloud backend.
-        this.observeExternalChanges = false;
     }
     init(options) {
         // The SCHEMA might have been removed from this.global in the case where
@@ -23919,35 +9115,18 @@ class RuntimeDatabase {
         this.global.registerService(Service.BACK_STORE, backStore);
         const indexStore = new MemoryIndexStore();
         this.global.registerService(Service.INDEX_STORE, indexStore);
-        const onUpgrade = options ? options.onUpgrade : undefined;
         return backStore
-            .init(onUpgrade)
+            .init()
             .then(() => {
-                this.global.registerService(Service.QUERY_ENGINE, new DefaultQueryEngine(this.global));
-                this.runner = new Runner();
-                this.global.registerService(Service.RUNNER, this.runner);
-                this.global.registerService(Service.OBSERVER_REGISTRY, new ObserverRegistry());
-                return indexStore.init(this.schema);
-            })
+            this.global.registerService(Service.QUERY_ENGINE, new DefaultQueryEngine(this.global));
+            this.runner = new Runner();
+            this.global.registerService(Service.RUNNER, this.runner);
+            return indexStore.init(this.schema);
+        })
             .then(() => {
-                if (this.observeExternalChanges) {
-                    const externalChangeObserver = new ExternalChangeObserver(this.global);
-                    externalChangeObserver.startObserving();
-                }
-                if (options && options['enableInspector'] && window) {
-                    // Exposes a global '#lfExport' method, that can be used by the
-                    // Lovefield Inspector Devtools Chrome extension.
-                    window.top['#lfInspect'] = Inspector.inspect;
-                    // TypeScript port specific: this is needed for perf benchmark.
-                    window.top['#lfRowId'] = Row.getNextId;
-                }
-                const prefetcher = new Prefetcher(this.global);
-                return prefetcher.init(this.schema);
-            })
-            .then(() => {
-                this.isActive = true;
-                return this;
-            });
+            this.isActive = true;
+            return this;
+        });
     }
     getGlobal() {
         return this.global;
@@ -23975,16 +9154,6 @@ class RuntimeDatabase {
         this.checkActive();
         return new DeleteBuilder(this.global);
     }
-    observe(builder, callback) {
-        this.checkActive();
-        const observerRegistry = this.global.getService(Service.OBSERVER_REGISTRY);
-        observerRegistry.addObserver(builder, callback);
-    }
-    unobserve(builder, callback) {
-        this.checkActive();
-        const observerRegistry = this.global.getService(Service.OBSERVER_REGISTRY);
-        observerRegistry.removeObserver(builder, callback);
-    }
     createTransaction(type) {
         this.checkActive();
         return new RuntimeTransaction(this.global);
@@ -24003,7 +9172,7 @@ class RuntimeDatabase {
     export() {
         this.checkActive();
         const task = new ExportTask(this.global);
-        return this.runner.scheduleTask(task).then(results => {
+        return this.runner.scheduleTask(task).then((results) => {
             return results[0].getPayloads()[0];
         });
     }
@@ -24022,66 +9191,14 @@ class RuntimeDatabase {
         }
     }
     createBackStore(schema, options) {
-        let backStore;
-        if (Global.get().getOptions().memoryOnly) {
-            backStore = new Memory(schema);
-            return backStore;
-        }
-        let dataStoreType;
-        if (options === undefined || options.storeType === undefined) {
-            const capability = Capability.get();
-            dataStoreType = capability.indexedDb
-                ? DataStoreType.INDEXED_DB
-                : capability.webSql
-                    ? DataStoreType.WEB_SQL
-                    : DataStoreType.MEMORY;
-        }
-        else {
-            dataStoreType = options.storeType;
-        }
-        switch (dataStoreType) {
-            case DataStoreType.INDEXED_DB:
-                backStore = new IndexedDB(this.global, schema);
-                break;
-            case DataStoreType.MEMORY:
-                backStore = new Memory(schema);
-                break;
-            case DataStoreType.OBSERVABLE_STORE:
-                backStore = new ObservableStore(schema);
-                break;
-            case DataStoreType.WEB_SQL:
-                backStore = new WebSql(this.global, schema, options ? options.websqlDbSize : undefined);
-                break;
-            default:
-                // We no longer support FIREBASE.
-                // 300: Not supported.
-                throw new Exception(ErrorCode.NOT_SUPPORTED);
-        }
-        return backStore;
+        return new Memory(schema);
     }
 }
-
-/**
- * Copyright 2016 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class DatabaseSchemaImpl {
     constructor(_name, _version) {
         this._name = _name;
         this._version = _version;
         this.tableMap = new Map();
-        this._pragma = { enableBundledMode: false };
         // Lazy initialization
         this._info = undefined;
     }
@@ -24111,26 +9228,7 @@ class DatabaseSchemaImpl {
     setTable(table) {
         this.tableMap.set(table.getName(), table);
     }
-    pragma() {
-        return this._pragma;
-    }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class GraphNode {
     constructor(name) {
         this.name = name;
@@ -24139,26 +9237,10 @@ class GraphNode {
         this.edges = new Set();
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class ForeignKeySpec {
     constructor(rawSpec, childTable, name) {
         this.childTable = childTable;
-        const array = rawSpec.ref.split('.');
+        const array = rawSpec.ref.split(".");
         if (array.length !== 2) {
             // 540: Foreign key {0} has invalid reference syntax.
             throw new Exception(ErrorCode.INVALID_FK_REF, name);
@@ -24171,22 +9253,6 @@ class ForeignKeySpec {
         this.timing = rawSpec.timing || ConstraintTiming.IMMEDIATE;
     }
 }
-
-/**
- * Copyright 2016 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 function createPredicate(lhs, rhs, type) {
     // For the case of .eq(null).
     if (rhs === null) {
@@ -24199,22 +9265,6 @@ function createPredicate(lhs, rhs, type) {
     // Value predicate, which can be bounded or not.
     return new ValuePredicate(lhs, rhs, type);
 }
-
-/**
- * Copyright 2016 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class ColumnImpl {
     constructor(table, name, unique, nullable, type, alias) {
         this.table = table;
@@ -24251,9 +9301,9 @@ class ColumnImpl {
         return this.unique;
     }
     getIndices() {
-        this.table.getIndices().forEach(index => {
-            const colNames = index.columns.map(col => col.schema.getName());
-            if (colNames.indexOf(this.name) !== -1) {
+        this.table.getIndices().forEach((index) => {
+            const colNames = index.columns.map((col) => col.schema.getName());
+            if (colNames.includes(this.name)) {
                 this.indices.push(index);
             }
         });
@@ -24264,7 +9314,7 @@ class ColumnImpl {
         // skipped if this.index has been set to null by a previous execution of
         // getIndex().
         if (this.index === undefined) {
-            const indices = this.getIndices().filter(indexSchema => {
+            const indices = this.getIndices().filter((indexSchema) => {
                 if (indexSchema.columns.length !== 1) {
                     return false;
                 }
@@ -24272,8 +9322,8 @@ class ColumnImpl {
             });
             // Normally there should be only one dedicated index for this column,
             // but if there are more, just grab the first one.
-            this.index =
-                indices.length > 0 ? indices[0] : null;
+            this.index
+                = indices.length > 0 ? indices[0] : null;
         }
         return this.index;
     }
@@ -24314,22 +9364,6 @@ class ColumnImpl {
         return new ColumnImpl(this.table, this.name, this.unique, this.nullable, this.type, name);
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class Constraint {
     constructor(primaryKey, notNullable, foreignKeys) {
         this.primaryKey = primaryKey;
@@ -24346,22 +9380,6 @@ class Constraint {
         return this.foreignKeys;
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class IndexImpl {
     constructor(tableName, name, isUnique, columns) {
         this.tableName = tableName;
@@ -24377,22 +9395,6 @@ class IndexImpl {
         return this.columns.some((column) => column.schema.isNullable());
     }
 }
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class RowImpl extends Row {
     constructor(functionMap, columns, indices, id, payload) {
         super(id, payload);
@@ -24409,16 +9411,14 @@ class RowImpl extends Row {
             return null;
         }
         const obj = {};
-        this.columns.forEach(col => {
-            obj[col.getName()] = col.isNullable()
-                ? null
-                : DEFAULT_VALUES.get(col.getType());
+        this.columns.forEach((col) => {
+            obj[col.getName()] = col.isNullable() ? null : DEFAULT_VALUES.get(col.getType());
         });
         return obj;
     }
     toDbPayload() {
         const obj = {};
-        this.columns.forEach(col => {
+        this.columns.forEach((col) => {
             const key = col.getName();
             const type = col.getType();
             let value = this.payload()[key];
@@ -24446,29 +9446,13 @@ class RowImpl extends Row {
         return key;
     }
 }
-
-/**
- * Copyright 2016 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class TableImpl {
     constructor(_name, cols, _indices, _usePersistentIndex, alias) {
         this._name = _name;
         this._indices = _indices;
         this._usePersistentIndex = _usePersistentIndex;
         this._columns = [];
-        cols.forEach(col => {
+        cols.forEach((col) => {
             const colSchema = new ColumnImpl(this, col.name, col.unique, col.nullable, col.type);
             this[col.name] = colSchema;
             this._columns.push(colSchema);
@@ -24501,12 +9485,12 @@ class TableImpl {
         return this._usePersistentIndex;
     }
     as(name) {
-        const colDef = this._columns.map(col => {
+        const colDef = this._columns.map((col) => {
             return {
-                name: col.getName(),
-                nullable: col.isNullable(),
-                type: col.getType(),
-                unique: col.isUnique(),
+                "name": col.getName(),
+                "nullable": col.isNullable(),
+                "type": col.getType(),
+                "unique": col.isUnique()
             };
         });
         const clone = new TableImpl(this._name, colDef, this._indices, this._usePersistentIndex, name);
@@ -24526,7 +9510,7 @@ class TableImpl {
     }
     deserializeRow(dbRecord) {
         const obj = {};
-        this._columns.forEach(col => {
+        this._columns.forEach((col) => {
             const key = col.getName();
             const type = col.getType();
             let value = dbRecord.value[key];
@@ -24546,26 +9530,24 @@ class TableImpl {
             return;
         }
         const columnMap = new Map();
-        this._columns.forEach(col => columnMap.set(col.getName(), col));
-        this._indices = Array.from(indices.keys()).map(indexName => {
+        this._columns.forEach((col) => columnMap.set(col.getName(), col));
+        this._indices = Array.from(indices.keys()).map((indexName) => {
             return new IndexImpl(this._name, indexName, uniqueIndices.has(indexName), this.generateIndexedColumns(indices, columnMap, indexName));
         });
         this._functionMap = new Map();
-        this._indices.forEach(index => this._functionMap.set(index.getNormalizedName(), this.getKeyOfIndexFn(columnMap, index)));
-        const pk = pkName === null
-            ? null
-            : new IndexImpl(this._name, pkName, true, this.generateIndexedColumns(indices, columnMap, pkName));
-        const notNullable = this._columns.filter(col => !nullable.has(col.getName()));
+        this._indices.forEach((index) => this._functionMap.set(index.getNormalizedName(), this.getKeyOfIndexFn(columnMap, index)));
+        const pk = pkName === null ? null : new IndexImpl(this._name, pkName, true, this.generateIndexedColumns(indices, columnMap, pkName));
+        const notNullable = this._columns.filter((col) => !nullable.has(col.getName()));
         this._constraint = new Constraint(pk, notNullable, fkSpecs);
     }
     generateIndexedColumns(indices, columnMap, indexName) {
         const index = indices.get(indexName);
         if (index) {
-            return index.map(indexedColumn => {
+            return index.map((indexedColumn) => {
                 return {
-                    autoIncrement: indexedColumn.autoIncrement,
-                    order: indexedColumn.order,
-                    schema: columnMap.get(indexedColumn.name),
+                    "autoIncrement": indexedColumn.autoIncrement,
+                    "order": indexedColumn.order,
+                    "schema": columnMap.get(indexedColumn.name)
                 };
             });
         }
@@ -24581,36 +9563,17 @@ class TableImpl {
         throw new Exception(ErrorCode.ASSERTION);
     }
     getMultiKeyFn(columnMap, columns) {
-        const getSingleKeyFunctions = columns.map(col => this.getSingleKeyFn(columnMap, col.schema));
-        return (payload) => getSingleKeyFunctions.map(fn => fn(payload));
+        const getSingleKeyFunctions = columns.map((col) => this.getSingleKeyFn(columnMap, col.schema));
+        return (payload) => getSingleKeyFunctions.map((fn) => fn(payload));
     }
     getKeyOfIndexFn(columnMap, index) {
-        return index.columns.length === 1
-            ? this.getSingleKeyFn(columnMap, index.columns[0].schema)
-            : this.getMultiKeyFn(columnMap, index.columns);
+        return index.columns.length === 1 ? this.getSingleKeyFn(columnMap, index.columns[0].schema) : this.getMultiKeyFn(columnMap, index.columns);
     }
 }
-TableImpl.ROW_ID_INDEX_PATTERN = '#';
+TableImpl.ROW_ID_INDEX_PATTERN = "#";
 TableImpl.EMPTY_INDICES = [];
-
-/**
- * Copyright 2016 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 // Dynamic Table schema builder
 // TODO(arthurhsu): FIXME: use a public interface here.
-// @export
 class TableBuilder {
     constructor(tableName) {
         this.checkNamingRules(tableName);
@@ -24648,7 +9611,7 @@ class TableBuilder {
     // case 2: (columns: Array<IndexedColumnSpec>)
     //   allows different ordering per-column, but more verbose.
     addPrimaryKey(columns, autoInc = false) {
-        this.pkName = 'pk' + TableBuilder.toPascal(this.name);
+        this.pkName = "pk" + TableBuilder.toPascal(this.name);
         this.checkNamingRules(this.pkName);
         this.checkNameConflicts(this.pkName);
         const cols = this.normalizeColumns(columns, true, undefined, autoInc);
@@ -24671,8 +9634,8 @@ class TableBuilder {
             rawSpec.timing = ConstraintTiming.IMMEDIATE;
         }
         const spec = new ForeignKeySpec(rawSpec, this.name, name);
-        if (spec.action === ConstraintAction.CASCADE &&
-            spec.timing === ConstraintTiming.DEFERRABLE) {
+        if (spec.action === ConstraintAction.CASCADE
+            && spec.timing === ConstraintTiming.DEFERRABLE) {
             // 506: Lovefield allows only immediate evaluation of cascading
             // constraints.
             throw new Exception(ErrorCode.IMMEDIATE_EVAL_ONLY);
@@ -24698,7 +9661,7 @@ class TableBuilder {
         return this;
     }
     addNullable(columns) {
-        this.normalizeColumns(columns, false).forEach(col => this.nullable.add(col.name));
+        this.normalizeColumns(columns, false).forEach((col) => this.nullable.add(col.name));
         return this;
     }
     // Mimics SQL CREATE INDEX.
@@ -24723,12 +9686,12 @@ class TableBuilder {
         this.checkPrimaryKeyNotForeignKey();
         this.checkPrimaryKeyDuplicateIndex();
         this.checkPrimaryKeyNotNullable();
-        const columns = Array.from(this.columns.keys()).map(colName => {
+        const columns = Array.from(this.columns.keys()).map((colName) => {
             return {
-                name: colName,
-                nullable: this.nullable.has(colName) || false,
-                type: this.columns.get(colName),
-                unique: this.uniqueColumns.has(colName) || false,
+                "name": colName,
+                "nullable": this.nullable.has(colName) || false,
+                "type": this.columns.get(colName),
+                "unique": this.uniqueColumns.has(colName) || false
             };
         });
         // Pass null as indices since Columns are not really constructed yet.
@@ -24752,19 +9715,19 @@ class TableBuilder {
             // 546: Indices/constraints/columns can't re-use the table name {0}
             throw new Exception(ErrorCode.DUPLICATE_NAME, name);
         }
-        if (this.columns.has(name) ||
-            this.indices.has(name) ||
-            this.uniqueIndices.has(name)) {
+        if (this.columns.has(name)
+            || this.indices.has(name)
+            || this.uniqueIndices.has(name)) {
             // 503: Name {0} is already defined.
             throw new Exception(ErrorCode.NAME_IN_USE, `${this.name}.${name}`);
         }
     }
     checkPrimaryKey(columns) {
         let hasAutoIncrement = false;
-        columns.forEach(column => {
+        columns.forEach((column) => {
             const columnType = this.columns.get(column.name);
-            hasAutoIncrement =
-                hasAutoIncrement || column.autoIncrement;
+            hasAutoIncrement
+                = hasAutoIncrement || column.autoIncrement;
             if (column.autoIncrement && columnType !== Type.INTEGER) {
                 // 504: Can not use autoIncrement with a non-integer primary key.
                 throw new Exception(ErrorCode.INVALID_AUTO_KEY_TYPE);
@@ -24783,11 +9746,11 @@ class TableBuilder {
         }
         const index = this.indices.get(this.pkName);
         if (index) {
-            const pkColumns = index.map(column => column.name);
+            const pkColumns = index.map((column) => column.name);
             let fkSpecIndex = 0;
             const conflict = this.fkSpecs.some((fkSpec, i) => {
                 fkSpecIndex = i;
-                return pkColumns.indexOf(fkSpec.childColumn) !== -1;
+                return pkColumns.includes(fkSpec.childColumn);
             });
             if (conflict) {
                 // 543: Foreign key {0}. A primary key column can't also be a foreign
@@ -24824,7 +9787,7 @@ class TableBuilder {
         }
         const index = this.indices.get(this.pkName);
         if (index) {
-            index.forEach(indexedColumnSpec => {
+            index.forEach((indexedColumnSpec) => {
                 if (this.nullable.has(indexedColumnSpec.name)) {
                     // 545: Primary key column {0} can't be marked as nullable
                     throw new Exception(ErrorCode.NULLABLE_PK, `${this.name}.${indexedColumnSpec.name}`);
@@ -24837,20 +9800,20 @@ class TableBuilder {
     // sure referred columns are actually defined.
     normalizeColumns(columns, checkIndexable, sortOrder = Order.ASC, autoInc = false) {
         let normalized = null;
-        if (typeof columns[0] === 'string') {
+        if (typeof columns[0] === "string") {
             const array = columns;
-            normalized = array.map(col => {
+            normalized = array.map((col) => {
                 return {
-                    autoIncrement: autoInc || false,
-                    name: col,
-                    order: sortOrder,
+                    "autoIncrement": autoInc || false,
+                    "name": col,
+                    "order": sortOrder
                 };
             });
         }
         else {
             normalized = columns;
         }
-        normalized.forEach(col => {
+        normalized.forEach((col) => {
             if (!this.columns.has(col.name)) {
                 // 508: Table {0} does not have column: {1}.
                 throw new Exception(ErrorCode.COLUMN_NOT_FOUND, this.name, col.name);
@@ -24866,33 +9829,17 @@ class TableBuilder {
         return normalized;
     }
     markFkIndexForColumnUnique(column) {
-        this.fkSpecs.forEach(fkSpec => {
+        this.fkSpecs.forEach((fkSpec) => {
             if (fkSpec.childColumn === column) {
-                this.uniqueIndices.add(fkSpec.name.split('.')[1]);
+                this.uniqueIndices.add(fkSpec.name.split(".")[1]);
             }
         });
     }
 }
 TableBuilder.NULLABLE_TYPES_BY_DEFAULT = new Set([
     Type.ARRAY_BUFFER,
-    Type.OBJECT,
+    Type.OBJECT
 ]);
-
-/**
- * Copyright 2016 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 class SchemaBuilder {
     constructor(dbName, dbVersion) {
         this.schema = new DatabaseSchemaImpl(dbName, dbVersion);
@@ -24902,12 +9849,14 @@ class SchemaBuilder {
         this.connectInProgress = false;
     }
     getSchema() {
+        console.log("getSchema");
         if (!this.finalized) {
             this.finalize();
         }
         return this.schema;
     }
     getGlobal() {
+        console.log("getGlobal");
         const namespaceGlobalId = new ServiceId(`ns_${this.schema.name()}`);
         const global = Global.get();
         let namespacedGlobal;
@@ -24924,7 +9873,8 @@ class SchemaBuilder {
     // called once per Builder instance. Subsequent calls will throw an error,
     // unless the previous DB connection has been closed first.
     connect(options) {
-        if (this.connectInProgress || (this.db !== null && this.db.isOpen())) {
+        console.log("connect");
+        if (this.connectInProgress || this.db !== null && this.db.isOpen()) {
             // 113: Attempt to connect() to an already connected/connecting database.
             throw new Exception(ErrorCode.ALREADY_CONNECTED);
         }
@@ -24936,10 +9886,10 @@ class SchemaBuilder {
             }
             this.db = new RuntimeDatabase(global);
         }
-        return this.db.init(options).then(db => {
+        return this.db.init(options).then((db) => {
             this.connectInProgress = false;
             return db;
-        }, e => {
+        }, (e) => {
             this.connectInProgress = false;
             // TODO(arthurhsu): Add a new test case to verify that failed init
             // call allows the database to be deleted since we close it properly
@@ -24949,6 +9899,7 @@ class SchemaBuilder {
         });
     }
     createTable(tableName) {
+        console.log("createTable");
         if (this.tableBuilders.has(tableName)) {
             // 503: Name {0} is already defined.
             throw new Exception(ErrorCode.NAME_IN_USE, tableName);
@@ -24960,28 +9911,21 @@ class SchemaBuilder {
         this.tableBuilders.set(tableName, new TableBuilder(tableName));
         const ret = this.tableBuilders.get(tableName);
         if (!ret) {
-            throw new Exception(ErrorCode.ASSERTION, 'Builder.createTable');
+            throw new Exception(ErrorCode.ASSERTION, "Builder.createTable");
         }
         return ret;
-    }
-    setPragma(pragma) {
-        if (this.finalized) {
-            // 535: Schema is already finalized.
-            throw new Exception(ErrorCode.SCHEMA_FINALIZED);
-        }
-        this.schema._pragma = pragma;
-        return this;
     }
     // Builds the graph of foreign key relationships and checks for
     // loop in the graph.
     checkFkCycle() {
+        console.log("checkFkCycle");
         // Builds graph.
         const nodeMap = new Map();
-        this.schema.tables().forEach(table => {
+        this.schema.tables().forEach((table) => {
             nodeMap.set(table.getName(), new GraphNode(table.getName()));
         }, this);
         this.tableBuilders.forEach((builder, tableName) => {
-            builder.getFkSpecs().forEach(spec => {
+            builder.getFkSpecs().forEach((spec) => {
                 const parentNode = nodeMap.get(spec.parentTable);
                 if (parentNode) {
                     parentNode.edges.add(tableName);
@@ -24989,13 +9933,14 @@ class SchemaBuilder {
             });
         });
         // Checks for cycle.
-        Array.from(nodeMap.values()).forEach(graphNode => this.checkCycleUtil(graphNode, nodeMap));
+        Array.from(nodeMap.values()).forEach((graphNode) => { this.checkCycleUtil(graphNode, nodeMap); });
     }
     // Performs foreign key checks like validity of names of parent and
     // child columns, matching of types and uniqueness of referred column
     // in the parent.
     checkForeignKeyValidity(builder) {
-        builder.getFkSpecs().forEach(specs => {
+        console.log("checkForeignKeyValidity");
+        builder.getFkSpecs().forEach((specs) => {
             const parentTableName = specs.parentTable;
             const table = this.tableBuilders.get(parentTableName);
             if (!table) {
@@ -25010,8 +9955,8 @@ class SchemaBuilder {
             }
             const localSchema = builder.getSchema();
             const localColName = specs.childColumn;
-            if (localSchema[localColName].getType() !==
-                parentSchema[parentColName].getType()) {
+            if (localSchema[localColName].getType()
+                !== parentSchema[parentColName].getType()) {
                 // 538: Foreign key {0} column type mismatch.
                 throw new Exception(ErrorCode.INVALID_FK_COLUMN_TYPE, specs.name);
             }
@@ -25023,11 +9968,12 @@ class SchemaBuilder {
     }
     // Performs checks to avoid chains of foreign keys on same column.
     checkForeignKeyChain(builder) {
+        console.log("checkForeignKeyChain");
         const fkSpecArray = builder.getFkSpecs();
-        fkSpecArray.forEach(specs => {
+        fkSpecArray.forEach((specs) => {
             const parentBuilder = this.tableBuilders.get(specs.parentTable);
             if (parentBuilder) {
-                parentBuilder.getFkSpecs().forEach(parentSpecs => {
+                parentBuilder.getFkSpecs().forEach((parentSpecs) => {
                     if (parentSpecs.childColumn === specs.parentColumn) {
                         // 534: Foreign key {0} refers to source column of another
                         // foreign key.
@@ -25038,8 +9984,9 @@ class SchemaBuilder {
         }, this);
     }
     finalize() {
+        console.log("finalize");
         if (!this.finalized) {
-            this.tableBuilders.forEach(builder => {
+            this.tableBuilders.forEach((builder) => {
                 this.checkForeignKeyValidity(builder);
                 this.schema.setTable(builder.getSchema());
             });
@@ -25055,10 +10002,11 @@ class SchemaBuilder {
     // can be acyclic if and only DFS of G yields no back edges.
     // @see http://www.geeksforgeeks.org/detect-cycle-in-a-graph/
     checkCycleUtil(graphNode, nodeMap) {
+        console.log("checkCycleUtil");
         if (!graphNode.visited) {
             graphNode.visited = true;
             graphNode.onStack = true;
-            graphNode.edges.forEach(edge => {
+            graphNode.edges.forEach((edge) => {
                 const childNode = nodeMap.get(edge);
                 if (childNode) {
                     if (!childNode.visited) {
@@ -25078,1231 +10026,18 @@ class SchemaBuilder {
         graphNode.onStack = false;
     }
 }
-
-/**
- * Copyright 2016 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-function getHrDbSchemaBuilder(dbName) {
-    const name = dbName || `hr${Date.now()}`;
-    const schemaBuilder = new SchemaBuilder(name, 1);
-    schemaBuilder
-        .createTable('Job')
-        .addColumn('id', Type.STRING)
-        .addColumn('title', Type.STRING)
-        .addColumn('minSalary', Type.NUMBER)
-        .addColumn('maxSalary', Type.NUMBER)
-        .addPrimaryKey(['id'])
-        .addIndex('idx_maxSalary', ['maxSalary'], false, Order.DESC);
-    schemaBuilder
-        .createTable('JobHistory')
-        .addColumn('employeeId', Type.STRING)
-        .addColumn('startDate', Type.DATE_TIME)
-        .addColumn('endDate', Type.DATE_TIME)
-        .addColumn('jobId', Type.STRING)
-        .addColumn('departmentId', Type.STRING)
-        .addForeignKey('fk_EmployeeId', {
-            action: ConstraintAction.RESTRICT,
-            local: 'employeeId',
-            ref: 'Employee.id',
-        })
-        .addForeignKey('fk_DepartmentId', {
-            action: ConstraintAction.RESTRICT,
-            local: 'departmentId',
-            ref: 'Department.id',
-        });
-    schemaBuilder
-        .createTable('Employee')
-        .addColumn('id', Type.STRING)
-        .addColumn('firstName', Type.STRING)
-        .addColumn('lastName', Type.STRING)
-        .addColumn('email', Type.STRING)
-        .addColumn('phoneNumber', Type.STRING)
-        .addColumn('hireDate', Type.DATE_TIME)
-        .addColumn('jobId', Type.STRING)
-        .addColumn('salary', Type.NUMBER)
-        .addColumn('commissionPercent', Type.NUMBER)
-        .addColumn('managerId', Type.STRING)
-        .addColumn('departmentId', Type.STRING)
-        .addColumn('photo', Type.ARRAY_BUFFER)
-        .addPrimaryKey(['id'])
-        .addForeignKey('fk_JobId', {
-            action: ConstraintAction.RESTRICT,
-            local: 'jobId',
-            ref: 'Job.id',
-        })
-        .addForeignKey('fk_DepartmentId', {
-            action: ConstraintAction.RESTRICT,
-            local: 'departmentId',
-            ref: 'Department.id',
-        })
-        .addIndex('idx_salary', ['salary'], false, Order.DESC)
-        .addNullable(['hireDate']);
-    schemaBuilder
-        .createTable('Department')
-        .addColumn('id', Type.STRING)
-        .addColumn('name', Type.STRING)
-        .addColumn('managerId', Type.STRING)
-        .addColumn('locationId', Type.STRING)
-        .addPrimaryKey(['id'])
-        .addForeignKey('fk_LocationId', {
-            action: ConstraintAction.RESTRICT,
-            local: 'locationId',
-            ref: 'Location.id',
-        });
-    schemaBuilder
-        .createTable('Location')
-        .addColumn('id', Type.STRING)
-        .addColumn('streetAddress', Type.STRING)
-        .addColumn('postalCode', Type.STRING)
-        .addColumn('city', Type.STRING)
-        .addColumn('stateProvince', Type.STRING)
-        .addColumn('countryId', Type.INTEGER)
-        .addPrimaryKey(['id'])
-        .addForeignKey('fk_CountryId', {
-            action: ConstraintAction.RESTRICT,
-            local: 'countryId',
-            ref: 'Country.id',
-        });
-    schemaBuilder
-        .createTable('Country')
-        .addColumn('id', Type.INTEGER)
-        .addColumn('name', Type.STRING)
-        .addColumn('regionId', Type.STRING)
-        .addPrimaryKey(['id'], true)
-        .addForeignKey('fk_RegionId', {
-            action: ConstraintAction.RESTRICT,
-            local: 'regionId',
-            ref: 'Region.id',
-        });
-    schemaBuilder
-        .createTable('Region')
-        .addColumn('id', Type.STRING)
-        .addColumn('name', Type.STRING)
-        .addPrimaryKey(['id']);
-    schemaBuilder
-        .createTable('Holiday')
-        .addColumn('name', Type.STRING)
-        .addColumn('begin', Type.DATE_TIME)
-        .addColumn('end', Type.DATE_TIME)
-        .addIndex('idx_begin', ['begin'], false, Order.ASC)
-        .addPrimaryKey(['name'])
-        .persistentIndex(true);
-    schemaBuilder
-        .createTable('DummyTable')
-        .addColumn('arraybuffer', Type.ARRAY_BUFFER)
-        .addColumn('boolean', Type.BOOLEAN)
-        .addColumn('datetime', Type.DATE_TIME)
-        .addColumn('integer', Type.INTEGER)
-        .addColumn('number', Type.NUMBER)
-        .addColumn('string', Type.STRING)
-        .addColumn('string2', Type.STRING)
-        .addColumn('proto', Type.OBJECT)
-        .addPrimaryKey(['string', 'number'])
-        .addUnique('uq_constraint', ['integer', 'string2'])
-        .addNullable(['datetime']);
-    schemaBuilder
-        .createTable('CrossColumnTable')
-        .addColumn('integer1', Type.INTEGER)
-        .addColumn('integer2', Type.INTEGER)
-        .addColumn('string1', Type.STRING)
-        .addColumn('string2', Type.STRING)
-        .addNullable(['string1', 'string2'])
-        .addIndex('idx_ascDesc', [
-            {
-                name: 'integer1',
-                order: Order.ASC,
-            },
-            {
-                name: 'integer2',
-                order: Order.DESC,
-            },
-        ], true)
-        .addIndex('idx_crossNull', ['string1', 'string2'], true)
-        .persistentIndex(true);
-    return schemaBuilder;
-}
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-class HRSchemaSamples {
-}
-HRSchemaSamples.FIRST_NAMES = [
-    'Aaliyah',
-    'Aaron',
-    'Abigail',
-    'Adam',
-    'Addison',
-    'Adrian',
-    'Aiden',
-    'Alex',
-    'Alexa',
-    'Alexander',
-    'Alexandra',
-    'Alexis',
-    'Alice',
-    'Allison',
-    'Alyssa',
-    'Amelia',
-    'Andrew',
-    'Anna',
-    'Annabelle',
-    'Anthony',
-    'Aria',
-    'Arianna',
-    'Asher',
-    'Aubrey',
-    'Audrey',
-    'Austin',
-    'Ava',
-    'Avery',
-    'Bailey',
-    'Bella',
-    'Benjamin',
-    'Bentley',
-    'Blake',
-    'Brandon',
-    'Brayden',
-    'Brianna',
-    'Brody',
-    'Brooke',
-    'Brooklyn',
-    'Caleb',
-    'Cameron',
-    'Caroline',
-    'Carson',
-    'Carter',
-    'Charlie',
-    'Charlotte',
-    'Chase',
-    'Chloe',
-    'Christian',
-    'Christopher',
-    'Claire',
-    'Clara',
-    'Cole',
-    'Colin',
-    'Colton',
-    'Connor',
-    'Cooper',
-    'Daniel',
-    'David',
-    'Declan',
-    'Dominic',
-    'Dylan',
-    'Easton',
-    'Eleanor',
-    'Elena',
-    'Eli',
-    'Eliana',
-    'Elijah',
-    'Elise',
-    'Elizabeth',
-    'Ella',
-    'Ellie',
-    'Emily',
-    'Emma',
-    'Ethan',
-    'Eva',
-    'Evan',
-    'Evelyn',
-    'Gabriel',
-    'Gabriella',
-    'Gavin',
-    'Gianna',
-    'Grace',
-    'Grayson',
-    'Hailey',
-    'Hannah',
-    'Harper',
-    'Harrison',
-    'Hayden',
-    'Henry',
-    'Hudson',
-    'Hunter',
-    'Ian',
-    'Isaac',
-    'Isabella',
-    'Isabelle',
-    'Isaiah',
-    'Isla',
-    'Jace',
-    'Jack',
-    'Jackson',
-    'Jacob',
-    'Jake',
-    'James',
-    'Jasmine',
-    'Jason',
-    'Jayden',
-    'Jeremiah',
-    'John',
-    'Jonathan',
-    'Jordan',
-    'Joseph',
-    'Joshua',
-    'Julia',
-    'Julian',
-    'Kaitlyn',
-    'Kate',
-    'Kayla',
-    'Kaylee',
-    'Kendall',
-    'Kennedy',
-    'Kylie',
-    'Landon',
-    'Lauren',
-    'Layla',
-    'Leah',
-    'Leo',
-    'Levi',
-    'Liam',
-    'Lillian',
-    'Lily',
-    'Lincoln',
-    'Logan',
-    'Lucas',
-    'Lucy',
-    'Luke',
-    'Lyla',
-    'Mackenzie',
-    'Madelyn',
-    'Madison',
-    'Makayla',
-    'Maria',
-    'Mason',
-    'Matthew',
-    'Max',
-    'Maya',
-    'Mia',
-    'Micah',
-    'Michael',
-    'Mila',
-    'Miles',
-    'Molly',
-    'Morgan',
-    'Natalie',
-    'Nathan',
-    'Nathaniel',
-    'Nevaeh',
-    'Nicholas',
-    'Noah',
-    'Nolan',
-    'Nora',
-    'Oliver',
-    'Olivia',
-    'Owen',
-    'Paige',
-    'Parker',
-    'Peyton',
-    'Piper',
-    'Quinn',
-    'Reagan',
-    'Reese',
-    'Riley',
-    'Riley',
-    'Ruby',
-    'Ryan',
-    'Ryder',
-    'Sadie',
-    'Samantha',
-    'Samuel',
-    'Sarah',
-    'Savannah',
-    'Scarlett',
-    'Sean',
-    'Sebastian',
-    'Sienna',
-    'Sophia',
-    'Sophie',
-    'Stella',
-    'Sydney',
-    'Taylor',
-    'Thomas',
-    'Tristan',
-    'Tyler',
-    'Victoria',
-    'Violet',
-    'William',
-    'Wyatt',
-    'Xavier',
-    'Zachary',
-    'Zoe',
-];
-HRSchemaSamples.LAST_NAMES = [
-    'Adams',
-    'Alexander',
-    'Allen',
-    'Anderson',
-    'Bailey',
-    'Baker',
-    'Barnes',
-    'Bell',
-    'Bennett',
-    'Brooks',
-    'Brown,',
-    'Bryant',
-    'Butler',
-    'Campbell',
-    'Carter',
-    'Clark',
-    'Coleman',
-    'Collins',
-    'Cook',
-    'Cooper',
-    'Cox',
-    'Davis,',
-    'Diaz',
-    'Edwards',
-    'Evans',
-    'Flores',
-    'Foster',
-    'Garcia',
-    'Gonzales',
-    'Gonzalez',
-    'Gray',
-    'Green',
-    'Griffin',
-    'Hall',
-    'Harris',
-    'Hayes',
-    'Henderson',
-    'Hernandez',
-    'Hill',
-    'Howard',
-    'Hughes',
-    'Jackson',
-    'James',
-    'Jenkins',
-    'Johnson',
-    'Jones,',
-    'Kelly',
-    'King',
-    'Lee',
-    'Lewis',
-    'Long',
-    'Lopez',
-    'Martin',
-    'Martinez',
-    'Miller,',
-    'Mitchell',
-    'Moore',
-    'Morgan',
-    'Morris',
-    'Murphy',
-    'Nelson',
-    'Parker',
-    'Patterson',
-    'Perez',
-    'Perry',
-    'Peterson',
-    'Phillips',
-    'Powell',
-    'Price',
-    'Ramirez',
-    'Reed',
-    'Richardson',
-    'Rivera',
-    'Roberts',
-    'Robinson',
-    'Rodriguez',
-    'Rogers',
-    'Ross',
-    'Russell',
-    'Sanchez',
-    'Sanders',
-    'Scott',
-    'Simmons',
-    'Smith',
-    'Stewart',
-    'Taylor',
-    'Thomas',
-    'Thompson',
-    'Torres',
-    'Turner',
-    'Walker',
-    'Ward',
-    'Washington',
-    'Watson',
-    'White',
-    'Williams',
-    'Wilson',
-    'Wood',
-    'Wright',
-    'Young',
-];
-HRSchemaSamples.JOB_TITLES = [
-    'Accountant, Private',
-    'Accountant, Public',
-    'Accounting Specialist',
-    'Actuary',
-    'Administrative Services Manager',
-    'Administrator Payroll',
-    'Advertising and Promotions Manager',
-    'Advertising Sales Agent',
-    'Agent and Business Manager of Artists, Performers and Athletes',
-    'Aircraft Mechanic',
-    'Aircraft Technician',
-    'Antenna Engineer',
-    'Antenna Operator',
-    'Appraiser and Assessor of Real Estate',
-    'Arbitrators, Mediators, and Conciliators',
-    'Auditor',
-    'Brand Manager',
-    'Budget Analyst',
-    'Business Analyst',
-    'Business Continuity Planner',
-    'Business Intelligence Analyst',
-    'Chief Executive Officer',
-    'Chief Financial Officer',
-    'Chief Information Officer',
-    'Community Service Manager',
-    'Compensation or Benefits Manager',
-    'Computer and Information Systems Manager',
-    'Credit Analyst',
-    'Criminal Investigator and Special Agent',
-    'Customer Service Representative',
-    'Customs Broker',
-    'Design Engineer',
-    'Document Management Specialist',
-    'Economist',
-    'Electrical Engineer',
-    'Employment Interviewer',
-    'Employment Manager',
-    'Energy Broker',
-    'Engineer',
-    'Engineering Technician',
-    'Engine Mechanic',
-    'Event Planner',
-    'Financial Analyst',
-    'Financial Examiner',
-    'Financial Manager',
-    'Financial Planner',
-    'First-Line Supervisors and Manager/Supervisor',
-    'Food Service Manager',
-    'Fraud Examiner',
-    'Gaming manager',
-    'Grant writer',
-    'Human Resources Assistant',
-    'Human Resources Coordinator',
-    'Human Resources Generalist',
-    'Human Resources Specialist',
-    'Immigration and Customs Inspector',
-    'Insurance Underwriter',
-    'Java Developer',
-    'Job Analysis Specialist',
-    'Labor Relations Specialist',
-    'Loan Officer',
-    'Lodging Manager',
-    'Loss Prevention Specialist',
-    'Management Analyst',
-    'Manufacturing Engineer',
-    'Marketing Manager',
-    'Market Researcher',
-    'Mechanical Engineer',
-    'Meeting and Convention Planner',
-    'Network Engineer',
-    'Nurse',
-    'Occupational Therapist',
-    'Payroll Clerk',
-    'Payroll Specialist',
-    'Personal Financial Advisor/Planner',
-    'Personnel Recruiter',
-    'Pharmacist',
-    'Physical Therapist',
-    'Process Engineer',
-    'Project Engineer',
-    'Project Manager',
-    'Property, Real Estate, and Community Association Manager',
-    'Public Relations Specialist',
-    'Purchasing manager, Buyer, and Purchasing agent',
-    'Quality Engineer',
-    'Quantum Physicist',
-    'Real estate broker and sales agent',
-    'Recruiter',
-    'Registered Nurse',
-    'Senior Software Engineer',
-    'Software Engineer',
-    'Speech Language Pathologist',
-    'Speech Pathologist Assistant',
-    'Systems Administrator',
-    'Systems Engineer',
-    'Tax Examiner, Collector, and Revenue Agent',
-    'Technical Recruiter',
-    'Technician',
-    'Trainer',
-    'Training and Development Manager',
-    'Training Specialist',
-    'Web Developer',
-];
-HRSchemaSamples.DEPARTMENT_NAMES = [
-    'Marketing',
-    'Human Resources',
-    'Financial',
-    'Purchasing',
-    'Sales',
-    'IT',
-    'Inventory',
-    'Quality Asurance',
-    'Insurance',
-    'Licenses',
-    'Operational',
-    'Staff',
-    'Customer Service',
-    'Organizational',
-];
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-class DepartmentDataGenerator {
-    constructor() {
-        this.names = HRSchemaSamples.DEPARTMENT_NAMES.slice();
-        ArrayHelper.shuffle(this.names);
-    }
-    generate(count) {
-        const rawData = this.generateRaw(count);
-        const d = getHrDbSchemaBuilder().getSchema().table('Department');
-        return rawData.map(object => d.createRow(object));
-    }
-    generateRaw(count) {
-        assert(count <= this.names.length, `count can be at most ${this.names.length}`);
-        const departments = new Array(count);
-        for (let i = 0; i < count; i++) {
-            departments[i] = {
-                id: 'departmentId' + i.toString(),
-                name: this.names.shift(),
-                managerId: 'managerId',
-                locationId: 'locationId',
-            };
-        }
-        return departments;
+// Keep lower case class name for compatibility with Lovefield API.
+// TODO(arthurhsu): FIXME: Builder should be a public interface, not concrete
+// class. Currently Builder has no @export.
+class schema {
+    // Returns a builder.
+    // Note that Lovefield builder is a stateful object, and it remembers it has
+    // been used for connecting a database instance. Once the connection is closed
+    // or dropped, the builder cannot be used to reconnect. Instead, the caller
+    // needs to construct a new builder for doing so.
+    static create(name, version) {
+        return new SchemaBuilder(name, version);
     }
 }
 
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-class EmployeeDataGenerator {
-    constructor() {
-        this.assignedSalaries = new Set();
-        this.jobCount = HRSchemaSamples.JOB_TITLES.length;
-        this.departmentCount = HRSchemaSamples.DEPARTMENT_NAMES.length;
-    }
-    // Sets the number of jobs that will be used for all generated employees.
-    setJobCount(count) {
-        this.jobCount = Math.min(count, HRSchemaSamples.JOB_TITLES.length);
-    }
-    // Sets the number of departments that will be used for all generated
-    // employees.
-    setDepartmentCount(count) {
-        this.departmentCount = Math.min(count, HRSchemaSamples.DEPARTMENT_NAMES.length);
-    }
-    generate(count) {
-        assert(count >= this.jobCount, 'employee count must be greater or equal to job count');
-        assert(count >= this.departmentCount, 'employee count must be greater or equal to department count');
-        const rawData = this.generateRaw(count);
-        const e = getHrDbSchemaBuilder().getSchema().table('Employee');
-        return rawData.map(object => e.createRow(object));
-    }
-    generateRaw(count) {
-        const employees = new Array(count);
-        for (let i = 0; i < count; i++) {
-            const firstName = this.genFirstName();
-            const lastName = this.genLastName();
-            const email = firstName.toLowerCase() + '.' + lastName.toLowerCase() + '@theweb.com';
-            const phoneNumber = String(1000000000 + Math.floor(Math.random() * 999999999));
-            const commissionPercent = 0.15 + Math.random();
-            employees[i] = {
-                id: `employeeId${i}`,
-                firstName: firstName,
-                lastName: lastName,
-                email: email,
-                phoneNumber: phoneNumber,
-                hireDate: this.genHireDate(),
-                // Ensuring that each job is assigned at least one employee.
-                jobId: i < this.jobCount ? 'jobId' + i : this.genJobId(),
-                salary: this.genSalary(),
-                commissionPercent: commissionPercent,
-                managerId: 'managerId',
-                // Ensuring that each department is assigned at least one employee.
-                departmentId: i < this.departmentCount
-                    ? `departmentId${i}`
-                    : this.genDepartmentId(),
-                photo: this.genPhoto(),
-            };
-        }
-        return employees;
-    }
-    genFirstName() {
-        const maxIndex = HRSchemaSamples.FIRST_NAMES.length;
-        const index = Math.floor(Math.random() * maxIndex);
-        return HRSchemaSamples.FIRST_NAMES[index];
-    }
-    genLastName() {
-        const maxIndex = HRSchemaSamples.LAST_NAMES.length;
-        const index = Math.floor(Math.random() * maxIndex);
-        return HRSchemaSamples.LAST_NAMES[index];
-    }
-    genJobId() {
-        const index = Math.floor(Math.random() * this.jobCount);
-        return `jobId${index}`;
-    }
-    genDepartmentId() {
-        const index = Math.floor(Math.random() * this.departmentCount);
-        return `departmentId${index}`;
-    }
-    genHireDate() {
-        // Tue Jan 01 1980 10:00:00 GMT-0800 (PST)
-        const min = new Date(315597600000);
-        // Fri Sep 12 2014 13:52:20 GMT-0700 (PDT)
-        const max = new Date(1410555147354);
-        const diff = Math.random() * (max.getTime() - min.getTime());
-        return new Date(min.getTime() + diff);
-    }
-    genSalary() {
-        const getNewSalary = () => 10000 + Math.floor(Math.random() * 200000);
-        let salary = null;
-        do {
-            salary = getNewSalary();
-        } while (this.assignedSalaries.has(salary));
-        this.assignedSalaries.add(salary);
-        return salary;
-    }
-    genPhoto() {
-        const buffer = new ArrayBuffer(8);
-        const view = new Uint8Array(buffer);
-        for (let i = 0; i < 8; ++i) {
-            view[i] = i;
-        }
-        return buffer;
-    }
-}
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-class JobDataGenerator {
-    constructor() {
-        this.titles = HRSchemaSamples.JOB_TITLES.slice();
-        ArrayHelper.shuffle(this.titles);
-    }
-    generate(count) {
-        const j = getHrDbSchemaBuilder().getSchema().table('Job');
-        const rawData = this.generateRaw(count);
-        return rawData.map(object => j.createRow(object));
-    }
-    generateRaw(count) {
-        assert(count <= this.titles.length, `count can be at most ${this.titles.length}`);
-        const jobs = new Array(count);
-        for (let i = 0; i < count; i++) {
-            const salaries = this.genSalaries();
-            jobs[i] = {
-                id: 'jobId' + i.toString(),
-                maxSalary: salaries[1],
-                minSalary: salaries[0],
-                title: this.titles.shift(),
-            };
-        }
-        return jobs;
-    }
-    genSalaries() {
-        const salary1Index = Math.floor(Math.random() * JobDataGenerator.SALARY_POOL.length);
-        const salary2Index = Math.floor(Math.random() * JobDataGenerator.SALARY_POOL.length);
-        return [
-            JobDataGenerator.SALARY_POOL[salary1Index],
-            JobDataGenerator.SALARY_POOL[salary2Index],
-        ].sort((a, b) => a - b);
-    }
-}
-JobDataGenerator.SALARY_POOL = [100000, 200000, 300000, 400000, 500000, 600000];
-
-/**
- * Copyright 2018 The Lovefield Project Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-class MockDataGenerator {
-    constructor() {
-        this.sampleCountries = [];
-        this.sampleDepartments = [];
-        this.sampleEmployees = [];
-        this.sampleJobs = [];
-        this.sampleLocations = [];
-        this.sampleRegions = [];
-    }
-    static fromExportData(data) {
-        const schema = getHrDbSchemaBuilder().getSchema();
-        const deserialize = (tableSchema, obj) => {
-            return tableSchema.deserializeRow({
-                id: Row.getNextId(),
-                value: obj,
-            });
-        };
-        const employeeSchema = schema.table('Employee');
-        const employees = data.employees.map(obj => deserialize(employeeSchema, obj));
-        const jobSchema = schema.table('Job');
-        const jobs = data.jobs.map(obj => deserialize(jobSchema, obj));
-        const departmentSchema = schema.table('Department');
-        const departments = data.departments.map(obj => deserialize(departmentSchema, obj));
-        const generator = new MockDataGenerator();
-        generator.sampleJobs = jobs;
-        generator.sampleEmployees = employees;
-        generator.sampleDepartments = departments;
-        generator.jobGroundTruth = generator.extractJobGroundTruth();
-        generator.employeeGroundTruth = generator.extractEmployeeGroundTruth();
-        return generator;
-    }
-    generate(jobCount, employeeCount, departmentCount) {
-        const employeeGenerator = new EmployeeDataGenerator();
-        employeeGenerator.setJobCount(jobCount);
-        employeeGenerator.setDepartmentCount(departmentCount);
-        this.sampleEmployees = employeeGenerator.generate(employeeCount);
-        const jobGenerator = new JobDataGenerator();
-        this.sampleJobs = jobGenerator.generate(jobCount);
-        const departmentGenerator = new DepartmentDataGenerator();
-        this.sampleDepartments = departmentGenerator.generate(departmentCount);
-        const schema = getHrDbSchemaBuilder().getSchema();
-        const location = schema.table('Location');
-        this.sampleLocations = [
-            location.createRow({
-                id: 'locationId',
-                streetAddress: 'dummyStreetAddress',
-                postalCode: 'dummyPostalCode',
-                city: 'dummyCity',
-                stateProvince: 'dummyStateProvince',
-                countryId: 1,
-            }),
-        ];
-        const country = schema.table('Country');
-        this.sampleCountries = [
-            country.createRow({
-                id: 1,
-                name: 'dummyCountryName',
-                regionId: 'regionId',
-            }),
-            country.createRow({
-                id: 2,
-                name: 'dummyCountryName',
-                regionId: 'regionId',
-            }),
-        ];
-        const region = schema.table('Region');
-        this.sampleRegions = [
-            region.createRow({
-                id: 'regionId',
-                name: 'dummyRegionName',
-            }),
-            region.createRow({
-                id: 'regionId2',
-                name: 'dummyRegionName2',
-            }),
-            region.createRow({
-                id: 'regionId3',
-                name: 'dummyRegionName3',
-            }),
-        ];
-        this.jobGroundTruth = this.extractJobGroundTruth();
-        this.employeeGroundTruth = this.extractEmployeeGroundTruth();
-    }
-    exportData() {
-        const employeesPayloads = this.sampleEmployees.map(employee => employee.toDbPayload());
-        const jobsPayloads = this.sampleJobs.map(job => job.toDbPayload());
-        const departmentsPayloads = this.sampleDepartments.map(department => department.toDbPayload());
-        return {
-            departments: departmentsPayloads,
-            employees: employeesPayloads,
-            jobs: jobsPayloads,
-        };
-    }
-    extractJobGroundTruth() {
-        const minSalary = (job) => job.payload()['minSalary'];
-        const maxSalary = (job) => job.payload()['maxSalary'];
-        return {
-            minMinSalary: this.findJobMin(minSalary),
-            maxMinSalary: this.findJobMax(minSalary),
-            distinctMinSalary: this.findJobDistinct(minSalary),
-            sumDistinctMinSalary: MathHelper.sum.apply(null, this.findJobDistinct(minSalary)),
-            countDistinctMinSalary: this.findJobDistinct(minSalary).length,
-            avgDistinctMinSalary: MathHelper.average.apply(null, this.findJobDistinct(minSalary)),
-            stddevDistinctMinSalary: MathHelper.standardDeviation.apply(null, this.findJobDistinct(minSalary)),
-            minMaxSalary: this.findJobMin(maxSalary),
-            maxMaxSalary: this.findJobMax(maxSalary),
-            distinctMaxSalary: this.findJobDistinct(maxSalary),
-            sumDistinctMaxSalary: MathHelper.sum.apply(null, this.findJobDistinct(maxSalary)),
-            countDistinctMaxSalary: this.findJobDistinct(maxSalary).length,
-            avgDistinctMaxSalary: MathHelper.average.apply(null, this.findJobDistinct(maxSalary)),
-            stddevDistinctMaxSalary: MathHelper.standardDeviation.apply(null, this.findJobDistinct(maxSalary)),
-            geomeanDistinctMaxSalary: this.findGeomean(this.findJobDistinct(maxSalary)),
-            selfJoinSalary: this.findSelfJoinSalary(),
-        };
-    }
-    extractEmployeeGroundTruth() {
-        const salary = (employee) => employee.payload()['salary'];
-        const hireDate = (employee) => employee.payload()['hireDate'];
-        return {
-            employeesPerJob: this.findEmployeesPerJob(),
-            minSalary: 0,
-            maxSalary: 0,
-            avgSalary: MathHelper.average.apply(null, this.sampleEmployees.map(salary)),
-            stddevSalary: MathHelper.standardDeviation.apply(null, this.sampleEmployees.map(salary)),
-            countSalary: 0,
-            distinctHireDates: this.findDistinct(hireDate, this.sampleEmployees),
-            minHireDate: this.findEmployeeMinDate(),
-            maxHireDate: this.findEmployeeMaxDate(),
-            thetaJoinSalaryIds: this.findThetaJoinSalaryIds(),
-        };
-    }
-    // Finds the MIN of a given attribute in the Job table.
-    findJobMin(getterFn) {
-        const jobsSorted = this.sampleJobs
-            .slice()
-            .sort((job1, job2) => getterFn(job1) - getterFn(job2));
-        return getterFn(jobsSorted[0]);
-    }
-    // Finds the MAX of a given attribute in the Job table.
-    findJobMax(getterFn) {
-        const jobsSorted = this.sampleJobs
-            .slice()
-            .sort((job1, job2) => getterFn(job2) - getterFn(job1));
-        return getterFn(jobsSorted[0]);
-    }
-    // Finds the DISTINCT of a given attribute in the Job table.
-    findDistinct(getterFn, rows) {
-        const valueSet = new Set();
-        rows.forEach(row => valueSet.add(getterFn(row)));
-        return Array.from(valueSet.values());
-    }
-    findJobDistinct(getterFn) {
-        return this.findDistinct(getterFn, this.sampleJobs);
-    }
-    // Finds all job pairs where j1.minSalary == j2.maxSalary.
-    findSelfJoinSalary() {
-        const result = [];
-        this.sampleJobs.forEach(job1 => {
-            this.sampleJobs.forEach(job2 => {
-                if (job1.payload()['minSalary'] === job2.payload()['maxSalary']) {
-                    result.push([job1, job2]);
-                }
-            });
-        });
-        // Sorting results to be in deterministic order such that they can be
-        // useful for assertions.
-        result.sort((jobPair1, jobPair2) => {
-            const jp1id0 = jobPair1[0].payload()['id'];
-            const jp2id0 = jobPair2[0].payload()['id'];
-            if (jp1id0 < jp2id0) {
-                return -1;
-            }
-            else if (jp1id0 > jp2id0) {
-                return 1;
-            }
-            else {
-                const jp1id1 = jobPair1[1].payload()['id'];
-                const jp2id1 = jobPair2[1].payload()['id'];
-                if (jp1id1 < jp2id1) {
-                    return -1;
-                }
-                else if (jp1id1 > jp2id1) {
-                    return 1;
-                }
-                return 0;
-            }
-        });
-        return result;
-    }
-    findGeomean(values) {
-        const reduced = values.reduce((soFar, value) => (soFar += Math.log(value)), 0);
-        return Math.pow(Math.E, reduced / values.length);
-    }
-    // Find the association between Jobs and Employees.
-    findEmployeesPerJob() {
-        const employeesPerJob = new Map();
-        this.sampleEmployees.forEach(employee => {
-            const key = employee.payload()['jobId'];
-            const value = employee.payload()['id'];
-            if (!employeesPerJob.has(key)) {
-                employeesPerJob.set(key, [value]);
-            }
-            else {
-                employeesPerJob.get(key).push(value);
-            }
-        });
-        return employeesPerJob;
-    }
-    // Find the MIN hireDate attribute in the Employee table.
-    findEmployeeMinDate() {
-        const employeesSorted = this.sampleEmployees
-            .slice()
-            .sort((employee1, employee2) => employee1.payload()['hireDate'].getTime() -
-                employee2.payload()['hireDate'].getTime());
-        return employeesSorted[0].payload()['hireDate'];
-    }
-    // Find the MAX hireDate attribute in the Employee table.
-    findEmployeeMaxDate() {
-        const employeesSorted = this.sampleEmployees
-            .slice()
-            .sort((employee1, employee2) => employee2.payload()['hireDate'].getTime() -
-                employee1.payload()['hireDate'].getTime());
-        return employeesSorted[0].payload()['hireDate'];
-    }
-    // Finds the IDs of all employees whose salary is larger than the MAX salary
-    // for their job title.
-    // Note: This is possible because generated employee data does not respect
-    // corresponding min/max job salary.
-    findThetaJoinSalaryIds() {
-        const employeeIds = [];
-        this.sampleEmployees.forEach(employee => {
-            this.sampleJobs.forEach(job => {
-                if (employee.payload()['jobId'] === job.payload()['id'] &&
-                    employee.payload()['salary'] >
-                    job.payload()['maxSalary']) {
-                    employeeIds.push(employee.payload()['id']);
-                }
-            });
-        });
-        return employeeIds.sort();
-    }
-}
-
-(async function() {
-    const schemaBuilder = schema.create("idk", 1);
-    schemaBuilder
-        .createTable("Job")
-        .addColumn("id", Type$1.STRING)
-        .addColumn("title", Type$1.STRING)
-        .addColumn("minSalary", Type$1.NUMBER)
-        .addColumn("maxSalary", Type$1.NUMBER)
-        .addPrimaryKey(["id"])
-        .addIndex("idx_maxSalary", ["maxSalary"], false, Order$1.DESC);
-    schemaBuilder
-        .createTable("JobHistory")
-        .addColumn("employeeId", Type$1.STRING)
-        .addColumn("startDate", Type$1.DATE_TIME)
-        .addColumn("endDate", Type$1.DATE_TIME)
-        .addColumn("jobId", Type$1.STRING)
-        .addColumn("departmentId", Type$1.STRING)
-        .addForeignKey("fk_EmployeeId", {
-            "action": ConstraintAction$1.RESTRICT,
-            "local": "employeeId",
-            "ref": "Employee.id"
-        })
-        .addForeignKey("fk_DepartmentId", {
-            "action": ConstraintAction$1.RESTRICT,
-            "local": "departmentId",
-            "ref": "Department.id"
-        });
-    schemaBuilder
-        .createTable("Employee")
-        .addColumn("id", Type$1.STRING)
-        .addColumn("firstName", Type$1.STRING)
-        .addColumn("lastName", Type$1.STRING)
-        .addColumn("email", Type$1.STRING)
-        .addColumn("phoneNumber", Type$1.STRING)
-        .addColumn("hireDate", Type$1.DATE_TIME)
-        .addColumn("jobId", Type$1.STRING)
-        .addColumn("salary", Type$1.NUMBER)
-        .addColumn("commissionPercent", Type$1.NUMBER)
-        .addColumn("managerId", Type$1.STRING)
-        .addColumn("departmentId", Type$1.STRING)
-        .addColumn("photo", Type$1.ARRAY_BUFFER)
-        .addPrimaryKey(["id"])
-        .addForeignKey("fk_JobId", {
-            "action": ConstraintAction$1.RESTRICT,
-            "local": "jobId",
-            "ref": "Job.id"
-        })
-        .addForeignKey("fk_DepartmentId", {
-            "action": ConstraintAction$1.RESTRICT,
-            "local": "departmentId",
-            "ref": "Department.id"
-        })
-        .addIndex("idx_salary", ["salary"], false, Order$1.DESC)
-        .addNullable(["hireDate"]);
-    schemaBuilder
-        .createTable("Department")
-        .addColumn("id", Type$1.STRING)
-        .addColumn("name", Type$1.STRING)
-        .addColumn("managerId", Type$1.STRING)
-        .addColumn("locationId", Type$1.STRING)
-        .addPrimaryKey(["id"])
-        .addForeignKey("fk_LocationId", {
-            "action": ConstraintAction$1.RESTRICT,
-            "local": "locationId",
-            "ref": "Location.id"
-        });
-    schemaBuilder
-        .createTable("Location")
-        .addColumn("id", Type$1.STRING)
-        .addColumn("streetAddress", Type$1.STRING)
-        .addColumn("postalCode", Type$1.STRING)
-        .addColumn("city", Type$1.STRING)
-        .addColumn("stateProvince", Type$1.STRING)
-        .addColumn("countryId", Type$1.INTEGER)
-        .addPrimaryKey(["id"])
-        .addForeignKey("fk_CountryId", {
-            "action": ConstraintAction$1.RESTRICT,
-            "local": "countryId",
-            "ref": "Country.id"
-        });
-    schemaBuilder
-        .createTable("Country")
-        .addColumn("id", Type$1.INTEGER)
-        .addColumn("name", Type$1.STRING)
-        .addColumn("regionId", Type$1.STRING)
-        .addPrimaryKey(["id"], true)
-        .addForeignKey("fk_RegionId", {
-            "action": ConstraintAction$1.RESTRICT,
-            "local": "regionId",
-            "ref": "Region.id"
-        });
-    schemaBuilder
-        .createTable("Region")
-        .addColumn("id", Type$1.STRING)
-        .addColumn("name", Type$1.STRING)
-        .addPrimaryKey(["id"]);
-    schemaBuilder
-        .createTable("Holiday")
-        .addColumn("name", Type$1.STRING)
-        .addColumn("begin", Type$1.DATE_TIME)
-        .addColumn("end", Type$1.DATE_TIME)
-        .addIndex("idx_begin", ["begin"], false, Order$1.ASC)
-        .addPrimaryKey(["name"])
-        .persistentIndex(true);
-    schemaBuilder
-        .createTable("DummyTable")
-        .addColumn("arraybuffer", Type$1.ARRAY_BUFFER)
-        .addColumn("boolean", Type$1.BOOLEAN)
-        .addColumn("datetime", Type$1.DATE_TIME)
-        .addColumn("integer", Type$1.INTEGER)
-        .addColumn("number", Type$1.NUMBER)
-        .addColumn("string", Type$1.STRING)
-        .addColumn("string2", Type$1.STRING)
-        .addColumn("proto", Type$1.OBJECT)
-        .addPrimaryKey(["string", "number"])
-        .addUnique("uq_constraint", ["integer", "string2"])
-        .addNullable(["datetime"]);
-    schemaBuilder
-        .createTable("CrossColumnTable")
-        .addColumn("integer1", Type$1.INTEGER)
-        .addColumn("integer2", Type$1.INTEGER)
-        .addColumn("string1", Type$1.STRING)
-        .addColumn("string2", Type$1.STRING)
-        .addNullable(["string1", "string2"])
-        .addIndex("idx_ascDesc", [
-            {
-                "name": "integer1",
-                "order": Order$1.ASC
-            },
-            {
-                "name": "integer2",
-                "order": Order$1.DESC
-            }
-        ], true)
-        .addIndex("idx_crossNull", ["string1", "string2"], true)
-        .persistentIndex(true);
-    const db = await schemaBuilder.connect();
-    const dataGenerator = new MockDataGenerator();
-    dataGenerator.generate(
-    /* jobCount */ 50,
-    /* employeeCount */ 300,
-    /* departmentCount */ 10);
-    db
-        .createTransaction()
-        .exec([
-            db.insert().into(db.getSchema().table("Region")).values(dataGenerator.sampleRegions),
-            db.insert().into(db.getSchema().table("Country")).values(dataGenerator.sampleCountries),
-            db.insert().into(db.getSchema().table("Location")).values(dataGenerator.sampleLocations),
-            db.insert().into(db.getSchema().table("Department")).values(dataGenerator.sampleDepartments),
-            db.insert().into(db.getSchema().table("Job")).values(dataGenerator.sampleJobs),
-            db.insert().into(db.getSchema().table("Employee")).values(dataGenerator.sampleEmployees),
-            db.insert().into(db.getSchema().table("CrossColumnTable")).values((() => {
-                const sampleRows = new Array(20);
-                const padZeros = (n) => (n < 10 ? `0${n}` : `${n}`);
-                for (let i = 0; i < 20; i++) {
-                    sampleRows[i] = db.getSchema().table("CrossColumnTable").createRow({
-                        "integer1": i,
-                        "integer2": i * 10,
-                        // Generating a null value for i = [10, 12, 14].
-                        "string1": i % 2 === 0 && i >= 10 && i < 15 ? null : `string1_${padZeros(i)}`,
-                        // Generating a null value for i = 16 and 18.
-                        "string2": i % 2 === 0 && i >= 15 ? null : `string2_${i * 10}`
-                    });
-                }
-                return sampleRows;
-            })())
-        ]);
-    const results = await db.select().from(db.getSchema().table("Job")).where(db.getSchema().table("Job").col("minSalary").gte(300000)).exec();
-    console.log(results);
-    //fs.writeFileSync(path.join(__dirname, "output.json"), JSON.stringify(await db.export(), undefined, 4));
-})();
+export { ConstraintAction, Order, Type, schema };

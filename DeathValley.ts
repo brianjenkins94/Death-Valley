@@ -293,58 +293,6 @@ class ServiceId<T> {
 	}
 }
 
-// Raw data store interface passed to onUpgrade() function.
-interface RawBackStore {
-	// Returns original database instance that can be used for low-level data
-	// manipulations, not really useful for IndexedDB.
-	getRawDBInstance: () => unknown;
-
-	// Returns original database upgrade transaction.
-	getRawTransaction: () => unknown;
-
-	// Removes a table from data store. Lovefield does not support automatic
-	// dropping table. Users must call dropTable manually during upgrade to purge
-	// table that is no longer used from database.
-	dropTable: (tableName: string) => Promise<void>;
-
-	// Adds a column to existing table rows. This API does not provide any
-	// consistency check. Callers are solely responsible for making sure the
-	// values of |columnName| and |defaultValue| are consistent with the new
-	// schema.
-	addTableColumn: (
-		tableName: string,
-		columnName: string,
-		defaultValue: ArrayBuffer | Date | boolean | number | string | null
-	) => Promise<void>;
-
-	dropTableColumn: (tableName: string, columnName: string) => Promise<void>;
-
-	// Renames a column for all existing table rows.
-	renameTableColumn: (
-		tableName: string,
-		oldColumnName: string,
-		newColumnName: string
-	) => Promise<void>;
-
-	// Creates a Lovefield row structure that can be stored into raw DB instance
-	// via raw transaction.
-	createRow: (payload: object) => Row;
-
-	// Returns version of existing DB.
-	getVersion: () => number;
-
-	// Offers last resort for data rescue. This function dumps all rows in the
-	// database to one single JSON object.
-	// The format is a JSON object of
-	//     {
-	//        "table1": [ <row1>, <row2>, ..., <rowN> ],
-	//        "table2": [ ... ],
-	//        ...
-	//        "tableM": [ ... ]
-	//     }
-	dump: () => Promise<object>;
-}
-
 // @emptyExport
 interface Predicate {
 	// Returns relation that holds only the entries satisfying given predicate.
@@ -514,7 +462,7 @@ interface BackStore {
 	// |db| must be instance of RawBackStore.
 	// Returned promise contain raw type of the back store, e.g. IDBDatabase,
 	// caller to dynamic cast.
-	init: (onUpgrade?: (db: RawBackStore) => Promise<unknown>) => Promise<unknown>;
+	init: () => Promise<unknown>;
 
 	// Creates backstore native transaction that is tied to a given journal.
 	createTx: (type: TransactionType, scope: Table[], journal?: Journal) => Tx;
@@ -525,25 +473,15 @@ interface BackStore {
 	// Returns one table based on table name.
 	getTableInternal: (tableName: string) => RuntimeTable;
 
-	// Notifies registered observers with table diffs.
-	notify: (changes: TableDiff[]) => void;
-
 	// Whether this backstore supports the `import` operation.
 	supportsImport: () => boolean;
-}
-
-interface Pragma {
-	// Bundled mode has tradeoffs and therefore placed as a pragma.
-	enableBundledMode: boolean;
 }
 
 // Models the return value of Database.getSchema().
 interface DatabaseSchema {
 	name: () => string;
-	version: () => number;
 	tables: () => Table[];
 	table: (name: string) => Table;
-	pragma: () => Pragma;
 }
 
 // TODO(arthurhsu): original SingleKey can be null.
@@ -3849,8 +3787,7 @@ class Memory implements BackStore {
 		this.tables = new Map<string, MemoryTable>();
 	}
 
-	init(onUpgrade?: (db: RawBackStore) => Promise<void>): Promise<void> {
-		// Memory does not uses raw back store, just ignore the onUpgrade function.
+	init(): Promise<void> {
 		(this.schema.tables() as BaseTable[]).forEach((table) => { this.initTable(table); }, this);
 		return Promise.resolve();
 	}
@@ -3870,11 +3807,6 @@ class Memory implements BackStore {
 
 	close(): void {
 		// No op.
-	}
-
-	// Notifies registered observers with table diffs.
-	notify(changes: TableDiff[]): void {
-		// Not supported.
 	}
 
 	supportsImport(): boolean {
@@ -3976,133 +3908,6 @@ class MathHelper {
 			= MathHelper.sum.apply(null, args.map((val) => (val - mean) ** 2))
 			/ (args.length - 1);
 		return Math.sqrt(sampleVariance);
-	}
-}
-
-// The format of a change record object. This matches the native implementation.
-interface ChangeRecord {
-	addedCount: number;
-	object: object[];
-	index: number;
-	removed: object[];
-	type: string;
-}
-
-// A DiffCalculator is responsible for detecting and applying the difference
-// between old and new results for a given query.
-class DiffCalculator {
-	private readonly evalRegistry: EvalRegistry;
-
-	private readonly columns: Column[];
-
-	constructor(
-		private readonly query: SelectContext,
-		private readonly observableResults: object[]
-	) {
-		this.evalRegistry = EvalRegistry.get();
-		this.columns = this.detectColumns();
-	}
-
-	// Detects the diff between old and new results, and applies it to the
-	// observed array, which triggers observers to be notified.
-	// NOTE: Following logic does not detect modifications. A modification is
-	// detected as a deletion and an insertion.
-	// Also the implementation below is calculating longestCommonSubsequence
-	// twice, with different collectorFn each time, because comparisons are done
-	// based on object reference, there might be a cheaper way, such that
-	// longestCommonSubsequence is only called once.
-	applyDiff(oldResults: Relation, newResults: Relation): ChangeRecord[] {
-		const oldEntries = oldResults === null ? [] : oldResults.entries;
-
-		// Detecting and applying deletions.
-		const longestCommonSubsequenceLeft = MathHelper.longestCommonSubsequence(oldEntries, newResults.entries, this.comparator.bind(this), (indexLeft, indexRight) => oldEntries[indexLeft]);
-
-		const changeRecords: ChangeRecord[] = [];
-		let commonIndex = 0;
-		for (let i = 0; i < oldEntries.length; i++) {
-			const entry = oldEntries[i];
-			if (longestCommonSubsequenceLeft[commonIndex] === entry) {
-				commonIndex++;
-				continue;
-			} else {
-				const removed = this.observableResults.splice(commonIndex, 1);
-				const changeRecord = this.createChangeRecord(i, removed, 0, this.observableResults);
-				changeRecords.push(changeRecord);
-			}
-		}
-
-		// Detecting and applying additions.
-		const longestCommonSubsequenceRight = MathHelper.longestCommonSubsequence(oldEntries, newResults.entries, this.comparator.bind(this), (indexLeft, indexRight) => newResults.entries[indexRight]);
-
-		commonIndex = 0;
-		for (let i = 0; i < newResults.entries.length; i++) {
-			const entry = newResults.entries[i];
-			if (longestCommonSubsequenceRight[commonIndex] === entry) {
-				commonIndex++;
-				continue;
-			} else {
-				this.observableResults.splice(i, 0, entry.row.payload());
-				const changeRecord = this.createChangeRecord(i, [], 1, this.observableResults);
-				changeRecords.push(changeRecord);
-			}
-		}
-
-		return changeRecords;
-	}
-
-	// Detects the columns present in each result entry.
-	private detectColumns(): Column[] {
-		if (this.query.columns.length > 0) {
-			return this.query.columns;
-		} else {
-			// Handle the case where all columns are being projected.
-			const columns: Column[] = [];
-			this.query.from.forEach((t) => {
-				const table = t as BaseTable;
-				table.getColumns().forEach((column) => columns.push(column));
-			});
-			return columns;
-		}
-	}
-
-	// The comparator function to use for determining whether two entries are the
-	// same. Returns whether the two entries are identical, taking only into
-	// account the columns that are being projected.
-	private comparator(left: RelationEntry, right: RelationEntry): boolean {
-		return this.columns.every((column) => {
-			// For OBJECT and ARRAY_BUFFER columns, don't bother detecting changes
-			// within the object. Trigger observers only if the object reference
-			// changed.
-			if (
-				column.getType() === Type.OBJECT
-				|| column.getType() === Type.ARRAY_BUFFER
-			) {
-				return left.getField(column) === right.getField(column);
-			}
-
-			const evalFn = this.evalRegistry.getEvaluator(column.getType(), EvalType.EQ);
-			return evalFn(left.getField(column), right.getField(column));
-		}, this);
-	}
-
-	// Creates a new change record object.
-	// |index| is the index that was affected.
-	// |removed| is an array holding the elements that were removed.
-	// |addedCount| is the number of elements added to the observed array.
-	// |object| is the array that is being observed.
-	private createChangeRecord(
-		index: number,
-		removed: object[],
-		addedCount: number,
-		object: object[]
-	): ChangeRecord {
-		return {
-			"addedCount": addedCount,
-			"index": index,
-			"object": object,
-			"removed": removed,
-			"type": "splice"
-		};
 	}
 }
 
@@ -6237,121 +6042,6 @@ class RowId implements RuntimeIndex {
 		});
 
 		return [keys, [keys]];
-	}
-}
-
-// Prefetcher fetches rows from database into cache and build indices.
-class Prefetcher {
-	private readonly backStore: BackStore;
-
-	private readonly indexStore: IndexStore;
-
-	private readonly cache: Cache;
-
-	constructor(global: Global) {
-		this.backStore = global.getService(Service.BACK_STORE);
-		this.indexStore = global.getService(Service.INDEX_STORE);
-		this.cache = global.getService(Service.CACHE);
-	}
-
-	init(schema: DatabaseSchema): Promise<void> {
-		// Sequentially load tables
-		const tables = schema.tables();
-		const execSequentially = (): Promise<void> => {
-			if (tables.length === 0) {
-				return Promise.resolve();
-			}
-
-			const table = tables.shift() as BaseTable;
-			const whenTableFetched = table.persistentIndex() ? this.fetchTableWithPersistentIndices(table) : this.fetchTable(table);
-			return whenTableFetched.then(execSequentially);
-		};
-
-		return execSequentially();
-	}
-
-	private fetchTable(table: BaseTable): Promise<void> {
-		const tx = this.backStore.createTx(TransactionType.READ_ONLY, [table]);
-		const store = tx.getTable(table.getName(), table.deserializeRow.bind(table), TableType.DATA);
-		const promise = store.get([]).then((results) => {
-			this.cache.setMany(table.getName(), results);
-			this.reconstructNonPersistentIndices(table, results);
-		});
-		tx.commit();
-		return promise;
-	}
-
-	// Reconstructs a table's indices by populating them from scratch.
-	private reconstructNonPersistentIndices(
-		tableSchema: BaseTable,
-		tableRows: Row[]
-	): void {
-		const indices = this.indexStore.getTableIndices(tableSchema.getName());
-		tableRows.forEach((row) => {
-			indices.forEach((index) => {
-				const key = row.keyOfIndex(index.getName());
-				index.add(key, row.id());
-			});
-		});
-	}
-
-	// Fetches contents of a table with persistent indices into cache, and
-	// reconstructs the indices from disk.
-	private fetchTableWithPersistentIndices(tableSchema: BaseTable): Promise<void> {
-		const tx = this.backStore.createTx(TransactionType.READ_ONLY, [
-			tableSchema
-		]);
-
-		const store = tx.getTable(tableSchema.getName(), tableSchema.deserializeRow, TableType.DATA);
-		const whenTableContentsFetched = store.get([]).then((results) => {
-			this.cache.setMany(tableSchema.getName(), results);
-		});
-
-		const whenIndicesReconstructed = (tableSchema.getIndices() as IndexImpl[])
-			.map((indexSchema: IndexImpl) => this.reconstructPersistentIndex(indexSchema, tx))
-			.concat(this.reconstructPersistentRowIdIndex(tableSchema, tx));
-
-		tx.commit();
-		return Promise.all(whenIndicesReconstructed.concat(whenTableContentsFetched)).then(() => {
-
-		});
-	}
-
-	// Reconstructs a persistent index by deserializing it from disk.
-	private reconstructPersistentIndex(
-		indexSchema: IndexImpl,
-		tx: Tx
-	): Promise<void> {
-		const indexTable = tx.getTable(indexSchema.getNormalizedName(), Row.deserialize, TableType.INDEX);
-		const comparator = ComparatorFactory.create(indexSchema);
-		return indexTable.get([]).then((serializedRows) => {
-			// No need to replace the index if there is no index contents.
-			if (serializedRows.length > 0) {
-				if (indexSchema.hasNullableColumn()) {
-					const deserializeFn = BTree.deserialize.bind(undefined, comparator, indexSchema.getNormalizedName(), indexSchema.isUnique);
-					const nullableIndex = NullableIndex.deserialize(deserializeFn, serializedRows);
-					this.indexStore.set(indexSchema.tableName, nullableIndex);
-				} else {
-					const btreeIndex = BTree.deserialize(comparator, indexSchema.getNormalizedName(), indexSchema.isUnique, serializedRows);
-					this.indexStore.set(indexSchema.tableName, btreeIndex);
-				}
-			}
-		});
-	}
-
-	// Reconstructs a persistent RowId index by deserializing it from disk.
-	private reconstructPersistentRowIdIndex(
-		tableSchema: BaseTable,
-		tx: Tx
-	): Promise<void> {
-		const indexTable = tx.getTable(tableSchema.getRowIdIndexName(), Row.deserialize, TableType.INDEX);
-		return indexTable.get([]).then((serializedRows) => {
-			// No need to replace the index if there is no index contents.
-			if (serializedRows.length > 0) {
-				const rowIdIndex = RowId.deserialize(tableSchema.getRowIdIndexName(), serializedRows);
-				this.indexStore.set(tableSchema.getName(), rowIdIndex);
-			}
-		});
 	}
 }
 
@@ -11595,8 +11285,7 @@ class ExportTask extends UniqueId implements Task {
 
 		return {
 			"name": this.schema.name(),
-			"tables": tables,
-			"version": this.schema.version()
+			"tables": tables
 		};
 	}
 
@@ -11666,7 +11355,6 @@ class ImportTask extends UniqueId implements Task {
 
 		if (
 			this.schema.name() !== this.data["name"]
-			|| this.schema.version() !== this.data["version"]
 		) {
 			// 111: Database name/version mismatch for import.
 			throw new Exception(ErrorCode.DB_MISMATCH);
@@ -12367,12 +12055,6 @@ interface DatabaseConnection {
 	update: (table: Table) => UpdateQuery;
 	delete: () => DeleteQuery;
 
-	// Registers an observer for the given query.
-	observe: (query: SelectQuery, callback: ObserverCallback) => void;
-
-	// Un-registers an observer for the given query.
-	unobserve: (query: SelectQuery, callback: ObserverCallback) => void;
-
 	createTransaction: (type?: TransactionType) => Transaction;
 
 	// Closes database connection. This is a best effort function and the closing
@@ -12388,7 +12070,6 @@ interface DatabaseConnection {
 }
 
 interface ConnectOptions {
-	onUpgrade?: (raw: RawBackStore) => Promise<unknown>;
 	storeType: DataStoreType;
 	websqlDbSize?: number;
 	enableInspector?: boolean;
@@ -12413,13 +12094,12 @@ class RuntimeDatabase implements DatabaseConnection {
 		// Database#close() was called, therefore it needs to be re-added.
 		this.global.registerService(Service.SCHEMA, this.schema);
 		this.global.registerService(Service.CACHE, new DefaultCache(this.schema));
-		const backStore = this.createBackStore(this.schema, options);
+		const backStore = new Memory(this.schema);
 		this.global.registerService(Service.BACK_STORE, backStore);
 		const indexStore = new MemoryIndexStore();
 		this.global.registerService(Service.INDEX_STORE, indexStore);
-		const onUpgrade = options ? options.onUpgrade : undefined;
 		return backStore
-			.init(onUpgrade)
+			.init()
 			.then(() => {
 				this.global.registerService(Service.QUERY_ENGINE, new DefaultQueryEngine(this.global));
 				this.runner = new Runner();
@@ -12505,35 +12185,21 @@ class RuntimeDatabase implements DatabaseConnection {
 			throw new Exception(ErrorCode.CONNECTION_CLOSED);
 		}
 	}
-
-	private createBackStore(
-		schema: DatabaseSchema,
-		options?: ConnectOptions
-	): BackStore {
-		return new Memory(schema);
-	}
 }
 
 class DatabaseSchemaImpl implements DatabaseSchema {
-	_pragma: Pragma;
-
 	private _info: Info;
 
 	private readonly tableMap: Map<string, Table>;
 
-	constructor(readonly _name: string, readonly _version: number) {
+	constructor(readonly _name: string) {
 		this.tableMap = new Map<string, Table>();
-		this._pragma = { "enableBundledMode": false };
 		// Lazy initialization
 		this._info = undefined as unknown as Info;
 	}
 
 	name(): string {
 		return this._name;
-	}
-
-	version(): number {
-		return this._version;
 	}
 
 	info(): Info {
@@ -12558,10 +12224,6 @@ class DatabaseSchemaImpl implements DatabaseSchema {
 
 	setTable(table: Table): void {
 		this.tableMap.set(table.getName(), table);
-	}
-
-	pragma(): Pragma {
-		return this._pragma;
 	}
 }
 
@@ -13417,254 +13079,63 @@ class TableBuilder {
 	}
 }
 
-interface Builder {
-	// Constructor syntax itself violates the no any rule.
-	// new (dbName: string, dbVersion: number): any;
-
-	getSchema: () => DatabaseSchema;
-	getGlobal: () => Global;
-
-	// Instantiates a connection to the database. Note: This method can only be
-	// called once per Builder instance. Subsequent calls will throw an error,
-	// unless the previous DB connection has been closed first.
-	connect: (options?: ConnectOptions) => Promise<DatabaseConnection>;
-
-	createTable: (tableName: string) => TableBuilder;
-	setPragma: (pragma: Pragma) => Builder;
-}
-
-class SchemaBuilder implements Builder {
+class Database {
 	private schema: DatabaseSchemaImpl;
+	private cache: DefaultCache;
+	private backstore: Memory;
+	private indexstore: MemoryIndexStore;
+	private engine: DefaultQueryEngine;
+	private runner: Runner;
 
-	private readonly tableBuilders: Map<string, TableBuilder>;
+	public constructor() {
+		this.schema = new DatabaseSchemaImpl();
 
-	private finalized: boolean;
+		this.schema.setTable(new TableBuilder(tableName).getSchema());
 
-	private db: RuntimeDatabase;
-
-	private connectInProgress: boolean;
-
-	constructor(dbName: string, dbVersion: number) {
-		this.schema = new DatabaseSchemaImpl(dbName, dbVersion);
-		this.tableBuilders = new Map<string, TableBuilder>();
-		this.finalized = false;
-		this.db = null as unknown as RuntimeDatabase;
-		this.connectInProgress = false;
+		this.cache = new DefaultCache(this.schema);
+		this.backstore = new Memory(this.schema);
+		this.indexstore = new MemoryIndexStore();
+		this.engine = new DefaultQueryEngine(this.global);
+		this.runner = new Runner();
 	}
 
-	getSchema(): DatabaseSchema {
-		console.log("getSchema");
-		if (!this.finalized) {
-			this.finalize();
-		}
-		return this.schema;
+	public select(...columns: Column[]): SelectQuery {
+		return new SelectBuilder(this.global, columns);
 	}
 
-	getGlobal(): Global {
-		console.log("getGlobal");
-		const namespaceGlobalId = new ServiceId<Global>(`ns_${this.schema.name()}`);
-		const global = Global.get();
-		let namespacedGlobal: Global;
-		if (!global.isRegistered(namespaceGlobalId)) {
-			namespacedGlobal = new Global();
-			global.registerService(namespaceGlobalId, namespacedGlobal);
-		} else {
-			namespacedGlobal = global.getService(namespaceGlobalId);
-		}
-		return namespacedGlobal;
+	public insert(): InsertBuilder {
+		return new InsertBuilder(this.global);
 	}
 
-	// Instantiates a connection to the database. Note: This method can only be
-	// called once per Builder instance. Subsequent calls will throw an error,
-	// unless the previous DB connection has been closed first.
-	connect(options?: ConnectOptions): Promise<DatabaseConnection> {
-		console.log("connect");
-		if (this.connectInProgress || this.db !== null && this.db.isOpen()) {
-			// 113: Attempt to connect() to an already connected/connecting database.
-			throw new Exception(ErrorCode.ALREADY_CONNECTED);
-		}
-		this.connectInProgress = true;
+	public insertOrReplace(): InsertBuilder {
+		return new InsertBuilder(this.global, /* allowReplace */ true);
+	}
 
-		if (this.db === null) {
-			const global = this.getGlobal();
-			if (!global.isRegistered(Service.SCHEMA)) {
-				global.registerService(Service.SCHEMA, this.getSchema());
-			}
-			this.db = new RuntimeDatabase(global);
-		}
+	public update(table: Table): UpdateBuilder {
+		return new UpdateBuilder(this.global, table);
+	}
 
-		return this.db.init(options).then((db) => {
-			this.connectInProgress = false;
-			return db;
-		}, (e) => {
-			this.connectInProgress = false;
-			// TODO(arthurhsu): Add a new test case to verify that failed init
-			// call allows the database to be deleted since we close it properly
-			// here.
-			this.db.close();
-			throw e;
+	public delete(): DeleteBuilder {
+		return new DeleteBuilder(this.global);
+	}
+
+	public createTransaction(type?: TransactionType): Transaction {
+		return new RuntimeTransaction(this.global);
+	}
+
+	public export(): Promise<object> {
+		const task = new ExportTask(this.global);
+
+		return this.runner.scheduleTask(task).then((results) => {
+			return results[0].getPayloads()[0];
 		});
 	}
 
-	createTable(tableName: string): TableBuilder {
-		console.log("createTable");
-		if (this.tableBuilders.has(tableName)) {
-			// 503: Name {0} is already defined.
-			throw new Exception(ErrorCode.NAME_IN_USE, tableName);
-		} else if (this.finalized) {
-			// 535: Schema is already finalized.
-			throw new Exception(ErrorCode.SCHEMA_FINALIZED);
-		}
-		this.tableBuilders.set(tableName, new TableBuilder(tableName));
-		const ret = this.tableBuilders.get(tableName);
-		if (!ret) {
-			throw new Exception(ErrorCode.ASSERTION, "Builder.createTable");
-		}
-		return ret;
-	}
+	public import(d: object): Promise<object[]> {
+		const data = d as PayloadType;
 
-	setPragma(pragma: Pragma): Builder {
-		console.log("setPragma");
-		if (this.finalized) {
-			// 535: Schema is already finalized.
-			throw new Exception(ErrorCode.SCHEMA_FINALIZED);
-		}
+		const task = new ImportTask(this.global, data);
 
-		this.schema._pragma = pragma;
-		return this;
-	}
-
-	// Builds the graph of foreign key relationships and checks for
-	// loop in the graph.
-	private checkFkCycle(): void {
-		console.log("checkFkCycle");
-		// Builds graph.
-		const nodeMap = new Map<string, GraphNode>();
-		this.schema.tables().forEach((table) => {
-			nodeMap.set(table.getName(), new GraphNode(table.getName()));
-		}, this);
-		this.tableBuilders.forEach((builder, tableName) => {
-			builder.getFkSpecs().forEach((spec) => {
-				const parentNode = nodeMap.get(spec.parentTable);
-				if (parentNode) {
-					parentNode.edges.add(tableName);
-				}
-			});
-		});
-		// Checks for cycle.
-		Array.from(nodeMap.values()).forEach((graphNode) => { this.checkCycleUtil(graphNode, nodeMap); });
-	}
-
-	// Performs foreign key checks like validity of names of parent and
-	// child columns, matching of types and uniqueness of referred column
-	// in the parent.
-	private checkForeignKeyValidity(builder: TableBuilder): void {
-		console.log("checkForeignKeyValidity");
-		builder.getFkSpecs().forEach((specs) => {
-			const parentTableName = specs.parentTable;
-			const table = this.tableBuilders.get(parentTableName);
-			if (!table) {
-				// 536: Foreign key {0} refers to invalid table.
-				throw new Exception(ErrorCode.INVALID_FK_TABLE);
-			}
-			const parentSchema = table.getSchema();
-			const parentColName = specs.parentColumn;
-			if (!Object.prototype.hasOwnProperty.call(parentSchema, parentColName)) {
-				// 537: Foreign key {0} refers to invalid column.
-				throw new Exception(ErrorCode.INVALID_FK_COLUMN);
-			}
-
-			const localSchema = builder.getSchema();
-			const localColName = specs.childColumn;
-			if (
-				(localSchema[localColName] as BaseColumn).getType()
-				!== (parentSchema[parentColName] as BaseColumn).getType()
-			) {
-				// 538: Foreign key {0} column type mismatch.
-				throw new Exception(ErrorCode.INVALID_FK_COLUMN_TYPE, specs.name);
-			}
-			if (!(parentSchema[parentColName] as BaseColumn).isUnique()) {
-				// 539: Foreign key {0} refers to non-unique column.
-				throw new Exception(ErrorCode.FK_COLUMN_NONUNIQUE, specs.name);
-			}
-		}, this);
-	}
-
-	// Performs checks to avoid chains of foreign keys on same column.
-	private checkForeignKeyChain(builder: TableBuilder): void {
-		console.log("checkForeignKeyChain");
-		const fkSpecArray = builder.getFkSpecs();
-		fkSpecArray.forEach((specs) => {
-			const parentBuilder = this.tableBuilders.get(specs.parentTable);
-			if (parentBuilder) {
-				parentBuilder.getFkSpecs().forEach((parentSpecs) => {
-					if (parentSpecs.childColumn === specs.parentColumn) {
-						// 534: Foreign key {0} refers to source column of another
-						// foreign key.
-						throw new Exception(ErrorCode.FK_COLUMN_IN_USE, specs.name);
-					}
-				}, this);
-			}
-		}, this);
-	}
-
-	private finalize(): void {
-		console.log("finalize");
-		if (!this.finalized) {
-			this.tableBuilders.forEach((builder) => {
-				this.checkForeignKeyValidity(builder);
-				this.schema.setTable(builder.getSchema());
-			});
-			Array.from(this.tableBuilders.values()).forEach(this.checkForeignKeyChain, this);
-			this.checkFkCycle();
-			this.tableBuilders.clear();
-			this.finalized = true;
-		}
-	}
-
-	// Checks for loop in the graph recursively. Ignores self loops.
-	// This algorithm is based on Lemma 22.11 in "Introduction To Algorithms
-	// 3rd Edition By Cormen et Al". It says that a directed graph G
-	// can be acyclic if and only DFS of G yields no back edges.
-	// @see http://www.geeksforgeeks.org/detect-cycle-in-a-graph/
-	private checkCycleUtil(
-		graphNode: GraphNode,
-		nodeMap: Map<string, GraphNode>
-	): void {
-		console.log("checkCycleUtil");
-		if (!graphNode.visited) {
-			graphNode.visited = true;
-			graphNode.onStack = true;
-			graphNode.edges.forEach((edge) => {
-				const childNode = nodeMap.get(edge);
-				if (childNode) {
-					if (!childNode.visited) {
-						this.checkCycleUtil(childNode, nodeMap);
-					} else if (childNode.onStack) {
-						// Checks for self loop, in which case, it does not throw an
-						// exception.
-						if (graphNode !== childNode) {
-							// 533: Foreign key loop detected.
-							throw new Exception(ErrorCode.FK_LOOP);
-						}
-					}
-				}
-			}, this);
-		}
-		graphNode.onStack = false;
-	}
-}
-
-// Keep lower case class name for compatibility with Lovefield API.
-// TODO(arthurhsu): FIXME: Builder should be a public interface, not concrete
-// class. Currently Builder has no @export.
-export class schema {
-	// Returns a builder.
-	// Note that Lovefield builder is a stateful object, and it remembers it has
-	// been used for connecting a database instance. Once the connection is closed
-	// or dropped, the builder cannot be used to reconnect. Instead, the caller
-	// needs to construct a new builder for doing so.
-	static create(name: string, version: number): Builder {
-		return new SchemaBuilder(name, version) as unknown as Builder;
+		return this.runner.scheduleTask(task);
 	}
 }

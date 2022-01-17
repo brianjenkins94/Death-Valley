@@ -6,7 +6,7 @@ import postProcess from "rollup-plugin-postprocess";
 import typescript from "@rollup/plugin-typescript";
 
 export default {
-	"input": "example.ts",
+	"input": "DeathValley.ts",
 	"output": {
 		"file": "docs/js/DeathValley.js",
 		"format": "esm"
