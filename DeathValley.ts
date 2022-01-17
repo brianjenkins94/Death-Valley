@@ -12733,10 +12733,6 @@ class TableBuilder {
 		Type.OBJECT
 	]);
 
-	private static toPascal(name: string): string {
-		return name[0].toUpperCase() + name.substring(1);
-	}
-
 	private readonly name: string;
 
 	private readonly columns: Map<string, Type>;
@@ -12772,120 +12768,13 @@ class TableBuilder {
 		this.checkNamingRules(name);
 		this.checkNameConflicts(name);
 		this.columns.set(name, type);
-		if (TableBuilder.NULLABLE_TYPES_BY_DEFAULT.has(type)) {
-			this.addNullable([name]);
-		}
+		//if (TableBuilder.NULLABLE_TYPES_BY_DEFAULT.has(type)) {
+		// 	this.addNullable([name]);
+		//}
 		return this;
-	}
-
-	// Adds a primary key to table.
-	// There are two overloads of this function:
-	//
-	// case 1: (columns: Array<string>, autoInc)
-	//   specifies primary key by given only column names with default ascending
-	//   orders (Order.ASC). When autoInc is true, there can be only one
-	//   column in the columns, its type must be Type.INTEGER, and its order
-	//   must be the default Order.ASC.
-	//
-	// case 2: (columns: Array<IndexedColumnSpec>)
-	//   allows different ordering per-column, but more verbose.
-	addPrimaryKey(
-		columns: IndexedColumnSpec[] | string[],
-		autoInc = false
-	): this {
-		this.pkName = "pk" + TableBuilder.toPascal(this.name);
-		this.checkNamingRules(this.pkName);
-		this.checkNameConflicts(this.pkName);
-		const cols = this.normalizeColumns(columns, true, undefined, autoInc);
-		this.checkPrimaryKey(cols);
-
-		if (cols.length === 1) {
-			this.uniqueColumns.add(cols[0].name);
-		}
-		this.uniqueIndices.add(this.pkName);
-		this.indices.set(this.pkName, cols);
-		return this;
-	}
-
-	// Creates a foreign key on a given table column.
-	addForeignKey(name: string, rawSpec: RawForeignKeySpec): this {
-		this.checkNamingRules(name);
-		this.checkNameConflicts(name);
-		if (rawSpec.action === undefined) {
-			rawSpec.action = ConstraintAction.RESTRICT;
-		}
-		if (rawSpec.timing === undefined) {
-			rawSpec.timing = ConstraintTiming.IMMEDIATE;
-		}
-
-		const spec = new ForeignKeySpec(rawSpec, this.name, name);
-		if (
-			spec.action === ConstraintAction.CASCADE
-			&& spec.timing === ConstraintTiming.DEFERRABLE
-		) {
-			// 506: Lovefield allows only immediate evaluation of cascading
-			// constraints.
-			throw new Exception(ErrorCode.IMMEDIATE_EVAL_ONLY);
-		}
-
-		if (!this.columns.has(spec.childColumn)) {
-			// 540: Foreign key {0} has invalid reference syntax.
-			throw new Exception(ErrorCode.INVALID_FK_REF, `${this.name}.${name}`);
-		}
-
-		this.fkSpecs.push(spec);
-		this.addIndex(name, [spec.childColumn], this.uniqueColumns.has(spec.childColumn));
-		return this;
-	}
-
-	addUnique(name: string, columns: string[]): this {
-		this.checkNamingRules(name);
-		this.checkNameConflicts(name);
-		const cols = this.normalizeColumns(columns, true);
-		if (cols.length === 1) {
-			this.uniqueColumns.add(cols[0].name);
-			this.markFkIndexForColumnUnique(cols[0].name);
-		}
-		this.indices.set(name, cols);
-		this.uniqueIndices.add(name);
-		return this;
-	}
-
-	addNullable(columns: string[]): this {
-		this.normalizeColumns(columns, false).forEach((col) => this.nullable.add(col.name));
-		return this;
-	}
-
-	// Mimics SQL CREATE INDEX.
-	// There are two overloads of this function:
-	// case 1: (name, columns: !Array<string>, unique, order)
-	//   adds an index by column names only. All columns have same ordering.
-	// case 2: (name, columns: !Array<!TableBuilder.IndexedColumnSpec>, unique)
-	//   adds an index, allowing customization of ordering, but more verbose.
-	addIndex(
-		name: string,
-		columns: object[] | string[],
-		unique = false,
-		order = Order.ASC
-	): this {
-		this.checkNamingRules(name);
-		this.checkNameConflicts(name);
-		this.indices.set(name, this.normalizeColumns(columns, true, order));
-		if (unique) {
-			this.uniqueIndices.add(name);
-		}
-		return this;
-	}
-
-	persistentIndex(value: boolean): void {
-		this.persistIndex = value;
 	}
 
 	getSchema(): BaseTable {
-		this.checkPrimaryKeyNotForeignKey();
-		this.checkPrimaryKeyDuplicateIndex();
-		this.checkPrimaryKeyNotNullable();
-
 		const columns: ColumnDef[] = Array.from(this.columns.keys()).map((colName) => {
 			return {
 				"name": colName,
@@ -12902,10 +12791,6 @@ class TableBuilder {
 		// instruct it to construct proper index schema.
 		table.constructIndices(this.pkName, this.indices, this.uniqueIndices, this.nullable, this.fkSpecs);
 		return table;
-	}
-
-	getFkSpecs(): ForeignKeySpec[] {
-		return this.fkSpecs;
 	}
 
 	private checkNamingRules(name: string): void {
@@ -12929,139 +12814,6 @@ class TableBuilder {
 			// 503: Name {0} is already defined.
 			throw new Exception(ErrorCode.NAME_IN_USE, `${this.name}.${name}`);
 		}
-	}
-
-	private checkPrimaryKey(columns: IndexedColumnSpec[]): void {
-		let hasAutoIncrement = false;
-		columns.forEach((column) => {
-			const columnType = this.columns.get(column.name);
-			hasAutoIncrement
-				= hasAutoIncrement || (column.autoIncrement as unknown as boolean);
-			if (column.autoIncrement && columnType !== Type.INTEGER) {
-				// 504: Can not use autoIncrement with a non-integer primary key.
-				throw new Exception(ErrorCode.INVALID_AUTO_KEY_TYPE);
-			}
-		});
-
-		if (hasAutoIncrement && columns.length > 1) {
-			// 505: Can not use autoIncrement with a cross-column primary key.
-			throw new Exception(ErrorCode.INVALID_AUTO_KEY_COLUMN);
-		}
-	}
-
-	// Checks whether any primary key column is also used as a foreign key child
-	// column, and throws an exception if such a column is found.
-	private checkPrimaryKeyNotForeignKey(): void {
-		if (this.pkName === null) {
-			return;
-		}
-
-		const index = this.indices.get(this.pkName);
-		if (index) {
-			const pkColumns = index.map((column) => column.name);
-			let fkSpecIndex = 0;
-			const conflict = this.fkSpecs.some((fkSpec, i) => {
-				fkSpecIndex = i;
-				return pkColumns.includes(fkSpec.childColumn);
-			});
-			if (conflict) {
-				// 543: Foreign key {0}. A primary key column can't also be a foreign
-				// key child column.
-				throw new Exception(ErrorCode.PK_CANT_BE_FK, this.fkSpecs[fkSpecIndex].name);
-			}
-		} // else nothing to check.
-	}
-
-	// Checks whether the primary key index is identical (in terms of indexed
-	// columns) with another explicitly added index.
-	private checkPrimaryKeyDuplicateIndex(): void {
-		if (this.pkName === null) {
-			return;
-		}
-
-		const index = this.indices.get(this.pkName);
-		if (index) {
-			const extractName = (column: IndexedColumnSpec) => column.name;
-			const pkColumnsJson = JSON.stringify(index.map(extractName));
-
-			this.indices.forEach((indexedColumnSpecs, indexName) => {
-				if (indexName === this.pkName) {
-					return;
-				}
-
-				if (
-					JSON.stringify(indexedColumnSpecs.map(extractName)) === pkColumnsJson
-				) {
-					// 544: Duplicate primary key index found at {0}
-					throw new Exception(ErrorCode.DUPLICATE_PK, `${this.name}.${indexName}`);
-				}
-			});
-		} // else nothing to check.
-	}
-
-	// Checks whether any primary key column has also been marked as nullable.
-	private checkPrimaryKeyNotNullable(): void {
-		if (this.pkName === null) {
-			return;
-		}
-
-		const index = this.indices.get(this.pkName);
-		if (index) {
-			index.forEach((indexedColumnSpec) => {
-				if (this.nullable.has(indexedColumnSpec.name)) {
-					// 545: Primary key column {0} can't be marked as nullable
-					throw new Exception(ErrorCode.NULLABLE_PK, `${this.name}.${indexedColumnSpec.name}`);
-				}
-			});
-		} // else nothing to check.
-	}
-
-	// Convert different column representations (column name only or column
-	// objects) into column object array. Also performs consistency check to make
-	// sure referred columns are actually defined.
-	private normalizeColumns(
-		columns: object[] | string[],
-		checkIndexable: boolean,
-		sortOrder = Order.ASC,
-		autoInc = false
-	): IndexedColumnSpec[] {
-		let normalized: IndexedColumnSpec[]
-			= null as unknown as IndexedColumnSpec[];
-		if (typeof columns[0] === "string") {
-			const array = columns as string[];
-			normalized = array.map((col) => {
-				return {
-					"autoIncrement": autoInc || false,
-					"name": col,
-					"order": sortOrder
-				};
-			});
-		} else {
-			normalized = columns as IndexedColumnSpec[];
-		}
-
-		normalized.forEach((col) => {
-			if (!this.columns.has(col.name)) {
-				// 508: Table {0} does not have column: {1}.
-				throw new Exception(ErrorCode.COLUMN_NOT_FOUND, this.name, col.name);
-			}
-			if (checkIndexable) {
-				const type = this.columns.get(col.name);
-				if (type === Type.ARRAY_BUFFER || type === Type.OBJECT) {
-					// 509: Attempt to index table {0} on non-indexable column {1}.
-					throw new Exception(ErrorCode.COLUMN_NOT_INDEXABLE, this.name, col.name);
-				}
-			}
-		});
-		return normalized;
-	}
-
-	private markFkIndexForColumnUnique(column: string): void {
-		this.fkSpecs.forEach((fkSpec) => {
-			if (fkSpec.childColumn === column) {
-				this.uniqueIndices.add(fkSpec.name.split(".")[1]);
-			}
-		});
 	}
 }
 
@@ -13093,7 +12845,6 @@ interface Builder {
 	connect: (options?: ConnectOptions) => Promise<DatabaseConnection>;
 
 	createTable: (tableName: string) => TableBuilder;
-	setPragma: (pragma: Pragma) => Builder;
 }
 
 class SchemaBuilder implements Builder {
@@ -13116,7 +12867,6 @@ class SchemaBuilder implements Builder {
 	}
 
 	getSchema(): DatabaseSchema {
-		console.log("getSchema");
 		if (!this.finalized) {
 			this.finalize();
 		}
@@ -13124,7 +12874,6 @@ class SchemaBuilder implements Builder {
 	}
 
 	getGlobal(): Global {
-		console.log("getGlobal");
 		const namespaceGlobalId = new ServiceId<Global>(`ns_${this.schema.name()}`);
 		const global = Global.get();
 		let namespacedGlobal: Global;
@@ -13141,7 +12890,6 @@ class SchemaBuilder implements Builder {
 	// called once per Builder instance. Subsequent calls will throw an error,
 	// unless the previous DB connection has been closed first.
 	connect(options?: ConnectOptions): Promise<DatabaseConnection> {
-		console.log("connect");
 		if (this.connectInProgress || this.db !== null && this.db.isOpen()) {
 			// 113: Attempt to connect() to an already connected/connecting database.
 			throw new Exception(ErrorCode.ALREADY_CONNECTED);
@@ -13170,7 +12918,6 @@ class SchemaBuilder implements Builder {
 	}
 
 	createTable(tableName: string): TableBuilder {
-		console.log("createTable");
 		if (this.tableBuilders.has(tableName)) {
 			// 503: Name {0} is already defined.
 			throw new Exception(ErrorCode.NAME_IN_USE, tableName);
@@ -13186,135 +12933,14 @@ class SchemaBuilder implements Builder {
 		return ret;
 	}
 
-	setPragma(pragma: Pragma): Builder {
-		console.log("setPragma");
-		if (this.finalized) {
-			// 535: Schema is already finalized.
-			throw new Exception(ErrorCode.SCHEMA_FINALIZED);
-		}
-
-		this.schema._pragma = pragma;
-		return this;
-	}
-
-	// Builds the graph of foreign key relationships and checks for
-	// loop in the graph.
-	private checkFkCycle(): void {
-		console.log("checkFkCycle");
-		// Builds graph.
-		const nodeMap = new Map<string, GraphNode>();
-		this.schema.tables().forEach((table) => {
-			nodeMap.set(table.getName(), new GraphNode(table.getName()));
-		}, this);
-		this.tableBuilders.forEach((builder, tableName) => {
-			builder.getFkSpecs().forEach((spec) => {
-				const parentNode = nodeMap.get(spec.parentTable);
-				if (parentNode) {
-					parentNode.edges.add(tableName);
-				}
-			});
-		});
-		// Checks for cycle.
-		Array.from(nodeMap.values()).forEach((graphNode) => { this.checkCycleUtil(graphNode, nodeMap); });
-	}
-
-	// Performs foreign key checks like validity of names of parent and
-	// child columns, matching of types and uniqueness of referred column
-	// in the parent.
-	private checkForeignKeyValidity(builder: TableBuilder): void {
-		console.log("checkForeignKeyValidity");
-		builder.getFkSpecs().forEach((specs) => {
-			const parentTableName = specs.parentTable;
-			const table = this.tableBuilders.get(parentTableName);
-			if (!table) {
-				// 536: Foreign key {0} refers to invalid table.
-				throw new Exception(ErrorCode.INVALID_FK_TABLE);
-			}
-			const parentSchema = table.getSchema();
-			const parentColName = specs.parentColumn;
-			if (!Object.prototype.hasOwnProperty.call(parentSchema, parentColName)) {
-				// 537: Foreign key {0} refers to invalid column.
-				throw new Exception(ErrorCode.INVALID_FK_COLUMN);
-			}
-
-			const localSchema = builder.getSchema();
-			const localColName = specs.childColumn;
-			if (
-				(localSchema[localColName] as BaseColumn).getType()
-				!== (parentSchema[parentColName] as BaseColumn).getType()
-			) {
-				// 538: Foreign key {0} column type mismatch.
-				throw new Exception(ErrorCode.INVALID_FK_COLUMN_TYPE, specs.name);
-			}
-			if (!(parentSchema[parentColName] as BaseColumn).isUnique()) {
-				// 539: Foreign key {0} refers to non-unique column.
-				throw new Exception(ErrorCode.FK_COLUMN_NONUNIQUE, specs.name);
-			}
-		}, this);
-	}
-
-	// Performs checks to avoid chains of foreign keys on same column.
-	private checkForeignKeyChain(builder: TableBuilder): void {
-		console.log("checkForeignKeyChain");
-		const fkSpecArray = builder.getFkSpecs();
-		fkSpecArray.forEach((specs) => {
-			const parentBuilder = this.tableBuilders.get(specs.parentTable);
-			if (parentBuilder) {
-				parentBuilder.getFkSpecs().forEach((parentSpecs) => {
-					if (parentSpecs.childColumn === specs.parentColumn) {
-						// 534: Foreign key {0} refers to source column of another
-						// foreign key.
-						throw new Exception(ErrorCode.FK_COLUMN_IN_USE, specs.name);
-					}
-				}, this);
-			}
-		}, this);
-	}
-
 	private finalize(): void {
-		console.log("finalize");
 		if (!this.finalized) {
 			this.tableBuilders.forEach((builder) => {
-				this.checkForeignKeyValidity(builder);
 				this.schema.setTable(builder.getSchema());
 			});
-			Array.from(this.tableBuilders.values()).forEach(this.checkForeignKeyChain, this);
-			this.checkFkCycle();
 			this.tableBuilders.clear();
 			this.finalized = true;
 		}
-	}
-
-	// Checks for loop in the graph recursively. Ignores self loops.
-	// This algorithm is based on Lemma 22.11 in "Introduction To Algorithms
-	// 3rd Edition By Cormen et Al". It says that a directed graph G
-	// can be acyclic if and only DFS of G yields no back edges.
-	// @see http://www.geeksforgeeks.org/detect-cycle-in-a-graph/
-	private checkCycleUtil(
-		graphNode: GraphNode,
-		nodeMap: Map<string, GraphNode>
-	): void {
-		console.log("checkCycleUtil");
-		if (!graphNode.visited) {
-			graphNode.visited = true;
-			graphNode.onStack = true;
-			graphNode.edges.forEach((edge) => {
-				const childNode = nodeMap.get(edge);
-				if (childNode) {
-					if (!childNode.visited) {
-						this.checkCycleUtil(childNode, nodeMap);
-					} else if (childNode.onStack) {
-						// Checks for self loop, in which case, it does not throw an
-						// exception.
-						if (graphNode !== childNode) {
-							// 533: Foreign key loop detected.
-							throw new Exception(ErrorCode.FK_LOOP);
-						}
-					}
-				}
-			}, this);
-		}
-		graphNode.onStack = false;
 	}
 }
 

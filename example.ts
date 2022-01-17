@@ -1,10 +1,14 @@
 import * as fs from "fs";
 import * as path from "path";
 
+//import { ConstraintAction, Order, Type } from "./src/lib/base/enum";
+//import { schema } from "./src/lib/schema/schema";
+//import { MockDataGenerator } from "./src/testing/hr_schema/mock_data_generator";
+
 import { ConstraintAction, Order, Type, schema } from "./DeathValley";
-import { MockDataGenerator } from "./src/testing/hr_schema/mock_data_generator";
 
 (async function() {
+	/*
 	const schemaBuilder = schema.create("idk", 1);
 
 	schemaBuilder
@@ -155,11 +159,7 @@ import { MockDataGenerator } from "./src/testing/hr_schema/mock_data_generator";
 
 	const dataGenerator = new MockDataGenerator();
 
-	dataGenerator.generate(
-		/* jobCount */ 50,
-		/* employeeCount */ 300,
-		/* departmentCount */ 10
-	);
+	dataGenerator.generate(50, 300, 10);
 
 	db
 		.createTransaction()
@@ -194,4 +194,99 @@ import { MockDataGenerator } from "./src/testing/hr_schema/mock_data_generator";
 	console.log(results);
 
 	fs.writeFileSync(path.join(__dirname, "output.json"), JSON.stringify(await db.export(), undefined, 4));
+
+	*/
+
+	const schemaBuilder2 = schema.create("idk", 1);
+
+	schemaBuilder2
+		.createTable("Job")
+		.addColumn("id", Type.STRING)
+		.addColumn("title", Type.STRING)
+		.addColumn("minSalary", Type.NUMBER)
+		.addColumn("maxSalary", Type.NUMBER);
+
+	schemaBuilder2
+		.createTable("JobHistory")
+		.addColumn("employeeId", Type.STRING)
+		.addColumn("startDate", Type.DATE_TIME)
+		.addColumn("endDate", Type.DATE_TIME)
+		.addColumn("jobId", Type.STRING)
+		.addColumn("departmentId", Type.STRING);
+
+	schemaBuilder2
+		.createTable("Employee")
+		.addColumn("id", Type.STRING)
+		.addColumn("firstName", Type.STRING)
+		.addColumn("lastName", Type.STRING)
+		.addColumn("email", Type.STRING)
+		.addColumn("phoneNumber", Type.STRING)
+		.addColumn("hireDate", Type.DATE_TIME)
+		.addColumn("jobId", Type.STRING)
+		.addColumn("salary", Type.NUMBER)
+		.addColumn("commissionPercent", Type.NUMBER)
+		.addColumn("managerId", Type.STRING)
+		.addColumn("departmentId", Type.STRING)
+		.addColumn("photo", Type.ARRAY_BUFFER);
+
+	schemaBuilder2
+		.createTable("Department")
+		.addColumn("id", Type.STRING)
+		.addColumn("name", Type.STRING)
+		.addColumn("managerId", Type.STRING)
+		.addColumn("locationId", Type.STRING);
+
+	schemaBuilder2
+		.createTable("Location")
+		.addColumn("id", Type.STRING)
+		.addColumn("streetAddress", Type.STRING)
+		.addColumn("postalCode", Type.STRING)
+		.addColumn("city", Type.STRING)
+		.addColumn("stateProvince", Type.STRING)
+		.addColumn("countryId", Type.INTEGER);
+
+	schemaBuilder2
+		.createTable("Country")
+		.addColumn("id", Type.INTEGER)
+		.addColumn("name", Type.STRING)
+		.addColumn("regionId", Type.STRING);
+
+	schemaBuilder2
+		.createTable("Region")
+		.addColumn("id", Type.STRING)
+		.addColumn("name", Type.STRING);
+
+	schemaBuilder2
+		.createTable("Holiday")
+		.addColumn("name", Type.STRING)
+		.addColumn("begin", Type.DATE_TIME)
+		.addColumn("end", Type.DATE_TIME);
+
+	schemaBuilder2
+		.createTable("DummyTable")
+		.addColumn("arraybuffer", Type.ARRAY_BUFFER)
+		.addColumn("boolean", Type.BOOLEAN)
+		.addColumn("datetime", Type.DATE_TIME)
+		.addColumn("integer", Type.INTEGER)
+		.addColumn("number", Type.NUMBER)
+		.addColumn("string", Type.STRING)
+		.addColumn("string2", Type.STRING)
+		.addColumn("proto", Type.OBJECT);
+
+	schemaBuilder2
+		.createTable("CrossColumnTable")
+		.addColumn("integer1", Type.INTEGER)
+		.addColumn("integer2", Type.INTEGER)
+		.addColumn("string1", Type.STRING)
+		.addColumn("string2", Type.STRING);
+
+	const db2 = await schemaBuilder2.connect(); // Make sure the database is empty.
+
+	const json = JSON.parse(fs.readFileSync(path.join(__dirname, "output.json"), { "encoding": "utf8" }));
+
+	await db2.import(json);
+
+	const results = await db2.select().from(db2.getSchema().table("Job")).where(db2.getSchema().table("Job").col("minSalary").gte(300000)).exec();
+
+	console.log(results);
 })();
