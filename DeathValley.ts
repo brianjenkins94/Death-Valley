@@ -12818,23 +12818,9 @@ class TableBuilder {
 }
 
 // <snip>
-class GraphNode {
-	visited: boolean;
-
-	onStack: boolean;
-
-	edges: Set<string>;
-
-	constructor(readonly name: string) {
-		this.visited = false;
-		this.onStack = false;
-		this.edges = new Set<string>();
-	}
-}
-
 interface Builder {
 	// Constructor syntax itself violates the no any rule.
-	// new (dbName: string, dbVersion: number): any;
+	// new (dbName: string): any;
 
 	getSchema: () => DatabaseSchema;
 	getGlobal: () => Global;
@@ -12858,8 +12844,8 @@ class SchemaBuilder implements Builder {
 
 	private connectInProgress: boolean;
 
-	constructor(dbName: string, dbVersion: number) {
-		this.schema = new DatabaseSchemaImpl(dbName, dbVersion);
+	constructor(dbName: string) {
+		this.schema = new DatabaseSchemaImpl(dbName);
 		this.tableBuilders = new Map<string, TableBuilder>();
 		this.finalized = false;
 		this.db = null as unknown as RuntimeDatabase;
@@ -12953,8 +12939,8 @@ export class schema {
 	// been used for connecting a database instance. Once the connection is closed
 	// or dropped, the builder cannot be used to reconnect. Instead, the caller
 	// needs to construct a new builder for doing so.
-	static create(name: string, version: number): Builder {
-		return new SchemaBuilder(name, version) as unknown as Builder;
+	static create(name: string): Builder {
+		return new SchemaBuilder(name) as unknown as Builder;
 	}
 }
 // </snip>
