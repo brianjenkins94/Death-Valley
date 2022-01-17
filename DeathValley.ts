@@ -12227,20 +12227,6 @@ class DatabaseSchemaImpl implements DatabaseSchema {
 	}
 }
 
-class GraphNode {
-	visited: boolean;
-
-	onStack: boolean;
-
-	edges: Set<string>;
-
-	constructor(readonly name: string) {
-		this.visited = false;
-		this.onStack = false;
-		this.edges = new Set<string>();
-	}
-}
-
 interface RawForeignKeySpec {
 	local: string;
 	ref: string;
@@ -13078,6 +13064,274 @@ class TableBuilder {
 		});
 	}
 }
+
+// <snip>
+class GraphNode {
+	visited: boolean;
+
+	onStack: boolean;
+
+	edges: Set<string>;
+
+	constructor(readonly name: string) {
+		this.visited = false;
+		this.onStack = false;
+		this.edges = new Set<string>();
+	}
+}
+
+interface Builder {
+	// Constructor syntax itself violates the no any rule.
+	// new (dbName: string, dbVersion: number): any;
+
+	getSchema: () => DatabaseSchema;
+	getGlobal: () => Global;
+
+	// Instantiates a connection to the database. Note: This method can only be
+	// called once per Builder instance. Subsequent calls will throw an error,
+	// unless the previous DB connection has been closed first.
+	connect: (options?: ConnectOptions) => Promise<DatabaseConnection>;
+
+	createTable: (tableName: string) => TableBuilder;
+	setPragma: (pragma: Pragma) => Builder;
+}
+
+class SchemaBuilder implements Builder {
+	private schema: DatabaseSchemaImpl;
+
+	private readonly tableBuilders: Map<string, TableBuilder>;
+
+	private finalized: boolean;
+
+	private db: RuntimeDatabase;
+
+	private connectInProgress: boolean;
+
+	constructor(dbName: string, dbVersion: number) {
+		this.schema = new DatabaseSchemaImpl(dbName, dbVersion);
+		this.tableBuilders = new Map<string, TableBuilder>();
+		this.finalized = false;
+		this.db = null as unknown as RuntimeDatabase;
+		this.connectInProgress = false;
+	}
+
+	getSchema(): DatabaseSchema {
+		console.log("getSchema");
+		if (!this.finalized) {
+			this.finalize();
+		}
+		return this.schema;
+	}
+
+	getGlobal(): Global {
+		console.log("getGlobal");
+		const namespaceGlobalId = new ServiceId<Global>(`ns_${this.schema.name()}`);
+		const global = Global.get();
+		let namespacedGlobal: Global;
+		if (!global.isRegistered(namespaceGlobalId)) {
+			namespacedGlobal = new Global();
+			global.registerService(namespaceGlobalId, namespacedGlobal);
+		} else {
+			namespacedGlobal = global.getService(namespaceGlobalId);
+		}
+		return namespacedGlobal;
+	}
+
+	// Instantiates a connection to the database. Note: This method can only be
+	// called once per Builder instance. Subsequent calls will throw an error,
+	// unless the previous DB connection has been closed first.
+	connect(options?: ConnectOptions): Promise<DatabaseConnection> {
+		console.log("connect");
+		if (this.connectInProgress || this.db !== null && this.db.isOpen()) {
+			// 113: Attempt to connect() to an already connected/connecting database.
+			throw new Exception(ErrorCode.ALREADY_CONNECTED);
+		}
+		this.connectInProgress = true;
+
+		if (this.db === null) {
+			const global = this.getGlobal();
+			if (!global.isRegistered(Service.SCHEMA)) {
+				global.registerService(Service.SCHEMA, this.getSchema());
+			}
+			this.db = new RuntimeDatabase(global);
+		}
+
+		return this.db.init(options).then((db) => {
+			this.connectInProgress = false;
+			return db;
+		}, (e) => {
+			this.connectInProgress = false;
+			// TODO(arthurhsu): Add a new test case to verify that failed init
+			// call allows the database to be deleted since we close it properly
+			// here.
+			this.db.close();
+			throw e;
+		});
+	}
+
+	createTable(tableName: string): TableBuilder {
+		console.log("createTable");
+		if (this.tableBuilders.has(tableName)) {
+			// 503: Name {0} is already defined.
+			throw new Exception(ErrorCode.NAME_IN_USE, tableName);
+		} else if (this.finalized) {
+			// 535: Schema is already finalized.
+			throw new Exception(ErrorCode.SCHEMA_FINALIZED);
+		}
+		this.tableBuilders.set(tableName, new TableBuilder(tableName));
+		const ret = this.tableBuilders.get(tableName);
+		if (!ret) {
+			throw new Exception(ErrorCode.ASSERTION, "Builder.createTable");
+		}
+		return ret;
+	}
+
+	setPragma(pragma: Pragma): Builder {
+		console.log("setPragma");
+		if (this.finalized) {
+			// 535: Schema is already finalized.
+			throw new Exception(ErrorCode.SCHEMA_FINALIZED);
+		}
+
+		this.schema._pragma = pragma;
+		return this;
+	}
+
+	// Builds the graph of foreign key relationships and checks for
+	// loop in the graph.
+	private checkFkCycle(): void {
+		console.log("checkFkCycle");
+		// Builds graph.
+		const nodeMap = new Map<string, GraphNode>();
+		this.schema.tables().forEach((table) => {
+			nodeMap.set(table.getName(), new GraphNode(table.getName()));
+		}, this);
+		this.tableBuilders.forEach((builder, tableName) => {
+			builder.getFkSpecs().forEach((spec) => {
+				const parentNode = nodeMap.get(spec.parentTable);
+				if (parentNode) {
+					parentNode.edges.add(tableName);
+				}
+			});
+		});
+		// Checks for cycle.
+		Array.from(nodeMap.values()).forEach((graphNode) => { this.checkCycleUtil(graphNode, nodeMap); });
+	}
+
+	// Performs foreign key checks like validity of names of parent and
+	// child columns, matching of types and uniqueness of referred column
+	// in the parent.
+	private checkForeignKeyValidity(builder: TableBuilder): void {
+		console.log("checkForeignKeyValidity");
+		builder.getFkSpecs().forEach((specs) => {
+			const parentTableName = specs.parentTable;
+			const table = this.tableBuilders.get(parentTableName);
+			if (!table) {
+				// 536: Foreign key {0} refers to invalid table.
+				throw new Exception(ErrorCode.INVALID_FK_TABLE);
+			}
+			const parentSchema = table.getSchema();
+			const parentColName = specs.parentColumn;
+			if (!Object.prototype.hasOwnProperty.call(parentSchema, parentColName)) {
+				// 537: Foreign key {0} refers to invalid column.
+				throw new Exception(ErrorCode.INVALID_FK_COLUMN);
+			}
+
+			const localSchema = builder.getSchema();
+			const localColName = specs.childColumn;
+			if (
+				(localSchema[localColName] as BaseColumn).getType()
+				!== (parentSchema[parentColName] as BaseColumn).getType()
+			) {
+				// 538: Foreign key {0} column type mismatch.
+				throw new Exception(ErrorCode.INVALID_FK_COLUMN_TYPE, specs.name);
+			}
+			if (!(parentSchema[parentColName] as BaseColumn).isUnique()) {
+				// 539: Foreign key {0} refers to non-unique column.
+				throw new Exception(ErrorCode.FK_COLUMN_NONUNIQUE, specs.name);
+			}
+		}, this);
+	}
+
+	// Performs checks to avoid chains of foreign keys on same column.
+	private checkForeignKeyChain(builder: TableBuilder): void {
+		console.log("checkForeignKeyChain");
+		const fkSpecArray = builder.getFkSpecs();
+		fkSpecArray.forEach((specs) => {
+			const parentBuilder = this.tableBuilders.get(specs.parentTable);
+			if (parentBuilder) {
+				parentBuilder.getFkSpecs().forEach((parentSpecs) => {
+					if (parentSpecs.childColumn === specs.parentColumn) {
+						// 534: Foreign key {0} refers to source column of another
+						// foreign key.
+						throw new Exception(ErrorCode.FK_COLUMN_IN_USE, specs.name);
+					}
+				}, this);
+			}
+		}, this);
+	}
+
+	private finalize(): void {
+		console.log("finalize");
+		if (!this.finalized) {
+			this.tableBuilders.forEach((builder) => {
+				this.checkForeignKeyValidity(builder);
+				this.schema.setTable(builder.getSchema());
+			});
+			Array.from(this.tableBuilders.values()).forEach(this.checkForeignKeyChain, this);
+			this.checkFkCycle();
+			this.tableBuilders.clear();
+			this.finalized = true;
+		}
+	}
+
+	// Checks for loop in the graph recursively. Ignores self loops.
+	// This algorithm is based on Lemma 22.11 in "Introduction To Algorithms
+	// 3rd Edition By Cormen et Al". It says that a directed graph G
+	// can be acyclic if and only DFS of G yields no back edges.
+	// @see http://www.geeksforgeeks.org/detect-cycle-in-a-graph/
+	private checkCycleUtil(
+		graphNode: GraphNode,
+		nodeMap: Map<string, GraphNode>
+	): void {
+		console.log("checkCycleUtil");
+		if (!graphNode.visited) {
+			graphNode.visited = true;
+			graphNode.onStack = true;
+			graphNode.edges.forEach((edge) => {
+				const childNode = nodeMap.get(edge);
+				if (childNode) {
+					if (!childNode.visited) {
+						this.checkCycleUtil(childNode, nodeMap);
+					} else if (childNode.onStack) {
+						// Checks for self loop, in which case, it does not throw an
+						// exception.
+						if (graphNode !== childNode) {
+							// 533: Foreign key loop detected.
+							throw new Exception(ErrorCode.FK_LOOP);
+						}
+					}
+				}
+			}, this);
+		}
+		graphNode.onStack = false;
+	}
+}
+
+// Keep lower case class name for compatibility with Lovefield API.
+// TODO(arthurhsu): FIXME: Builder should be a public interface, not concrete
+// class. Currently Builder has no @export.
+export class schema {
+	// Returns a builder.
+	// Note that Lovefield builder is a stateful object, and it remembers it has
+	// been used for connecting a database instance. Once the connection is closed
+	// or dropped, the builder cannot be used to reconnect. Instead, the caller
+	// needs to construct a new builder for doing so.
+	static create(name: string, version: number): Builder {
+		return new SchemaBuilder(name, version) as unknown as Builder;
+	}
+}
+// </snip>
 
 class Database {
 	private schema: DatabaseSchemaImpl;
