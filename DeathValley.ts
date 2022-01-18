@@ -3785,11 +3785,8 @@ class Memory implements BackStore {
 
 	constructor(private readonly schema: DatabaseSchema) {
 		this.tables = new Map<string, MemoryTable>();
-	}
 
-	init(): Promise<void> {
 		(this.schema.tables() as BaseTable[]).forEach((table) => { this.initTable(table); }, this);
-		return Promise.resolve();
 	}
 
 	getTableInternal(tableName: string): RuntimeTable {
@@ -12804,134 +12801,6 @@ class TableBuilder {
 	}
 }
 
-// <snip>
-interface Builder {
-	// Constructor syntax itself violates the no any rule.
-	// new (dbName: string): any;
-
-	getSchema: () => DatabaseSchema;
-	getGlobal: () => Global;
-
-	// Instantiates a connection to the database. Note: This method can only be
-	// called once per Builder instance. Subsequent calls will throw an error,
-	// unless the previous DB connection has been closed first.
-	connect: (options?: ConnectOptions) => Promise<DatabaseConnection>;
-
-	createTable: (tableName: string) => TableBuilder;
-}
-
-class SchemaBuilder implements Builder {
-	private schema: DatabaseSchemaImpl;
-
-	private readonly tableBuilders: Map<string, TableBuilder>;
-
-	private finalized: boolean;
-
-	private db: RuntimeDatabase;
-
-	private connectInProgress: boolean;
-
-	constructor(dbName: string) {
-		this.schema = new DatabaseSchemaImpl(dbName);
-		this.tableBuilders = new Map<string, TableBuilder>();
-		this.finalized = false;
-		this.db = null as unknown as RuntimeDatabase;
-		this.connectInProgress = false;
-	}
-
-	getSchema(): DatabaseSchema {
-		if (!this.finalized) {
-			this.finalize();
-		}
-		return this.schema;
-	}
-
-	getGlobal(): Global {
-		const namespaceGlobalId = new ServiceId<Global>(`ns_${this.schema.name()}`);
-		const global = Global.get();
-		let namespacedGlobal: Global;
-		if (!global.isRegistered(namespaceGlobalId)) {
-			namespacedGlobal = new Global();
-			global.registerService(namespaceGlobalId, namespacedGlobal);
-		} else {
-			namespacedGlobal = global.getService(namespaceGlobalId);
-		}
-		return namespacedGlobal;
-	}
-
-	// Instantiates a connection to the database. Note: This method can only be
-	// called once per Builder instance. Subsequent calls will throw an error,
-	// unless the previous DB connection has been closed first.
-	connect(options?: ConnectOptions): Promise<DatabaseConnection> {
-		if (this.connectInProgress || this.db !== null && this.db.isOpen()) {
-			// 113: Attempt to connect() to an already connected/connecting database.
-			throw new Exception(ErrorCode.ALREADY_CONNECTED);
-		}
-		this.connectInProgress = true;
-
-		if (this.db === null) {
-			const global = this.getGlobal();
-			if (!global.isRegistered(Service.SCHEMA)) {
-				global.registerService(Service.SCHEMA, this.getSchema());
-			}
-			this.db = new RuntimeDatabase(global);
-		}
-
-		return this.db.init(options).then((db) => {
-			this.connectInProgress = false;
-			return db;
-		}, (e) => {
-			this.connectInProgress = false;
-			// TODO(arthurhsu): Add a new test case to verify that failed init
-			// call allows the database to be deleted since we close it properly
-			// here.
-			this.db.close();
-			throw e;
-		});
-	}
-
-	createTable(tableName: string): TableBuilder {
-		if (this.tableBuilders.has(tableName)) {
-			// 503: Name {0} is already defined.
-			throw new Exception(ErrorCode.NAME_IN_USE, tableName);
-		} else if (this.finalized) {
-			// 535: Schema is already finalized.
-			throw new Exception(ErrorCode.SCHEMA_FINALIZED);
-		}
-		this.tableBuilders.set(tableName, new TableBuilder(tableName));
-		const ret = this.tableBuilders.get(tableName);
-		if (!ret) {
-			throw new Exception(ErrorCode.ASSERTION, "Builder.createTable");
-		}
-		return ret;
-	}
-
-	private finalize(): void {
-		if (!this.finalized) {
-			this.tableBuilders.forEach((builder) => {
-				this.schema.setTable(builder.getSchema());
-			});
-			this.tableBuilders.clear();
-			this.finalized = true;
-		}
-	}
-}
-
-// Keep lower case class name for compatibility with Lovefield API.
-// TODO(arthurhsu): FIXME: Builder should be a public interface, not concrete
-// class. Currently Builder has no @export.
-export class schema {
-	// Returns a builder.
-	// Note that Lovefield builder is a stateful object, and it remembers it has
-	// been used for connecting a database instance. Once the connection is closed
-	// or dropped, the builder cannot be used to reconnect. Instead, the caller
-	// needs to construct a new builder for doing so.
-	static create(name: string): Builder {
-		return new SchemaBuilder(name) as unknown as Builder;
-	}
-}
-// </snip>
-
 class Database {
 	private schema: DatabaseSchemaImpl;
 	private cache: DefaultCache;
@@ -12941,35 +12810,7 @@ class Database {
 	private runner: Runner;
 
 	public constructor(data) {
-		// init(options?: ConnectOptions): Promise<RuntimeDatabase> {
-		// 	// The SCHEMA might have been removed from this.global in the case where
-		// 	// Database#close() was called, therefore it needs to be re-added.
-		// 	this.global.registerService(Service.SCHEMA, this.schema);
-		// 	this.global.registerService(Service.CACHE, new DefaultCache(this.schema));
-		// 	const backStore = new Memory(this.schema);
-		// 	this.global.registerService(Service.BACK_STORE, backStore);
-		// 	const indexStore = new MemoryIndexStore();
-		// 	this.global.registerService(Service.INDEX_STORE, indexStore);
-		// 	return backStore
-		// 		.init()
-		// 		.then(() => {
-		// 			this.global.registerService(Service.QUERY_ENGINE, new DefaultQueryEngine(this.global));
-		// 			this.runner = new Runner();
-		// 			this.global.registerService(Service.RUNNER, this.runner);
-		// 			return indexStore.init(this.schema);
-		// 		})
-		// 		.then(() => {
-		// 			this.isActive = true;
-		// 			return this;
-		// 		});
-		// }
-
 		this.schema = new DatabaseSchemaImpl("db");
-		this.cache = new DefaultCache(this.schema);
-		this.backStore = new Memory(this.schema);
-		this.indexStore = new MemoryIndexStore();
-		//this.engine = new DefaultQueryEngine(this.global);
-		//this.runner = new Runner();
 
 		if (Array.isArray(data)) {
 			data = { "table": data };
@@ -13008,7 +12849,11 @@ class Database {
 			this.schema.setTable(tableBuilder.getSchema());
 		}
 
-		this.backStore.init();
+		this.cache = new DefaultCache(this.schema);
+		this.backStore = new Memory(this.schema);
+		this.indexStore = new MemoryIndexStore();
+		//this.engine = new DefaultQueryEngine(this.global);
+		//this.runner = new Runner();
 
 		this.import(data);
 	}
