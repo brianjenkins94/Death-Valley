@@ -786,10 +786,10 @@ class InMemoryUpdater {
 
 	private readonly schema: DatabaseSchema;
 
-	constructor(global: Global) {
-		this.cache = global.getService(Service.CACHE);
-		this.indexStore = global.getService(Service.INDEX_STORE);
-		this.schema = global.getService(Service.SCHEMA);
+	constructor(schema, cache, indexStore) {
+		this.cache = cache;
+		this.indexStore = indexStore;
+		this.schema = schema;
 	}
 
 	// Updates all indices and the cache to reflect the changes that are described
@@ -1222,10 +1222,10 @@ class ConstraintChecker {
 	// this association does not have to be detected more than once.
 	private readonly foreignKeysParentIndices: Map<string, RuntimeIndex>;
 
-	constructor(global: Global) {
-		this.indexStore = global.getService(Service.INDEX_STORE);
-		this.schema = global.getService(Service.SCHEMA);
-		this.cache = global.getService(Service.CACHE);
+	constructor(schema, cache, indexStore) {
+		this.indexStore = indexStore;
+		this.schema = schema;
+		this.cache = cache;
 		this.foreignKeysParentIndices = new Map();
 	}
 
@@ -1694,15 +1694,15 @@ class Journal {
 	// table.
 	private readonly tableDiffs: Map<string, TableDiff>;
 
-	constructor(global: Global, txScope: Set<Table>) {
+	constructor(schema, cache, indexStore, txScope: Set<Table>) {
 		this.scope = new Map<string, Table>();
 		txScope.forEach((tableSchema) => this.scope.set(tableSchema.getName(), tableSchema));
 
-		this.schema = global.getService(Service.SCHEMA);
-		this.cache = global.getService(Service.CACHE);
-		this.indexStore = global.getService(Service.INDEX_STORE);
-		this.constraintChecker = new ConstraintChecker(global);
-		this.inMemoryUpdater = new InMemoryUpdater(global);
+		this.schema = schema;
+		this.cache = cache;
+		this.indexStore = indexStore;
+		this.constraintChecker = new ConstraintChecker(schema, cache, indexStore);
+		this.inMemoryUpdater = new InMemoryUpdater(schema, cache, indexStore);
 		this.terminated = false;
 		this.pendingRollback = false;
 		this.tableDiffs = new Map<string, TableDiff>();
@@ -12423,8 +12423,7 @@ class ColumnImpl implements BaseColumn {
 class Constraint {
 	constructor(
 		readonly primaryKey: IndexImpl,
-		readonly notNullable: Column[],
-		readonly foreignKeys: ForeignKeySpec[]
+		readonly notNullable: Column[]
 	) { }
 
 	getPrimaryKey(): IndexImpl {
@@ -12433,10 +12432,6 @@ class Constraint {
 
 	getNotNullable(): Column[] {
 		return this.notNullable;
-	}
-
-	getForeignKeys(): ForeignKeySpec[] {
-		return this.foreignKeys;
 	}
 }
 
@@ -12549,8 +12544,6 @@ class TableImpl implements BaseTable {
 
 	private _constraint: Constraint;
 
-	private _referencingFK: ForeignKeySpec[];
-
 	private _functionMap: Map<string, (payload: PayloadType) => Key>;
 
 	private readonly _evalRegistry: EvalRegistry;
@@ -12568,7 +12561,6 @@ class TableImpl implements BaseTable {
 			this[col.name] = colSchema;
 			this._columns.push(colSchema);
 		}, this);
-		this._referencingFK = null as unknown as ForeignKeySpec[];
 		this._functionMap = null as unknown as Map<
 			string,
 			(payload: PayloadType) => Key
@@ -12616,7 +12608,6 @@ class TableImpl implements BaseTable {
 			};
 		});
 		const clone = new TableImpl(this._name, colDef, this._indices, this._usePersistentIndex, name);
-		clone._referencingFK = this._referencingFK;
 		clone._constraint = this._constraint;
 		clone._alias = name;
 		return clone;
@@ -12654,8 +12645,7 @@ class TableImpl implements BaseTable {
 		pkName: string,
 		indices: Map<string, IndexedColumnSpec[]>,
 		uniqueIndices: Set<string>,
-		nullable: Set<string>,
-		fkSpecs: ForeignKeySpec[]
+		nullable: Set<string>
 	): void {
 		if (indices.size === 0) {
 			this._constraint = new Constraint(null as unknown as IndexImpl, [], []);
@@ -12675,7 +12665,7 @@ class TableImpl implements BaseTable {
 		const pk: IndexImpl
 			= pkName === null ? (null as unknown as IndexImpl) : new IndexImpl(this._name, pkName, true, this.generateIndexedColumns(indices, columnMap, pkName));
 		const notNullable = this._columns.filter((col) => !nullable.has(col.getName()));
-		this._constraint = new Constraint(pk, notNullable, fkSpecs);
+		this._constraint = new Constraint(pk, notNullable);
 	}
 
 	private generateIndexedColumns(
@@ -12749,8 +12739,6 @@ class TableBuilder {
 
 	private persistIndex: boolean;
 
-	private readonly fkSpecs: ForeignKeySpec[];
-
 	constructor(tableName: string) {
 		this.checkNamingRules(tableName);
 		this.name = tableName;
@@ -12761,7 +12749,6 @@ class TableBuilder {
 		this.pkName = null as unknown as string;
 		this.indices = new Map<string, IndexedColumnSpec[]>();
 		this.persistIndex = false;
-		this.fkSpecs = [];
 	}
 
 	addColumn(name: string, type: Type): this {
@@ -12789,7 +12776,7 @@ class TableBuilder {
 
 		// Columns shall be constructed within TableImpl ctor, now we can
 		// instruct it to construct proper index schema.
-		table.constructIndices(this.pkName, this.indices, this.uniqueIndices, this.nullable, this.fkSpecs);
+		table.constructIndices(this.pkName, this.indices, this.uniqueIndices, this.nullable);
 		return table;
 	}
 
@@ -12948,21 +12935,82 @@ export class schema {
 class Database {
 	private schema: DatabaseSchemaImpl;
 	private cache: DefaultCache;
-	private backstore: Memory;
-	private indexstore: MemoryIndexStore;
+	private backStore: Memory;
+	private indexStore: MemoryIndexStore;
 	private engine: DefaultQueryEngine;
 	private runner: Runner;
 
-	public constructor() {
-		this.schema = new DatabaseSchemaImpl();
+	public constructor(data) {
+		// init(options?: ConnectOptions): Promise<RuntimeDatabase> {
+		// 	// The SCHEMA might have been removed from this.global in the case where
+		// 	// Database#close() was called, therefore it needs to be re-added.
+		// 	this.global.registerService(Service.SCHEMA, this.schema);
+		// 	this.global.registerService(Service.CACHE, new DefaultCache(this.schema));
+		// 	const backStore = new Memory(this.schema);
+		// 	this.global.registerService(Service.BACK_STORE, backStore);
+		// 	const indexStore = new MemoryIndexStore();
+		// 	this.global.registerService(Service.INDEX_STORE, indexStore);
+		// 	return backStore
+		// 		.init()
+		// 		.then(() => {
+		// 			this.global.registerService(Service.QUERY_ENGINE, new DefaultQueryEngine(this.global));
+		// 			this.runner = new Runner();
+		// 			this.global.registerService(Service.RUNNER, this.runner);
+		// 			return indexStore.init(this.schema);
+		// 		})
+		// 		.then(() => {
+		// 			this.isActive = true;
+		// 			return this;
+		// 		});
+		// }
 
-		this.schema.setTable(new TableBuilder(tableName).getSchema());
-
+		this.schema = new DatabaseSchemaImpl("db");
 		this.cache = new DefaultCache(this.schema);
-		this.backstore = new Memory(this.schema);
-		this.indexstore = new MemoryIndexStore();
-		this.engine = new DefaultQueryEngine(this.global);
-		this.runner = new Runner();
+		this.backStore = new Memory(this.schema);
+		this.indexStore = new MemoryIndexStore();
+		//this.engine = new DefaultQueryEngine(this.global);
+		//this.runner = new Runner();
+
+		if (Array.isArray(data)) {
+			data = { "table": data };
+		}
+
+		for (const [tableName, table] of Object.entries(data)) {
+			const tableBuilder = new TableBuilder(tableName);
+
+			for (const [columnName, value] of (table as object[]).length > 0 ? Object.entries(table[0]) : []) {
+				let type;
+
+				switch (Object.prototype.toString.call(value).slice(8, -1)) {
+					case "ArrayBuffer":
+						type = Type.ARRAY_BUFFER;
+						break;
+					case "Boolean":
+						type = Type.BOOLEAN;
+						break;
+					case "Date":
+						type = Type.DATE_TIME;
+						break;
+					case "Number":
+						type = Type.NUMBER;
+						break;
+					case "String":
+						type = Type.STRING;
+						break;
+					default:
+						type = Type.OBJECT;
+						break;
+				}
+
+				tableBuilder.addColumn(columnName, type);
+			}
+
+			this.schema.setTable(tableBuilder.getSchema());
+		}
+
+		this.backStore.init();
+
+		this.import(data);
 	}
 
 	public select(...columns: Column[]): SelectQuery {
@@ -12997,11 +13045,34 @@ class Database {
 		});
 	}
 
-	public import(d: object): Promise<object[]> {
-		const data = d as PayloadType;
+	private import(data: object): Promise<object[]> {
+		const scope = new Set<Table>(this.schema.tables());
 
-		const task = new ImportTask(this.global, data);
+		const transaction = this.backStore.createTx(TransactionType.READ_WRITE, Array.from(scope.values()), new Journal(this.schema, this.cache, this.indexStore, scope));
 
-		return this.runner.scheduleTask(task);
+		for (const [tableName, tableData] of Object.entries(data)) {
+			const tableSchema = this.schema.table(tableName) as BaseTable;
+			const payloads = tableData as PayloadType[];
+			const rows = payloads.map((value: object) => tableSchema.createRow(value));
+
+			const table = transaction.getTable(tableName, tableSchema.deserializeRow, TableType.DATA);
+			this.cache.setMany(tableName, rows);
+			const indices = this.indexStore.getTableIndices(tableName);
+
+			for (const row of rows) {
+				for (const index of indices) {
+					const key = row.keyOfIndex(index.getName());
+					index.add(key, row.id());
+				}
+			}
+
+			table.put(rows);
+		}
+
+		return transaction.commit() as Promise<Relation[]>;
 	}
+}
+
+export function query(objects) {
+	return new Database(objects);
 }
