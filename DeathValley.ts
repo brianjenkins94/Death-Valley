@@ -24,15 +24,6 @@ enum ConstraintTiming {
 	DEFERRABLE = 1
 }
 
-enum DataStoreType {
-	INDEXED_DB = 0,
-	MEMORY = 1,
-	LOCAL_STORAGE = 2,
-	FIREBASE = 3,
-	WEB_SQL = 4,
-	OBSERVABLE_STORE = 5
-}
-
 export enum Order {
 	DESC = 0,
 	ASC = 1
@@ -7819,8 +7810,9 @@ class SelectBuilder extends BaseBuilder<SelectContext> {
 
 	private whereAlreadyCalled: boolean;
 
-	constructor(queryEngine, runner, columns: Column[]) {
+	constructor(queryEngine, runner, schema, columns: Column[]) {
 		super(queryEngine, runner, new SelectContext());
+		this.schema = schema;
 		this.fromAlreadyCalled = false;
 		this.whereAlreadyCalled = false;
 		this.query.columns = columns;
@@ -7848,8 +7840,8 @@ class SelectBuilder extends BaseBuilder<SelectContext> {
 	}
 
 	from(...tables: Table[] | string[]): this {
-		if (tables.every((element) => { return typeof element === "string" })) {
-			tables = tables.map(function(table) {
+		if (tables.every((element) => { return typeof element === "string"; })) {
+			tables = tables.map((table) => {
 				return this.schema.table(table);
 			});
 		}
@@ -11320,115 +11312,6 @@ class ExportTask extends UniqueId implements Task {
 	}
 }
 
-// Imports table/rows from given JavaScript object to an empty database.
-class ImportTask extends UniqueId implements Task {
-	private readonly schema: DatabaseSchema;
-
-	private readonly scope: Set<Table>;
-
-	private readonly resolver: Resolver<Relation[]>;
-
-	private readonly backStore: BackStore;
-
-	private readonly cache: Cache;
-
-	private readonly indexStore: IndexStore;
-
-	constructor(private readonly global: Global, private readonly data: PayloadType) {
-		super();
-		this.schema = global.getService(Service.SCHEMA);
-		this.scope = new Set<Table>(this.schema.tables());
-		this.resolver = new Resolver<Relation[]>();
-		this.backStore = global.getService(Service.BACK_STORE);
-		this.cache = global.getService(Service.CACHE);
-		this.indexStore = global.getService(Service.INDEX_STORE);
-	}
-
-	exec(): Promise<Relation[]> {
-		if (!this.backStore.supportsImport()) {
-			// Import is supported only on MemoryDB / IndexedDB / WebSql.
-			// 300: Not supported.
-			throw new Exception(ErrorCode.NOT_SUPPORTED);
-		}
-
-		if (!this.isEmptyDB()) {
-			// 110: Attempt to import into a non-empty database.
-			throw new Exception(ErrorCode.IMPORT_TO_NON_EMPTY_DB);
-		}
-
-		if (
-			this.schema.name() !== this.data["name"]
-		) {
-			// 111: Database name/version mismatch for import.
-			throw new Exception(ErrorCode.DB_MISMATCH);
-		}
-
-		if (this.data["tables"] === undefined || this.data["tables"] === null) {
-			// 112: Import data not found.
-			throw new Exception(ErrorCode.IMPORT_DATA_NOT_FOUND);
-		}
-
-		return this.import();
-	}
-
-	getType(): TransactionType {
-		return TransactionType.READ_WRITE;
-	}
-
-	getScope(): Set<Table> {
-		return this.scope;
-	}
-
-	getResolver(): Resolver<Relation[]> {
-		return this.resolver;
-	}
-
-	getId(): number {
-		return this.getUniqueNumber();
-	}
-
-	getPriority(): TaskPriority {
-		return TaskPriority.IMPORT_TASK;
-	}
-
-	private isEmptyDB(): boolean {
-		return this.schema.tables().every((t) => {
-			const table = t as BaseTable;
-			const index = this.indexStore.get(table.getRowIdIndexName());
-			if (index.stats().totalRows > 0) {
-				return false;
-			}
-			return true;
-		});
-	}
-
-	private import(): Promise<Relation[]> {
-		const journal = new Journal(this.global, this.scope);
-		const tx = this.backStore.createTx(this.getType(), Array.from(this.scope.values()), journal);
-
-		Object.keys(this.data["tables"]).forEach((tableName) => {
-			const tableSchema = this.schema.table(tableName) as BaseTable;
-			const payloads = this.data["tables"][
-				tableName
-			] as PayloadType[];
-			const rows = payloads.map((value: object) => tableSchema.createRow(value));
-
-			const table = tx.getTable(tableName, tableSchema.deserializeRow, TableType.DATA);
-			this.cache.setMany(tableName, rows);
-			const indices = this.indexStore.getTableIndices(tableName);
-			rows.forEach((row) => {
-				indices.forEach((index) => {
-					const key = row.keyOfIndex(index.getName());
-					index.add(key, row.id());
-				});
-			});
-			table.put(rows);
-		}, this);
-
-		return tx.commit() as Promise<Relation[]>;
-	}
-}
-
 class LockTableEntry {
 	exclusiveLock: number | null;
 
@@ -12046,148 +11929,6 @@ interface UpdateQuery extends QueryBuilder {
 interface DeleteQuery extends QueryBuilder {
 	from: (table: Table) => DeleteQuery;
 	where: (predicate: Predicate) => DeleteQuery;
-}
-
-// Defines the interface of a runtime database instance. This models the return
-// value of connect().
-interface DatabaseConnection {
-	getSchema: () => DatabaseSchema;
-	select: (...columns: Column[]) => SelectQuery;
-	insert: () => InsertQuery;
-	insertOrReplace: () => InsertQuery;
-	update: (table: Table) => UpdateQuery;
-	delete: () => DeleteQuery;
-
-	createTransaction: (type?: TransactionType) => Transaction;
-
-	// Closes database connection. This is a best effort function and the closing
-	// can happen in a separate thread.
-	// Once a db is closed, all its queries will fail and cannot be reused.
-	close: () => void;
-
-	// Exports database as a JSON object.
-	export: () => Promise<object>;
-
-	// Imports from a JSON object into an empty database.
-	import: (data: object) => Promise<object[]>;
-}
-
-interface ConnectOptions {
-	storeType: DataStoreType;
-	websqlDbSize?: number;
-	enableInspector?: boolean;
-}
-
-class RuntimeDatabase implements DatabaseConnection {
-	private readonly schema: DatabaseSchema;
-
-	private isActive: boolean;
-
-	private runner!: Runner;
-
-	constructor(private readonly global: Global) {
-		this.schema = global.getService(Service.SCHEMA);
-
-		// Whether this connection to the database is active.
-		this.isActive = false;
-	}
-
-	init(options?: ConnectOptions): Promise<RuntimeDatabase> {
-		// The SCHEMA might have been removed from this.global in the case where
-		// Database#close() was called, therefore it needs to be re-added.
-		this.global.registerService(Service.SCHEMA, this.schema);
-		this.global.registerService(Service.CACHE, new DefaultCache(this.schema));
-		const backStore = new Memory(this.schema);
-		this.global.registerService(Service.BACK_STORE, backStore);
-		const indexStore = new MemoryIndexStore();
-		this.global.registerService(Service.INDEX_STORE, indexStore);
-		return backStore
-			.init()
-			.then(() => {
-				this.global.registerService(Service.QUERY_ENGINE, new DefaultQueryEngine(this.global));
-				this.runner = new Runner();
-				this.global.registerService(Service.RUNNER, this.runner);
-				return indexStore.init(this.schema);
-			})
-			.then(() => {
-				this.isActive = true;
-				return this;
-			});
-	}
-
-	getGlobal(): Global {
-		return this.global;
-	}
-
-	getSchema(): DatabaseSchema {
-		return this.schema;
-	}
-
-	select(...columns: Column[]): SelectQuery {
-		this.checkActive();
-		return new SelectBuilder(this.global, columns);
-	}
-
-	insert(): InsertBuilder {
-		this.checkActive();
-		return new InsertBuilder(this.global);
-	}
-
-	insertOrReplace(): InsertBuilder {
-		this.checkActive();
-		return new InsertBuilder(this.global, /* allowReplace */ true);
-	}
-
-	update(table: Table): UpdateBuilder {
-		this.checkActive();
-		return new UpdateBuilder(this.global, table);
-	}
-
-	delete(): DeleteBuilder {
-		this.checkActive();
-		return new DeleteBuilder(this.global);
-	}
-
-	createTransaction(type?: TransactionType): Transaction {
-		this.checkActive();
-		return new RuntimeTransaction(this.global);
-	}
-
-	close(): void {
-		try {
-			const backStore = this.global.getService(Service.BACK_STORE);
-			backStore.close();
-		} catch (e) {
-			// Swallow the exception if DB is not initialized yet.
-		}
-		this.global.clear();
-		this.isActive = false;
-	}
-
-	export(): Promise<object> {
-		this.checkActive();
-		const task = new ExportTask(this.global);
-		return this.runner.scheduleTask(task).then((results) => {
-			return results[0].getPayloads()[0];
-		});
-	}
-
-	import(d: object): Promise<object[]> {
-		const data = d as PayloadType;
-		this.checkActive();
-		const task = new ImportTask(this.global, data);
-		return this.runner.scheduleTask(task);
-	}
-
-	isOpen(): boolean {
-		return this.isActive;
-	}
-
-	private checkActive(): void {
-		if (!this.isActive) {
-			throw new Exception(ErrorCode.CONNECTION_CLOSED);
-		}
-	}
 }
 
 class DatabaseSchemaImpl implements DatabaseSchema {
@@ -12897,7 +12638,7 @@ class Database {
 	// FROM: class RuntimeDatabase
 
 	public select(...columns: Column[]): SelectQuery {
-		return new SelectBuilder(this.queryEngine, this.runner, columns);
+		return new SelectBuilder(this.queryEngine, this.runner, this.schema, columns);
 	}
 
 	public insert(): InsertBuilder {
