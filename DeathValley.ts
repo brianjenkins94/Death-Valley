@@ -7549,117 +7549,6 @@ class BaseBuilder<CONTEXT extends Context> implements QueryBuilder {
 	}
 }
 
-class DeleteBuilder extends BaseBuilder<DeleteContext> {
-	constructor(global: Global) {
-		super(global, new DeleteContext(global.getService(Service.SCHEMA)));
-	}
-
-	from(table: Table): this {
-		this.assertFromPreconditions();
-		this.query.from = table;
-		return this;
-	}
-
-	where(predicate: Predicate): this {
-		this.assertWherePreconditions();
-		this.query.where = predicate;
-		return this;
-	}
-
-	override assertExecPreconditions(): void {
-		super.assertExecPreconditions();
-		if (this.query.from === undefined || this.query.from === null) {
-			// 517: Invalid usage of delete().
-			throw new Exception(ErrorCode.INVALID_DELETE);
-		}
-	}
-
-	private assertFromPreconditions(): void {
-		if (this.query.from) {
-			// 515: from() has already been called.
-			throw new Exception(ErrorCode.DUPLICATE_FROM);
-		}
-	}
-
-	private assertWherePreconditions(): void {
-		if (this.query.from === undefined || this.query.from === null) {
-			// 548: from() has to be called before where().
-			throw new Exception(ErrorCode.FROM_AFTER_WHERE);
-		}
-		if (this.query.where) {
-			// 516: where() has already been called.
-			throw new Exception(ErrorCode.DUPLICATE_WHERE);
-		}
-	}
-}
-
-class InsertBuilder extends BaseBuilder<InsertContext> {
-	constructor(global: Global, allowReplace = false) {
-		super(global, new InsertContext(global.getService(Service.SCHEMA)));
-		this.query.allowReplace = allowReplace;
-	}
-
-	override assertExecPreconditions(): void {
-		super.assertExecPreconditions();
-		const context = this.query;
-
-		if (
-			context.into === undefined
-			|| context.into === null
-			|| context.values === undefined
-			|| context.values === null
-		) {
-			// 518: Invalid usage of insert().
-			throw new Exception(ErrorCode.INVALID_INSERT);
-		}
-
-		// "Insert or replace" makes no sense for tables that do not have a primary
-		// key.
-		if (
-			context.allowReplace
-			&& (context.into as BaseTable).getConstraint().getPrimaryKey() === null
-		) {
-			// 519: Attempted to insert or replace in a table with no primary key.
-			throw new Exception(ErrorCode.INVALID_INSERT_OR_REPLACE);
-		}
-	}
-
-	into(table: Table): this {
-		this.assertIntoPreconditions();
-		this.query.into = table;
-		return this;
-	}
-
-	values(rows: Binder | Binder[] | Row[]): this {
-		this.assertValuesPreconditions();
-		if (
-			rows instanceof Binder
-			|| (rows as unknown[]).some((r) => r instanceof Binder)
-		) {
-			this.query.binder = rows;
-		} else {
-			this.query.values = rows as Row[];
-		}
-		return this;
-	}
-
-	// Asserts whether the preconditions for calling the into() method are met.
-	private assertIntoPreconditions(): void {
-		if (this.query.into !== undefined && this.query.into !== null) {
-			// 520: into() has already been called.
-			throw new Exception(ErrorCode.DUPLICATE_INTO);
-		}
-	}
-
-	// Asserts whether the preconditions for calling the values() method are met.
-	private assertValuesPreconditions(): void {
-		if (this.query.values !== undefined && this.query.values !== null) {
-			// 521: values() has already been called.
-			throw new Exception(ErrorCode.DUPLICATE_VALUES);
-		}
-	}
-}
-
 // Base class for AggregateColumn and StarColumn which does not support
 // PredicateProvider interface.
 class NonPredicateProvider implements PredicateProvider {
@@ -8104,55 +7993,6 @@ class SelectBuilder extends BaseBuilder<SelectContext> {
 			// NOT REACHED
 		}
 		return false;
-	}
-}
-
-class UpdateBuilder extends BaseBuilder<UpdateContext> {
-	constructor(global: Global, table: Table) {
-		super(global, new UpdateContext(global.getService(Service.SCHEMA)));
-		this.query.table = table;
-	}
-
-	set(column: Column, value: unknown): this {
-		const set = {
-			"binding": value instanceof Binder ? value.index : -1,
-			"column": column,
-			"value": value
-		};
-
-		if (this.query.set) {
-			this.query.set.push(set);
-		} else {
-			this.query.set = [set];
-		}
-		return this;
-	}
-
-	where(predicate: Predicate): this {
-		this.assertWherePreconditions();
-		this.query.where = predicate;
-		return this;
-	}
-
-	override assertExecPreconditions(): void {
-		super.assertExecPreconditions();
-		if (this.query.set === undefined || this.query.set === null) {
-			// 532: Invalid usage of update().
-			throw new Exception(ErrorCode.INVALID_UPDATE);
-		}
-
-		const notBound = this.query.set.some((set) => set.value instanceof Binder);
-		if (notBound) {
-			// 501: Value is not bounded.
-			throw new Exception(ErrorCode.UNBOUND_VALUE);
-		}
-	}
-
-	private assertWherePreconditions(): void {
-		if (this.query.where) {
-			// 516: where() has already been called.
-			throw new Exception(ErrorCode.DUPLICATE_WHERE);
-		}
 	}
 }
 
@@ -12641,21 +12481,21 @@ class Database {
 		return new SelectBuilder(this.queryEngine, this.runner, this.schema, columns);
 	}
 
-	public insert(): InsertBuilder {
-		return new InsertBuilder(this.global);
-	}
+	// public insert(): InsertBuilder {
+	// 	return new InsertBuilder(this.global);
+	// }
 
-	public insertOrReplace(): InsertBuilder {
-		return new InsertBuilder(this.global, /* allowReplace */ true);
-	}
+	// public insertOrReplace(): InsertBuilder {
+	// 	return new InsertBuilder(this.global, /* allowReplace */ true);
+	// }
 
-	public update(table: Table): UpdateBuilder {
-		return new UpdateBuilder(this.global, table);
-	}
+	// public update(table: Table): UpdateBuilder {
+	// 	return new UpdateBuilder(this.global, table);
+	// }
 
-	public delete(): DeleteBuilder {
-		return new DeleteBuilder(this.global);
-	}
+	// public delete(): DeleteBuilder {
+	// 	return new DeleteBuilder(this.global);
+	// }
 
 	public createTransaction(type?: TransactionType): Transaction {
 		return new RuntimeTransaction(this.global);
