@@ -3285,7 +3285,7 @@ abstract class Context extends UniqueId {
 	// A map used for locating predicates by ID. Instantiated lazily.
 	private predicateMap: Map<number, Predicate>;
 
-	constructor(public schema: DatabaseSchema) {
+	constructor() {
 		super();
 		this.clonedFrom = null;
 		this.where = null;
@@ -3366,8 +3366,8 @@ class SelectContext extends Context {
 
 	outerJoinPredicates!: Set<number>;
 
-	constructor(dbSchema: DatabaseSchema) {
-		super(dbSchema);
+	constructor() {
+		super();
 	}
 
 	getScope(): Set<Table> {
@@ -3375,7 +3375,7 @@ class SelectContext extends Context {
 	}
 
 	clone(): SelectContext {
-		const context = new SelectContext(this.schema);
+		const context = new SelectContext();
 		context.cloneBase(this);
 		if (this.columns) {
 			context.columns = this.columns.slice();
@@ -3935,7 +3935,7 @@ interface QueryBuilder {
 // an exception will be thrown.
 interface SelectQuery extends QueryBuilder {
 	// Specifies the source of the SELECT query.
-	from: (...tables: Table[]) => SelectQuery;
+	from: (...tables: Table[] | string[]) => SelectQuery;
 
 	// Defines search condition of the SELECT query.
 	where: (predicate: Predicate) => SelectQuery;
@@ -7003,8 +7003,8 @@ class JoinPredicate extends PredicateNode {
 class DeleteContext extends Context {
 	from!: Table;
 
-	constructor(dbSchema: DatabaseSchema) {
-		super(dbSchema);
+	constructor() {
+		super();
 	}
 
 	getScope(): Set<Table> {
@@ -7015,7 +7015,7 @@ class DeleteContext extends Context {
 	}
 
 	clone(): DeleteContext {
-		const context = new DeleteContext(this.schema);
+		const context = new DeleteContext();
 		context.cloneBase(this);
 		context.from = this.from;
 		return context;
@@ -7049,8 +7049,8 @@ class InsertContext extends Context {
 
 	allowReplace!: boolean;
 
-	constructor(dbSchema: DatabaseSchema) {
-		super(dbSchema);
+	constructor() {
+		super();
 	}
 
 	getScope(): Set<Table> {
@@ -7065,7 +7065,7 @@ class InsertContext extends Context {
 	}
 
 	clone(): InsertContext {
-		const context = new InsertContext(this.schema);
+		const context = new InsertContext();
 		context.cloneBase(this);
 		context.into = this.into;
 		if (this.values) {
@@ -7105,8 +7105,8 @@ class UpdateContext extends Context {
 
 	set!: UpdateSetContext[];
 
-	constructor(dbSchema: DatabaseSchema) {
-		super(dbSchema);
+	constructor() {
+		super();
 	}
 
 	getScope(): Set<Table> {
@@ -7120,7 +7120,7 @@ class UpdateContext extends Context {
 	}
 
 	clone(): UpdateContext {
-		const context = new UpdateContext(this.schema);
+		const context = new UpdateContext();
 		context.cloneBase(this);
 		context.table = this.table;
 		context.set = this.set ? this.cloneSet(this.set) : this.set;
@@ -7487,9 +7487,9 @@ class BaseBuilder<CONTEXT extends Context> implements QueryBuilder {
 
 	private plan!: PhysicalQueryPlan;
 
-	constructor(protected global: Global, context: Context) {
-		this.queryEngine = global.getService(Service.QUERY_ENGINE);
-		this.runner = global.getService(Service.RUNNER);
+	constructor(queryEngine, runner, context: Context) {
+		this.queryEngine = queryEngine;
+		this.runner = runner;
 		this.query = context as CONTEXT;
 	}
 
@@ -7819,8 +7819,8 @@ class SelectBuilder extends BaseBuilder<SelectContext> {
 
 	private whereAlreadyCalled: boolean;
 
-	constructor(global: Global, columns: Column[]) {
-		super(global, new SelectContext(global.getService(Service.SCHEMA)));
+	constructor(queryEngine, runner, columns: Column[]) {
+		super(queryEngine, runner, new SelectContext());
 		this.fromAlreadyCalled = false;
 		this.whereAlreadyCalled = false;
 		this.query.columns = columns;
@@ -7847,7 +7847,13 @@ class SelectBuilder extends BaseBuilder<SelectContext> {
 		this.checkProjectionList();
 	}
 
-	from(...tables: Table[]): this {
+	from(...tables: Table[] | string[]): this {
+		if (tables.every((element) => { return typeof element === "string" })) {
+			tables = tables.map(function(table) {
+				return this.schema.table(table);
+			});
+		}
+
 		if (this.fromAlreadyCalled) {
 			// 515: from() has already been called.
 			throw new Exception(ErrorCode.DUPLICATE_FROM);
@@ -12806,7 +12812,7 @@ class Database {
 	private cache: DefaultCache;
 	private backStore: Memory;
 	private indexStore: MemoryIndexStore;
-	private engine: DefaultQueryEngine;
+	private queryEngine: DefaultQueryEngine;
 	private runner: Runner;
 
 	public constructor(data) {
@@ -12852,14 +12858,46 @@ class Database {
 		this.cache = new DefaultCache(this.schema);
 		this.backStore = new Memory(this.schema);
 		this.indexStore = new MemoryIndexStore();
-		//this.engine = new DefaultQueryEngine(this.global);
-		//this.runner = new Runner();
+		this.queryEngine = new DefaultQueryEngine(this.global);
+		this.runner = new Runner();
 
 		this.import(data);
 	}
 
+	// FROM: class DatabaseSchemaImpl
+
+	name(): string {
+		return this.schema._name;
+	}
+
+	info(): Info {
+		if (this.schema._info === undefined) {
+			this.schema._info = new Info(this);
+		}
+		return this.schema._info;
+	}
+
+	tables(): Table[] {
+		return Array.from(this.schema.tableMap.values());
+	}
+
+	table(tableName: string): Table {
+		const ret = this.schema.tableMap.get(tableName);
+		if (!ret) {
+			// 101: Table {0} not found.
+			throw new Exception(ErrorCode.TABLE_NOT_FOUND, tableName);
+		}
+		return ret;
+	}
+
+	setTable(table: Table): void {
+		this.schema.tableMap.set(table.getName(), table);
+	}
+
+	// FROM: class RuntimeDatabase
+
 	public select(...columns: Column[]): SelectQuery {
-		return new SelectBuilder(this.global, columns);
+		return new SelectBuilder(this.queryEngine, this.runner, columns);
 	}
 
 	public insert(): InsertBuilder {
