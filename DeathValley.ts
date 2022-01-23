@@ -3165,7 +3165,6 @@ abstract class Context extends UniqueId {
 	}
 
 	abstract getScope(): Set<Table>;
-	abstract clone(): Context;
 
 	protected cloneBase(context: Context): void {
 		if (context.where) {
@@ -3693,7 +3692,7 @@ class MathHelper {
 		collector?: (idx1: number, idx2: number) => T
 	): T[] {
 		const defaultComparator = (a: T, b: T) => a === b;
-		const defaultCollector = (i1: number, i2: number) => array1[i1];
+		const defaultCollector = (i1: number) => array1[i1];
 		const compare = comparator || defaultComparator;
 		const collect = collector || defaultCollector;
 		const length1 = array1.length;
@@ -6846,154 +6845,6 @@ class JoinPredicate extends PredicateNode {
 	}
 }
 
-// Internal representation of DELETE query.
-class DeleteContext extends Context {
-	from!: Table;
-
-	constructor() {
-		super();
-	}
-
-	getScope(): Set<Table> {
-		const scope = new Set<Table>();
-		scope.add(this.from);
-		this.expandTableScope(this.from.getName(), scope);
-		return scope;
-	}
-
-	clone(): DeleteContext {
-		const context = new DeleteContext();
-		context.cloneBase(this);
-		context.from = this.from;
-		return context;
-	}
-
-	override bind(values: unknown[]): this {
-		super.bind(values);
-		this.bindValuesInSearchCondition(values);
-		return this;
-	}
-
-	// Expands the scope of the given table recursively. It takes into account
-	// CASCADE foreign key constraints.
-	private expandTableScope(tableName: string, scopeSoFar: Set<Table>): void {
-		const cascadeChildTables = Info.from(this.schema).getChildTables(tableName, ConstraintAction.CASCADE);
-		const childTables = Info.from(this.schema).getChildTables(tableName);
-		childTables.forEach(scopeSoFar.add.bind(scopeSoFar));
-		cascadeChildTables.forEach((childTable) => {
-			this.expandTableScope(childTable.getName(), scopeSoFar);
-		}, this);
-	}
-}
-
-// Internal representation of INSERT and INSERT_OR_REPLACE queries.
-class InsertContext extends Context {
-	into!: Table;
-
-	binder!: Binder | Binder[] | Row[];
-
-	values!: Row[];
-
-	allowReplace!: boolean;
-
-	constructor() {
-		super();
-	}
-
-	getScope(): Set<Table> {
-		const scope = new Set<Table>();
-		scope.add(this.into);
-		const info = Info.from(this.schema);
-		info.getParentTables(this.into.getName()).forEach(scope.add.bind(scope));
-		if (this.allowReplace) {
-			info.getChildTables(this.into.getName()).forEach(scope.add.bind(scope));
-		}
-		return scope;
-	}
-
-	clone(): InsertContext {
-		const context = new InsertContext();
-		context.cloneBase(this);
-		context.into = this.into;
-		if (this.values) {
-			context.values
-				= this.values instanceof Binder ? this.values : this.values.slice();
-		}
-		context.allowReplace = this.allowReplace;
-		context.binder = this.binder;
-		return context;
-	}
-
-	override bind(values: unknown[]): this {
-		super.bind(values);
-
-		if (this.binder) {
-			if (this.binder instanceof Binder) {
-				this.values = values[this.binder.index] as Row[];
-			} else {
-				this.values = (this.binder as unknown[]).map((val) => {
-					return (val instanceof Binder ? values[val.index] : val) as Row;
-				});
-			}
-		}
-		return this;
-	}
-}
-
-interface UpdateSetContext {
-	binding?: number;
-	column: Column;
-	value: unknown;
-}
-
-// Internal representation of UPDATE query.
-class UpdateContext extends Context {
-	table!: Table;
-
-	set!: UpdateSetContext[];
-
-	constructor() {
-		super();
-	}
-
-	getScope(): Set<Table> {
-		const scope = new Set<Table>();
-		scope.add(this.table);
-		const columns = this.set.map((col) => col.column.getNormalizedName());
-		const info = Info.from(this.schema);
-		info.getParentTablesByColumns(columns).forEach(scope.add.bind(scope));
-		info.getChildTablesByColumns(columns).forEach(scope.add.bind(scope));
-		return scope;
-	}
-
-	clone(): UpdateContext {
-		const context = new UpdateContext();
-		context.cloneBase(this);
-		context.table = this.table;
-		context.set = this.set ? this.cloneSet(this.set) : this.set;
-		return context;
-	}
-
-	override bind(values: unknown[]): this {
-		super.bind(values);
-
-		this.set.forEach((set) => {
-			if (set.binding !== undefined && set.binding !== -1) {
-				set.value = values[set.binding];
-			}
-		});
-		this.bindValuesInSearchCondition(values);
-		return this;
-	}
-
-	private cloneSet(set: UpdateSetContext[]): UpdateSetContext[] {
-		return set.map((src) => {
-			const clone = { ...src };
-			return clone;
-		});
-	}
-}
-
 type V = ArrayBuffer | Date | boolean | number | string;
 
 class SqlHelper {
@@ -7810,7 +7661,6 @@ class LogicalQueryPlanNode extends TreeNode {
 	}
 }
 
-
 class SelectNode extends LogicalQueryPlanNode {
 	constructor(readonly predicate: Predicate) {
 		super();
@@ -7975,16 +7825,6 @@ abstract class BaseLogicalPlanGenerator<T extends Context>
 	abstract generateInternal(): LogicalQueryPlanNode;
 }
 
-class DeleteNode extends LogicalQueryPlanNode {
-	constructor(readonly table: Table) {
-		super();
-	}
-
-	override toString(): string {
-		return `delete(${this.table.getName()})`;
-	}
-}
-
 // Rewrites the logical query plan such that the resulting logical query plan is
 // faster to execute than the original "naive" plan.
 class LogicalPlanRewriter implements LogicalPlanGenerator {
@@ -8074,26 +7914,6 @@ class ImplicitJoinsPass extends RewritePass<LogicalQueryPlanNode> {
 			}
 		}
 		rootNode.getChildren().forEach((child) => { this.traverse(child, queryContext); });
-	}
-}
-
-class InsertNode extends LogicalQueryPlanNode {
-	constructor(readonly table: Table, readonly values: Row[]) {
-		super();
-	}
-
-	override toString(): string {
-		return `insert(${this.table.getName()}, R${this.values.length})`;
-	}
-}
-
-class InsertOrReplaceNode extends LogicalQueryPlanNode {
-	constructor(readonly table: Table, readonly values: Row[]) {
-		super();
-	}
-
-	override toString(): string {
-		return `insertOrReplace(${this.table.getName()}, R${this.values.length})`;
 	}
 }
 
@@ -8485,16 +8305,6 @@ class SelectLogicalPlanGenerator extends BaseLogicalPlanGenerator<SelectContext>
 
 	private generateProjectNode(): void {
 		this.projectNode = new ProjectNode(this.query.columns || [], this.query.groupBy || null);
-	}
-}
-
-class UpdateNode extends LogicalQueryPlanNode {
-	constructor(readonly table: Table) {
-		super();
-	}
-
-	override toString(): string {
-		return `update(${this.table.getName()})`;
 	}
 }
 
@@ -10374,7 +10184,7 @@ class UnboundedKeyRangeCalculator implements IndexKeyRangeCalculator {
 	constructor(private readonly indexSchema: IndexImpl) { }
 
 	getKeyRangeCombinations(queryContext: Context): KeyRange[] | SingleKeyRange[] {
-		return this.indexSchema.columns.length === 1 ? [SingleKeyRange.all()] : [this.indexSchema.columns.map((col) => SingleKeyRange.all())];
+		return this.indexSchema.columns.length === 1 ? [SingleKeyRange.all()] : [this.indexSchema.columns.map(() => SingleKeyRange.all())];
 	}
 }
 
@@ -12100,7 +11910,7 @@ class Database {
 	// 	return new DeleteBuilder(this.global);
 	// }
 
-	public createTransaction(type?: TransactionType): Transaction {
+	public createTransaction(): Transaction {
 		return new RuntimeTransaction(this.global);
 	}
 
