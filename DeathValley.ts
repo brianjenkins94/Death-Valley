@@ -523,27 +523,6 @@ interface QueryEngine {
 	getPlan: (query: Context) => PhysicalQueryPlan;
 }
 
-const Service = {
-	// The backing data store used by this connection.
-	// following statement fail compilation, need solution.
-	"BACK_STORE": new ServiceId<BackStore>("backstore"),
-
-	// The shared row cache used by this connection.
-	"CACHE": new ServiceId<Cache>("cache"),
-
-	// The shared store of all indices defined.
-	"INDEX_STORE": new ServiceId<IndexStore>("indexstore"),
-
-	// Query engine used for generating execution plan.
-	"QUERY_ENGINE": new ServiceId<QueryEngine>("engine"),
-
-	// Query runner which executes transactions.
-	"RUNNER": new ServiceId<Runner>("runner"),
-
-	// Finalized schema associated with this connection.
-	"SCHEMA": new ServiceId<DatabaseSchema>("schema")
-};
-
 // The comparison result constant. This must be consistent with the constant
 // required by the sort function of Array.prototype.sort.
 enum Favor {
@@ -7021,17 +7000,17 @@ class SqlHelper {
 	static toSql(builder: BaseBuilder<Context>, stripValueInfo = false): string {
 		const query = builder.getQuery();
 
-		if (query instanceof InsertContext) {
-			return SqlHelper.insertToSql(query, stripValueInfo);
-		}
+		// if (query instanceof InsertContext) {
+		// 	return SqlHelper.insertToSql(query, stripValueInfo);
+		// }
 
-		if (query instanceof DeleteContext) {
-			return SqlHelper.deleteToSql(query, stripValueInfo);
-		}
+		// if (query instanceof DeleteContext) {
+		// 	return SqlHelper.deleteToSql(query, stripValueInfo);
+		// }
 
-		if (query instanceof UpdateContext) {
-			return SqlHelper.updateToSql(query, stripValueInfo);
-		}
+		// if (query instanceof UpdateContext) {
+		// 	return SqlHelper.updateToSql(query, stripValueInfo);
+		// }
 
 		if (query instanceof SelectContext) {
 			return SqlHelper.selectToSql(query, stripValueInfo);
@@ -7063,25 +7042,6 @@ class SqlHelper {
 				// datetime, string
 				return `'${value.toString()}'`;
 		}
-	}
-
-	private static insertToSql(
-		query: InsertContext,
-		stripValueInfo: boolean
-	): string {
-		let prefix = query.allowReplace ? "INSERT OR REPLACE" : "INSERT";
-		const columns = (query.into as BaseTable).getColumns();
-		prefix += " INTO " + query.into.getName() + "(";
-		prefix += columns.map((col) => col.getName()).join(", ");
-		prefix += ") VALUES (";
-		const sqls = query.values.map((row) => {
-			const values = columns.map((col) => {
-				const rawVal = row.payload()[col.getName()];
-				return stripValueInfo ? rawVal !== undefined && rawVal !== null ? "#" : "NULL" : SqlHelper.escapeSqlValue(col.getType(), rawVal);
-			});
-			return prefix + values.join(", ") + ");";
-		});
-		return sqls.join("\n");
 	}
 
 	private static evaluatorToSql(op: EvalType): string {
@@ -7202,42 +7162,6 @@ class SqlHelper {
 			return " WHERE " + whereClause;
 		}
 		return "";
-	}
-
-	private static deleteToSql(
-		query: DeleteContext,
-		stripValueInfo: boolean
-	): string {
-		let sql = "DELETE FROM " + query.from.getName();
-		if (query.where) {
-			sql += SqlHelper.predicateToSql(query.where, stripValueInfo);
-		}
-		sql += ";";
-		return sql;
-	}
-
-	private static updateToSql(
-		query: UpdateContext,
-		stripValueInfo: boolean
-	): string {
-		let sql = "UPDATE " + query.table.getName() + " SET ";
-		sql += query.set
-			.map((set) => {
-				const c = set.column as BaseColumn;
-				const setter = c.getNormalizedName() + " = ";
-				if (set.binding !== -1) {
-					return setter + "?" + set.binding.toString();
-				}
-				return (
-					setter + SqlHelper.escapeSqlValue(c.getType(), set.value).toString()
-				);
-			})
-			.join(", ");
-		if (query.where) {
-			sql += SqlHelper.predicateToSql(query.where, stripValueInfo);
-		}
-		sql += ";";
-		return sql;
 	}
 
 	private static selectToSql(
@@ -8090,32 +8014,6 @@ class TableAccessNode extends LogicalQueryPlanNode {
 	}
 }
 
-class DeleteLogicalPlanGenerator extends BaseLogicalPlanGenerator<DeleteContext> {
-	constructor(
-		query: DeleteContext,
-		private readonly rewritePasses: RewritePass<LogicalQueryPlanNode>[]
-	) {
-		super(query);
-	}
-
-	generateInternal(): LogicalQueryPlanNode {
-		const deleteNode = new DeleteNode(this.query.from);
-		const selectNode = this.query.where ? new SelectNode(this.query.where.copy()) : null;
-		const tableAccessNode = new TableAccessNode(this.query.from);
-
-		if (selectNode === null) {
-			deleteNode.addChild(tableAccessNode);
-		} else {
-			selectNode.addChild(tableAccessNode);
-			deleteNode.addChild(selectNode);
-		}
-
-		// Optimizing the "naive" logical plan.
-		const planRewriter = new LogicalPlanRewriter(deleteNode, this.query, this.rewritePasses);
-		return planRewriter.generate();
-	}
-}
-
 class JoinNode extends LogicalQueryPlanNode {
 	constructor(
 		readonly predicate: JoinPredicate,
@@ -8196,16 +8094,6 @@ class InsertOrReplaceNode extends LogicalQueryPlanNode {
 
 	override toString(): string {
 		return `insertOrReplace(${this.table.getName()}, R${this.values.length})`;
-	}
-}
-
-class InsertLogicalPlanGenerator extends BaseLogicalPlanGenerator<InsertContext> {
-	constructor(query: InsertContext) {
-		super(query);
-	}
-
-	generateInternal(): LogicalQueryPlanNode {
-		return this.query.allowReplace ? new InsertOrReplaceNode(this.query.into, this.query.values) : new InsertNode(this.query.into, this.query.values);
 	}
 }
 
@@ -8610,28 +8498,6 @@ class UpdateNode extends LogicalQueryPlanNode {
 	}
 }
 
-class UpdateLogicalPlanGenerator extends BaseLogicalPlanGenerator<UpdateContext> {
-	constructor(query: UpdateContext) {
-		super(query);
-	}
-
-	generateInternal(): LogicalQueryPlanNode {
-		const updateNode = new UpdateNode(this.query.table);
-		const selectNode
-			= this.query.where !== null ? new SelectNode(this.query.where.copy()) : null;
-		const tableAccessNode = new TableAccessNode(this.query.table);
-
-		if (selectNode === null) {
-			updateNode.addChild(tableAccessNode);
-		} else {
-			selectNode.addChild(tableAccessNode);
-			updateNode.addChild(selectNode);
-		}
-
-		return updateNode;
-	}
-}
-
 // A factory used to create a logical query plan corresponding to a given query.
 class LogicalPlanFactory {
 	private readonly selectOptimizationPasses: RewritePass<LogicalQueryPlanNode>[];
@@ -8652,14 +8518,15 @@ class LogicalPlanFactory {
 	create(query: Context): LogicalQueryPlan {
 		let generator: LogicalPlanGenerator
 			= null as unknown as LogicalPlanGenerator;
-		if (query instanceof InsertContext) {
-			generator = new InsertLogicalPlanGenerator(query);
-		} else if (query instanceof DeleteContext) {
-			generator = new DeleteLogicalPlanGenerator(query, this.deleteOptimizationPasses);
-		} else if (query instanceof SelectContext) {
+		// if (query instanceof InsertContext) {
+		// 	generator = new InsertLogicalPlanGenerator(query);
+		// } else if (query instanceof DeleteContext) {
+		// 	generator = new DeleteLogicalPlanGenerator(query, this.deleteOptimizationPasses);
+		// } else
+		if (query instanceof SelectContext) {
 			generator = new SelectLogicalPlanGenerator(query, this.selectOptimizationPasses);
-		} else if (query instanceof UpdateContext) {
-			generator = new UpdateLogicalPlanGenerator(query);
+			// } else if (query instanceof UpdateContext) {
+			// 	generator = new UpdateLogicalPlanGenerator(query);
 		} else {
 			// 513: Unknown query context.
 			throw new Exception(ErrorCode.UNKNOWN_QUERY_CONTEXT);
