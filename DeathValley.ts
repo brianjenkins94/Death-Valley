@@ -8985,26 +8985,6 @@ class CrossProductStep extends PhysicalQueryPlanNode {
 	}
 }
 
-class DeleteStep extends PhysicalQueryPlanNode {
-	constructor(private readonly table: Table) {
-		super(1, ExecType.FIRST_CHILD);
-	}
-
-	override toString(): string {
-		return `delete(${this.table.getName()})`;
-	}
-
-	execInternal(
-		relations: Relation[],
-		journal?: Journal,
-		context?: Context
-	): Relation[] {
-		const rows = relations[0].entries.map((entry) => entry.row);
-		journal.remove(this.table, rows);
-		return [Relation.createEmpty()];
-	}
-}
-
 // Keep lower case class name for compatibility with Lovefield API.
 class fn {
 	static avg(col: Column): Column {
@@ -9873,83 +9853,6 @@ class IndexRangeScanPass extends RewritePass<PhysicalQueryPlanNode> {
 	}
 }
 
-class InsertStep extends PhysicalQueryPlanNode {
-	static assignAutoIncrementPks(
-		t: Table,
-		values: Row[],
-		indexStore: IndexStore
-	): void {
-		const table = t as BaseTable;
-		const pkIndexSchema = table.getConstraint().getPrimaryKey();
-		const autoIncrement
-			= pkIndexSchema === null ? false : pkIndexSchema.columns[0].autoIncrement;
-		if (autoIncrement) {
-			const pkColumnName = pkIndexSchema.columns[0].schema.getName();
-			const index = indexStore.get(pkIndexSchema.getNormalizedName());
-			const max = index.stats().maxKeyEncountered;
-			let maxKey: number = max === null ? 0 : (max as number);
-
-			values.forEach((row) => {
-				// A value of 0, null or undefined indicates that a primary key should
-				// automatically be assigned.
-				const val = row.payload()[pkColumnName];
-				if (val === 0 || val === null || val === undefined) {
-					maxKey++;
-					row.payload()[pkColumnName] = maxKey;
-				}
-			});
-		}
-	}
-
-	private readonly indexStore: IndexStore;
-
-	constructor(global: Global, private readonly table: Table) {
-		super(0, ExecType.NO_CHILD);
-		this.indexStore = global.getService(Service.INDEX_STORE);
-	}
-
-	override toString(): string {
-		return `insert(${this.table.getName()})`;
-	}
-
-	execInternal(
-		relations: Relation[],
-		journal?: Journal,
-		queryContext?: InsertContext
-	): Relation[] {
-		const values = queryContext.values;
-		InsertStep.assignAutoIncrementPks(this.table as BaseTable, values, this.indexStore);
-		journal.insert(this.table, values);
-
-		return [Relation.fromRows(values, [this.table.getName()])];
-	}
-}
-
-class InsertOrReplaceStep extends PhysicalQueryPlanNode {
-	private readonly indexStore: IndexStore;
-
-	constructor(global: Global, private readonly table: Table) {
-		super(0, ExecType.NO_CHILD);
-		this.indexStore = global.getService(Service.INDEX_STORE);
-	}
-
-	override toString(): string {
-		return `insert_replace(${this.table.getName()})`;
-	}
-
-	execInternal(
-		relations: Relation[],
-		journal?: Journal,
-		ctx?: Context
-	): Relation[] {
-		const queryContext = ctx as InsertContext;
-		InsertStep.assignAutoIncrementPks(this.table, queryContext.values, this.indexStore);
-		journal.insertOrReplace(this.table, queryContext.values);
-
-		return [Relation.fromRows(queryContext.values, [this.table.getName()])];
-	}
-}
-
 class LimitStep extends PhysicalQueryPlanNode {
 	constructor() {
 		super(1, ExecType.FIRST_CHILD);
@@ -10686,36 +10589,6 @@ class PhysicalPlanRewriter {
 	}
 }
 
-class UpdateStep extends PhysicalQueryPlanNode {
-	constructor(private readonly table: Table) {
-		super(1, ExecType.FIRST_CHILD);
-	}
-
-	override toString(): string {
-		return `update(${this.table.getName()})`;
-	}
-
-	execInternal(
-		relations: Relation[],
-		journal?: Journal,
-		context?: Context
-	): Relation[] {
-		const table = this.table as BaseTable;
-		const rows = relations[0].entries.map((entry) => {
-			// Need to clone the row here before modifying it, because it is a
-			// direct reference to the cache's contents.
-			const clone = table.deserializeRow(entry.row.serialize());
-
-			(context as UpdateContext).set.forEach((update) => {
-				clone.payload()[update.column.getName()] = update.value;
-			}, this);
-			return clone;
-		}, this);
-		journal.update(table, rows);
-		return [Relation.createEmpty()];
-	}
-}
-
 class PhysicalPlanFactory {
 	private readonly selectOptimizationPasses: RewritePass<PhysicalQueryPlanNode>[];
 
@@ -10739,12 +10612,12 @@ class PhysicalPlanFactory {
 		queryContext: Context
 	): PhysicalQueryPlan {
 		const logicalQueryPlanRoot = logicalQueryPlan.getRoot();
-		if (
-			logicalQueryPlanRoot instanceof InsertOrReplaceNode
-			|| logicalQueryPlanRoot instanceof InsertNode
-		) {
-			return this.createPlan(logicalQueryPlan, queryContext);
-		}
+		// if (
+		// 	logicalQueryPlanRoot instanceof InsertOrReplaceNode
+		// 	|| logicalQueryPlanRoot instanceof InsertNode
+		// ) {
+		// 	return this.createPlan(logicalQueryPlan, queryContext);
+		// }
 
 		if (
 			logicalQueryPlanRoot instanceof ProjectNode
@@ -10754,12 +10627,12 @@ class PhysicalPlanFactory {
 			return this.createPlan(logicalQueryPlan, queryContext, this.selectOptimizationPasses);
 		}
 
-		if (
-			logicalQueryPlanRoot instanceof DeleteNode
-			|| logicalQueryPlanRoot instanceof UpdateNode
-		) {
-			return this.createPlan(logicalQueryPlan, queryContext, this.deleteOptimizationPasses);
-		}
+		// if (
+		// 	logicalQueryPlanRoot instanceof DeleteNode
+		// 	|| logicalQueryPlanRoot instanceof UpdateNode
+		// ) {
+		// 	return this.createPlan(logicalQueryPlan, queryContext, this.deleteOptimizationPasses);
+		// }
 
 		// Should never get here since all cases are handled above.
 		// 8: Unknown query plan node.
@@ -10803,15 +10676,16 @@ class PhysicalPlanFactory {
 			return new JoinStep(this.global, node.predicate, node.isOuterJoin);
 		} else if (node instanceof TableAccessNode) {
 			return new TableAccessFullStep(this.global, node.table);
-		} else if (node instanceof DeleteNode) {
-			return new DeleteStep(node.table);
-		} else if (node instanceof UpdateNode) {
-			return new UpdateStep(node.table);
-		} else if (node instanceof InsertOrReplaceNode) {
-			return new InsertOrReplaceStep(this.global, node.table);
-		} else if (node instanceof InsertNode) {
-			return new InsertStep(this.global, node.table);
 		}
+		// else if (node instanceof DeleteNode) {
+		// 	return new DeleteStep(node.table);
+		// } else if (node instanceof UpdateNode) {
+		// 	return new UpdateStep(node.table);
+		// } else if (node instanceof InsertOrReplaceNode) {
+		// 	return new InsertOrReplaceStep(this.global, node.table);
+		// } else if (node instanceof InsertNode) {
+		// 	return new InsertStep(this.global, node.table);
+		// }
 
 		// 514: Unknown node type.
 		throw new Exception(ErrorCode.UNKNOWN_NODE_TYPE);
@@ -11498,21 +11372,6 @@ class RuntimeTransaction implements Transaction {
 			this.state = newState;
 		}
 	}
-}
-
-interface InsertQuery extends QueryBuilder {
-	into: (table: Table) => InsertQuery;
-	values: (rows: Binder | Binder[] | Row[]) => InsertQuery;
-}
-
-interface UpdateQuery extends QueryBuilder {
-	set: (column: Column, value: unknown) => UpdateQuery;
-	where: (predicate: Predicate) => UpdateQuery;
-}
-
-interface DeleteQuery extends QueryBuilder {
-	from: (table: Table) => DeleteQuery;
-	where: (predicate: Predicate) => DeleteQuery;
 }
 
 class DatabaseSchemaImpl implements DatabaseSchema {
