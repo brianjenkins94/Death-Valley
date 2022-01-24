@@ -1,11 +1,11 @@
-import * as fs from "fs";
-import * as path from "path";
+//import * as fs from "fs";
+//import * as path from "path";
 
 //import { ConstraintAction, Order, Type } from "./src/lib/base/enum";
 //import { schema } from "./src/lib/schema/schema";
 //import { MockDataGenerator } from "./src/testing/hr_schema/mock_data_generator";
 
-import { ConstraintAction, Order, Type, schema } from "./DeathValley";
+import { ConstraintAction, Order, Type, schema, query } from "./DeathValley";
 
 (async function() {
 	/*
@@ -197,6 +197,7 @@ import { ConstraintAction, Order, Type, schema } from "./DeathValley";
 
 	*/
 
+	/*
 	const schemaBuilder2 = schema.create("idk", 1);
 
 	schemaBuilder2
@@ -281,12 +282,18 @@ import { ConstraintAction, Order, Type, schema } from "./DeathValley";
 		.addColumn("string2", Type.STRING);
 
 	const db2 = await schemaBuilder2.connect(); // Make sure the database is empty.
+	*/
 
-	const json = JSON.parse(fs.readFileSync(path.join(__dirname, "output.json"), { "encoding": "utf8" }));
+	const json = JSON.parse(fs.readFileSync(path.join(__dirname, "output.json"), { "encoding": "utf8" }))["tables"];
 
-	await db2.import(json);
+	//await db2.import(json);
 
-	const results = await db2.select().from(db2.getSchema().table("Job")).where(db2.getSchema().table("Job").col("minSalary").gte(300000)).exec();
+	//const results = await db2.select().from(db2.getSchema().table("Job")).where(db2.getSchema().table("Job").col("minSalary").gte(300000)).exec();
+
+	const db = query(json);
+	const job = db.table("Job");
+
+	const results = await db.select().from(job).where(job.col("minSalary").gte(300000)).exec();
 
 	console.log(results);
 })();
