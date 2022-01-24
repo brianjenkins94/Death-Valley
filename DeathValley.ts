@@ -326,12 +326,6 @@ interface Tx {
 // Interface for all backing stores to implement (Indexed DB, filesystem,
 // memory etc).
 interface BackStore {
-	// Initialize the database and setting up row id.
-	// |db| must be instance of RawBackStore.
-	// Returned promise contain raw type of the back store, e.g. IDBDatabase,
-	// caller to dynamic cast.
-	init: () => Promise<unknown>;
-
 	// Creates backstore native transaction that is tied to a given journal.
 	createTx: (type: TransactionType, scope: Table[], journal?: Journal) => Tx;
 
@@ -346,7 +340,7 @@ interface BackStore {
 }
 
 // Models the return value of Database.getSchema().
-interface DatabaseSchema {
+interface Schema {
 	name: () => string;
 	tables: () => Table[];
 	table: (name: string) => Table;
@@ -505,7 +499,7 @@ interface RuntimeIndex {
 
 interface IndexStore {
 	// Initializes index store. This will create empty index instances.
-	init: (schema: DatabaseSchema) => Promise<void>;
+	init: (schema: Schema) => Promise<void>;
 
 	// Returns the index by full qualified name. Returns null if not found.
 	get: (name: string) => RuntimeIndex | null;
@@ -765,10 +759,8 @@ class TransactionStatsImpl implements TransactionStats {
 }
 
 function assert(condition: boolean, message = "assertion failed"): void {
-	if (Global.get().getOptions().debugMode) {
-		if (!condition) {
-			throw new Exception(ErrorCode.ASSERTION, message);
-		}
+	if (!condition) {
+		throw new Exception(ErrorCode.ASSERTION, message);
 	}
 }
 
@@ -891,7 +883,7 @@ interface BaseTable extends Table {
 
 // Read-only objects that provides information for schema metadata.
 class Info {
-	static from(dbSchema: DatabaseSchema): Info {
+	static from(dbSchema: Schema): Info {
 		return (dbSchema as DatabaseSchemaImpl).info();
 	}
 
@@ -917,7 +909,7 @@ class Info {
 	// The map of full qualified column name to their child table name.
 	private readonly colChild: MapSet<string, string>;
 
-	constructor(private readonly dbSchema: DatabaseSchema) {
+	constructor(private readonly dbSchema: Schema) {
 		this.cascadeReferringFk = new MapSet();
 		this.restrictReferringFk = new MapSet();
 		this.parents = new MapSet();
@@ -3629,7 +3621,7 @@ class MemoryTx extends BaseTx {
 class Memory implements BackStore {
 	private readonly tables: Map<string, MemoryTable>;
 
-	constructor(private readonly schema: DatabaseSchema) {
+	constructor(private readonly schema: Schema) {
 		this.tables = new Map<string, MemoryTable>();
 
 		(this.schema.tables() as BaseTable[]).forEach((table) => { this.initTable(table); }, this);
@@ -3807,12 +3799,43 @@ interface SelectQuery extends QueryBuilder {
 	groupBy: (...columns: Column[]) => SelectQuery;
 }
 
+interface Cache {
+	// Inserts/Updates contents in cache. This version takes single row.
+	set(tableName: string, row: Row): void;
+
+	// Inserts/Updates contents in cache. This version takes multiple rows.
+	setMany(tableName: string, rows: Row[]): void;
+
+	// Returns contents from the cache.
+	get(id: number): Row | null;
+
+	// Returns contents from the cache.
+	getMany(id: number[]): Array<Row | null>;
+
+	// Returns contents from the cache. The range query will return only the rows
+	// with row ids matching the range.
+	getRange(tableName: string, fromId: number, toId: number): Row[];
+
+	// Removes a single entry from the cache.
+	remove(tableName: string, rowId: number): void;
+
+	// Removes entries from the cache.
+	removeMany(tableName: string, rowIds: number[]): void;
+
+	// Number of rows in cache for |tableName|. If |tableName| is omitted, count
+	// rows for all tables.
+	getCount(tableName?: string): number;
+
+	// Removes all contents from the cache.
+	clear(): void;
+}
+
 class DefaultCache implements Cache {
 	private readonly map: Map<number, Row>;
 
 	private readonly tableRows: Map<string, Set<number>>;
 
-	constructor(dbSchema: DatabaseSchema) {
+	constructor(dbSchema: Schema) {
 		this.map = new Map<number, Row>();
 		this.tableRows = new Map<string, Set<number>>();
 
@@ -5899,7 +5922,7 @@ class MemoryIndexStore implements IndexStore {
 		this.tableIndices = new Map<string, RuntimeIndex[]>();
 	}
 
-	init(schema: DatabaseSchema): Promise<void> {
+	init(schema: Schema): Promise<void> {
 		const tables = schema.tables() as BaseTable[];
 
 		tables.forEach((table) => {
@@ -10164,6 +10187,7 @@ class MultiColumnOrPass extends RewritePass<PhysicalQueryPlanNode> {
 		indexRangeCandidates: IndexRangeCandidate[]
 	): PhysicalQueryPlanNode {
 		const tableAccessByRowIdStep = new TableAccessByRowIdStep(this.global, tableAccessFullStep.table);
+		const tableAccessByRowIdStep = new TableAccessByRowIdStep(this.services.cache, tableAccessFullStep.table);
 		const multiIndexRangeScanStep = new MultiIndexRangeScanStep();
 		tableAccessByRowIdStep.addChild(multiIndexRangeScanStep);
 
@@ -10402,9 +10426,9 @@ class PhysicalPlanRewriter {
 class PhysicalPlanFactory {
 	private readonly selectOptimizationPasses: RewritePass<PhysicalQueryPlanNode>[];
 
-	private readonly deleteOptimizationPasses: RewritePass<PhysicalQueryPlanNode>[];
+	//private readonly deleteOptimizationPasses: RewritePass<PhysicalQueryPlanNode>[];
 
-	constructor(private readonly global: Global) {
+	constructor(private readonly services) {
 		this.selectOptimizationPasses = [
 			new IndexJoinPass(),
 			new IndexRangeScanPass(global),
@@ -10414,7 +10438,7 @@ class PhysicalPlanFactory {
 			new GetRowCountPass(global)
 		];
 
-		this.deleteOptimizationPasses = [new IndexRangeScanPass(global)];
+		//this.deleteOptimizationPasses = [new IndexRangeScanPass(global)];
 	}
 
 	create(
@@ -11184,7 +11208,7 @@ class RuntimeTransaction implements Transaction {
 	}
 }
 
-class DatabaseSchemaImpl implements DatabaseSchema {
+class DatabaseSchemaImpl implements Schema {
 	private _info: Info;
 
 	private readonly tableMap: Map<string, Table>;
