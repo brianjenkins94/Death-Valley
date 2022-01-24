@@ -625,7 +625,7 @@ class InMemoryUpdater {
 
 	private readonly indexStore: IndexStore;
 
-	private readonly schema: DatabaseSchema;
+	private readonly schema: Schema;
 
 	constructor(schema, cache, indexStore) {
 		this.cache = cache;
@@ -1052,7 +1052,7 @@ class ConstraintChecker {
 
 	private readonly indexStore: IndexStore;
 
-	private readonly schema: DatabaseSchema;
+	private readonly schema: Schema;
 
 	private readonly cache: Cache;
 
@@ -1506,7 +1506,7 @@ class TableDiff {
 class Journal {
 	private readonly scope: Map<string, Table>;
 
-	private readonly schema: DatabaseSchema;
+	private readonly schema: Schema;
 
 	private readonly cache: Cache;
 
@@ -10187,7 +10187,6 @@ class MultiColumnOrPass extends RewritePass<PhysicalQueryPlanNode> {
 		indexRangeCandidates: IndexRangeCandidate[]
 	): PhysicalQueryPlanNode {
 		const tableAccessByRowIdStep = new TableAccessByRowIdStep(this.global, tableAccessFullStep.table);
-		const tableAccessByRowIdStep = new TableAccessByRowIdStep(this.services.cache, tableAccessFullStep.table);
 		const multiIndexRangeScanStep = new MultiIndexRangeScanStep();
 		tableAccessByRowIdStep.addChild(multiIndexRangeScanStep);
 
@@ -10543,7 +10542,7 @@ class DefaultQueryEngine implements QueryEngine {
 }
 
 class ExportTask extends UniqueId implements Task {
-	private readonly schema: DatabaseSchema;
+	private readonly schema: Schema;
 
 	private readonly scope: Set<Table>;
 
