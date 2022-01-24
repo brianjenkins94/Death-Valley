@@ -3293,8 +3293,6 @@ interface TaskItem {
 // A QueryTask represents a collection of queries that should be executed as
 // part of a single transaction.
 abstract class QueryTask extends UniqueId implements Task {
-	protected backStore: BackStore;
-
 	protected queries: Context[];
 
 	private readonly plans: PhysicalQueryPlan[];
@@ -3307,9 +3305,11 @@ abstract class QueryTask extends UniqueId implements Task {
 
 	private tx!: Tx;
 
-	constructor(protected global: Global, items: TaskItem[]) {
+	constructor(protected backStore: BackStore,
+		protected schema: Schema,
+		protected cache: Cache,
+		protected indexStore: IndexStore, items: TaskItem[]) {
 		super();
-		this.backStore = global.getService(Service.BACK_STORE);
 		this.queries = items.map((item) => item.context);
 		this.plans = items.map((item) => item.plan);
 		this.combinedScope = PhysicalQueryPlan.getCombinedScope(this.plans);
@@ -3318,7 +3318,7 @@ abstract class QueryTask extends UniqueId implements Task {
 	}
 
 	exec(): Promise<Relation[]> {
-		const journal = this.txType === TransactionType.READ_ONLY ? undefined : new Journal(this.global, this.combinedScope);
+		const journal = this.txType === TransactionType.READ_ONLY ? undefined : new Journal(this.schema, this.cache, this.indexStore, this.combinedScope);
 		const results: Relation[] = [];
 
 		const remainingPlans = this.plans.slice();
@@ -5968,11 +5968,8 @@ class MemoryIndexStore implements IndexStore {
 }
 
 class UserQueryTask extends QueryTask {
-	private readonly runner: Runner;
-
-	constructor(global: Global, items: TaskItem[]) {
-		super(global, items);
-		this.runner = global.getService(Service.RUNNER);
+	constructor(backStore: BackStore, schema: Schema, cache: Cache, indexStore: IndexStore, items: TaskItem[]) {
+		super(backStore, schema, cache, indexStore, items);
 	}
 
 	getPriority(): TaskPriority {
@@ -7130,7 +7127,7 @@ class BaseBuilder<CONTEXT extends Context> implements QueryBuilder {
 
 	private plan!: PhysicalQueryPlan;
 
-	constructor(queryEngine, runner, context: Context) {
+	constructor(backStore, schema, cache, indexStore, queryEngine, runner, context: Context) {
 		this.queryEngine = queryEngine;
 		this.runner = runner;
 		this.query = context as CONTEXT;
@@ -7144,7 +7141,7 @@ class BaseBuilder<CONTEXT extends Context> implements QueryBuilder {
 		}
 
 		return new Promise((resolve, reject) => {
-			const queryTask = new UserQueryTask(this.global, [this.getTaskItem()]);
+			const queryTask = new UserQueryTask(this.backStore, this.schema, this.cache, this.indexStore, [this.getTaskItem()]);
 			this.runner
 				.scheduleTask(queryTask)
 				.then((results) => { resolve(results[0].getPayloads()); }, reject);
@@ -7351,9 +7348,8 @@ class SelectBuilder extends BaseBuilder<SelectContext> {
 
 	private whereAlreadyCalled: boolean;
 
-	constructor(queryEngine, runner, schema, columns: Column[]) {
-		super(queryEngine, runner, new SelectContext());
-		this.schema = schema;
+	constructor(private readonly backStore, private readonly schema, private readonly cache, private readonly indexStore, queryEngine, runner, columns: Column[]) {
+		super(backStore, schema, cache, indexStore, queryEngine, runner, new SelectContext());
 		this.fromAlreadyCalled = false;
 		this.whereAlreadyCalled = false;
 		this.query.columns = columns;
@@ -7528,7 +7524,7 @@ class SelectBuilder extends BaseBuilder<SelectContext> {
 	// Provides a clone of this select builder. This is useful when the user needs
 	// to observe the same query with different parameter bindings.
 	clone(): SelectBuilder {
-		const builder = new SelectBuilder(this.global, this.query.columns);
+		const builder = new SelectBuilder(this.backStore, this.schema, this.cache, this.indexStore, this.queryEngine, this.runner, this.query.columns);
 		builder.query = this.query.clone();
 		builder.query.clonedFrom = null; // The two builders are not related.
 		return builder;
@@ -8825,11 +8821,8 @@ class fn {
 }
 
 class GetRowCountStep extends PhysicalQueryPlanNode {
-	private readonly indexStore: IndexStore;
-
-	constructor(global: Global, readonly table: Table) {
+	constructor(private readonly indexStore: IndexStore, readonly table: Table) {
 		super(0, ExecType.NO_CHILD);
-		this.indexStore = global.getService(Service.INDEX_STORE);
 	}
 
 	override toString(): string {
@@ -8849,14 +8842,8 @@ class GetRowCountStep extends PhysicalQueryPlanNode {
 }
 
 class TableAccessFullStep extends PhysicalQueryPlanNode {
-	private readonly cache: Cache;
-
-	private readonly indexStore: IndexStore;
-
-	constructor(global: Global, readonly table: Table) {
+	constructor(private readonly indexStore: IndexStore, private readonly cache: Cache, readonly table: Table) {
 		super(0, ExecType.NO_CHILD);
-		this.cache = global.getService(Service.CACHE);
-		this.indexStore = global.getService(Service.INDEX_STORE);
 	}
 
 	override toString(): string {
@@ -8888,7 +8875,7 @@ class TableAccessFullStep extends PhysicalQueryPlanNode {
 // An optimization pass responsible for optimizing SELECT COUNT(*) queries,
 // where no LIMIT, SKIP, WHERE or GROUP_BY appears.
 class GetRowCountPass extends RewritePass<PhysicalQueryPlanNode> {
-	constructor(private readonly global: Global) {
+	constructor(private readonly indexStore: IndexStore) {
 		super();
 	}
 
@@ -8902,7 +8889,7 @@ class GetRowCountPass extends RewritePass<PhysicalQueryPlanNode> {
 		}
 
 		const tableAccessFullStep: TableAccessFullStep = TreeHelper.find(rootNode, (node) => node instanceof TableAccessFullStep)[0] as unknown as TableAccessFullStep;
-		const getRowCountStep = new GetRowCountStep(this.global, tableAccessFullStep.table);
+		const getRowCountStep = new GetRowCountStep(this.indexStore, tableAccessFullStep.table);
 		TreeHelper.replaceNodeWithChain(tableAccessFullStep, getRowCountStep, getRowCountStep);
 
 		return this.rootNode;
@@ -8972,23 +8959,17 @@ enum JoinAlgorithm {
 }
 
 class JoinStep extends PhysicalQueryPlanNode {
-	private readonly indexStore: IndexStore;
-
-	private readonly cache: Cache;
-
 	private algorithm: JoinAlgorithm;
 
 	private indexJoinInfo: IndexJoinInfo;
 
 	constructor(
-		global: Global,
+		private readonly indexStore: IndexStore,
+		private readonly cache: Cache,
 		readonly predicate: JoinPredicate,
 		readonly isOuterJoin: boolean
 	) {
 		super(2, ExecType.ALL);
-
-		this.indexStore = global.getService(Service.INDEX_STORE);
-		this.cache = global.getService(Service.CACHE);
 		this.algorithm = this.predicate.evaluatorType === EvalType.EQ ? JoinAlgorithm.HASH : JoinAlgorithm.NESTED_LOOP;
 		this.indexJoinInfo = null as unknown as IndexJoinInfo;
 	}
@@ -9345,11 +9326,7 @@ class IndexRangeCandidate {
 // a full table scan. This constant has been determined by trial and error.
 const INDEX_QUERY_THRESHOLD_PERCENT = 0.02;
 class IndexCostEstimator {
-	private readonly indexStore: IndexStore;
-
-	constructor(global: Global, private readonly tableSchema: Table) {
-		this.indexStore = global.getService(Service.INDEX_STORE);
-	}
+	constructor(private readonly indexStore: IndexStore, private readonly tableSchema: Table) { }
 
 	chooseIndexFor(
 		queryContext: Context,
@@ -9447,17 +9424,14 @@ class IndexRangeScanStep extends PhysicalQueryPlanNode {
 
 	useSkip: boolean;
 
-	private readonly indexStore: IndexStore;
-
 	// |reverseOrder|: return the results in reverse index order.
 	constructor(
-		global: Global,
+		private readonly indexStore: IndexStore,
 		public index: IndexImpl,
 		public keyRangeCalculator: IndexKeyRangeCalculator,
 		public reverseOrder: boolean
 	) {
 		super(0, ExecType.NO_CHILD);
-		this.indexStore = global.getService(Service.INDEX_STORE);
 		this.useLimit = false;
 		this.useSkip = false;
 	}
@@ -9541,11 +9515,8 @@ class SelectStep extends PhysicalQueryPlanNode {
 }
 
 class TableAccessByRowIdStep extends PhysicalQueryPlanNode {
-	private readonly cache: Cache;
-
-	constructor(global: Global, private readonly table: Table) {
+	constructor(private readonly cache: Cache, private readonly table: Table) {
 		super(1, ExecType.FIRST_CHILD);
-		this.cache = global.getService(Service.CACHE);
 	}
 
 	override toString(): string {
@@ -9568,7 +9539,7 @@ class TableAccessByRowIdStep extends PhysicalQueryPlanNode {
 //  An optimization pass that detects if there are any indices that can be used
 // in order to avoid full table scan.
 class IndexRangeScanPass extends RewritePass<PhysicalQueryPlanNode> {
-	constructor(private readonly global: Global) {
+	constructor(private readonly indexStore: IndexStore, private readonly cache: Cache) {
 		super();
 	}
 
@@ -9585,7 +9556,7 @@ class IndexRangeScanPass extends RewritePass<PhysicalQueryPlanNode> {
 				return;
 			}
 
-			const costEstimator = new IndexCostEstimator(this.global, tableAccessFullStep.table);
+			const costEstimator = new IndexCostEstimator(this.indexStore, tableAccessFullStep.table);
 			const indexRangeCandidate = costEstimator.chooseIndexFor(queryContext, selectStepsCandidates.map((c) => queryContext.getPredicate(c.predicateId)));
 			if (indexRangeCandidate === null) {
 				// No SelectStep could be optimized for this table.
@@ -9638,9 +9609,9 @@ class IndexRangeScanPass extends RewritePass<PhysicalQueryPlanNode> {
 		});
 		selectSteps.forEach(TreeHelper.removeNode);
 
-		const indexRangeScanStep = new IndexRangeScanStep(this.global, indexRangeCandidate.indexSchema, indexRangeCandidate.getKeyRangeCalculator(), false /* reverseOrder */
+		const indexRangeScanStep = new IndexRangeScanStep(this.indexStore, indexRangeCandidate.indexSchema, indexRangeCandidate.getKeyRangeCalculator(), false /* reverseOrder */
 		);
-		const tableAccessByRowIdStep = new TableAccessByRowIdStep(this.global, tableAccessFullStep.table);
+		const tableAccessByRowIdStep = new TableAccessByRowIdStep(this.cache, tableAccessFullStep.table);
 		tableAccessByRowIdStep.addChild(indexRangeScanStep);
 		TreeHelper.replaceNodeWithChain(tableAccessFullStep, tableAccessByRowIdStep, indexRangeScanStep);
 
@@ -10037,7 +10008,7 @@ class MultiIndexRangeScanStep extends PhysicalQueryPlanNode {
 // OR predicates that refer to a single column are already optimized by the
 // previous optimization pass IndexRangeScanPass.
 class MultiColumnOrPass extends RewritePass<PhysicalQueryPlanNode> {
-	constructor(private readonly global: Global) {
+	constructor(private readonly indexStore: IndexStore, private readonly cache: Cache) {
 		super();
 	}
 
@@ -10122,7 +10093,7 @@ class MultiColumnOrPass extends RewritePass<PhysicalQueryPlanNode> {
 		}
 
 		const tableSchema = Array.from(tables.values())[0];
-		const indexCostEstimator = new IndexCostEstimator(this.global, tableSchema);
+		const indexCostEstimator = new IndexCostEstimator(this.indexStore, tableSchema);
 
 		let indexRangeCandidates: IndexRangeCandidate[] | null = null;
 		const allIndexed = predicate.getChildren().every((childPredicate) => {
@@ -10144,12 +10115,12 @@ class MultiColumnOrPass extends RewritePass<PhysicalQueryPlanNode> {
 		tableAccessFullStep: TableAccessFullStep,
 		indexRangeCandidates: IndexRangeCandidate[]
 	): PhysicalQueryPlanNode {
-		const tableAccessByRowIdStep = new TableAccessByRowIdStep(this.global, tableAccessFullStep.table);
+		const tableAccessByRowIdStep = new TableAccessByRowIdStep(this.cache, tableAccessFullStep.table);
 		const multiIndexRangeScanStep = new MultiIndexRangeScanStep();
 		tableAccessByRowIdStep.addChild(multiIndexRangeScanStep);
 
 		indexRangeCandidates.forEach((candidate) => {
-			const indexRangeScanStep = new IndexRangeScanStep(this.global, candidate.indexSchema, candidate.getKeyRangeCalculator(), false /* reverseOrder */
+			const indexRangeScanStep = new IndexRangeScanStep(this.indexStore, candidate.indexSchema, candidate.getKeyRangeCalculator(), false /* reverseOrder */
 			);
 			multiIndexRangeScanStep.addChild(indexRangeScanStep);
 		}, this);
@@ -10178,7 +10149,7 @@ interface OrderByIndexRangeCandidate {
 // OrderByStep node to an equivalent tree that leverages indices to perform
 // sorting.
 class OrderByIndexPass extends RewritePass<PhysicalQueryPlanNode> {
-	constructor(private readonly global: Global) {
+	constructor(private readonly indexStore: IndexStore, private readonly cache: Cache) {
 		super();
 	}
 
@@ -10213,8 +10184,8 @@ class OrderByIndexPass extends RewritePass<PhysicalQueryPlanNode> {
 				return rootNode;
 			}
 
-			const indexRangeScanStep = new IndexRangeScanStep(this.global, indexRangeCandidate.indexSchema, new UnboundedKeyRangeCalculator(indexRangeCandidate.indexSchema), indexRangeCandidate.isReverse);
-			const tableAccessByRowIdStep = new TableAccessByRowIdStep(this.global, tableAccessFullStep.table);
+			const indexRangeScanStep = new IndexRangeScanStep(this.indexStore, indexRangeCandidate.indexSchema, new UnboundedKeyRangeCalculator(indexRangeCandidate.indexSchema), indexRangeCandidate.isReverse);
+			const tableAccessByRowIdStep = new TableAccessByRowIdStep(this.cache, tableAccessFullStep.table);
 			tableAccessByRowIdStep.addChild(indexRangeScanStep);
 
 			TreeHelper.removeNode(orderByStep);
@@ -10382,14 +10353,14 @@ class PhysicalPlanFactory {
 
 	//private readonly deleteOptimizationPasses: RewritePass<PhysicalQueryPlanNode>[];
 
-	constructor(private readonly services) {
+	constructor(private readonly indexStore, private readonly cache) {
 		this.selectOptimizationPasses = [
 			new IndexJoinPass(),
-			new IndexRangeScanPass(global),
-			new MultiColumnOrPass(global),
-			new OrderByIndexPass(global),
+			new IndexRangeScanPass(indexStore, cache),
+			new MultiColumnOrPass(indexStore, cache),
+			new OrderByIndexPass(indexStore, cache),
 			new LimitSkipByIndexPass(),
-			new GetRowCountPass(global)
+			new GetRowCountPass(indexStore)
 		];
 
 		//this.deleteOptimizationPasses = [new IndexRangeScanPass(global)];
@@ -10461,9 +10432,9 @@ class PhysicalPlanFactory {
 		} else if (node instanceof CrossProductNode) {
 			return new CrossProductStep();
 		} else if (node instanceof JoinNode) {
-			return new JoinStep(this.global, node.predicate, node.isOuterJoin);
+			return new JoinStep(this.indexStore, this.cache, node.predicate, node.isOuterJoin);
 		} else if (node instanceof TableAccessNode) {
-			return new TableAccessFullStep(this.global, node.table);
+			return new TableAccessFullStep(this.indexStore, this.cache, node.table);
 		}
 		// else if (node instanceof DeleteNode) {
 		// 	return new DeleteStep(node.table);
@@ -10485,9 +10456,9 @@ class DefaultQueryEngine implements QueryEngine {
 
 	private readonly physicalPlanFactory: PhysicalPlanFactory;
 
-	constructor(global: Global) {
+	constructor(indexStore, cache) {
 		this.logicalPlanFactory = new LogicalPlanFactory();
-		this.physicalPlanFactory = new PhysicalPlanFactory(global);
+		this.physicalPlanFactory = new PhysicalPlanFactory(indexStore, cache);
 	}
 
 	getPlan(query: Context): PhysicalQueryPlan {
@@ -10497,29 +10468,30 @@ class DefaultQueryEngine implements QueryEngine {
 }
 
 class ExportTask extends UniqueId implements Task {
-	private readonly schema: Schema;
-
 	private readonly scope: Set<Table>;
 
 	private readonly resolver: Resolver<Relation[]>;
 
-	constructor(private readonly global: Global) {
+	constructor(
+		private readonly schema: Schema,
+		private readonly indexStore: IndexStore,
+		private readonly cache: Cache
+	) {
 		super();
-		this.schema = global.getService(Service.SCHEMA);
 		this.scope = new Set<Table>(this.schema.tables());
 		this.resolver = new Resolver<Relation[]>();
 	}
 
 	// Grabs contents from the cache and exports them as a plain object.
 	execSync(): PayloadType {
-		const indexStore = this.global.getService(Service.INDEX_STORE);
-		const cache = this.global.getService(Service.CACHE);
+		//const indexStore = this.global.getService(Service.INDEX_STORE);
+		//const cache = this.global.getService(Service.CACHE);
 
 		const tables: PayloadType = {};
 		(this.schema.tables() as BaseTable[]).forEach((table) => {
-			const rowIds = indexStore.get(table.getRowIdIndexName())
+			const rowIds = this.indexStore.get(table.getRowIdIndexName())
 				.getRange();
-			const payloads = cache.getMany(rowIds).map((row) => (row as Row).payload());
+			const payloads = this.cache.getMany(rowIds).map((row) => (row as Row).payload());
 			tables[table.getName()] = payloads;
 		});
 
@@ -10915,10 +10887,6 @@ class StateTransition {
 // it will appear to the lf.proc.Runner that this task finished and all locks
 // will be released, exactly as is done for any type of Task.
 class TransactionTask extends UniqueId implements Task {
-	private readonly backStore: BackStore;
-
-	private readonly runner: Runner;
-
 	private readonly scope: Set<Table>;
 
 	private readonly journal: Journal;
@@ -10931,12 +10899,17 @@ class TransactionTask extends UniqueId implements Task {
 
 	private tx!: Tx;
 
-	constructor(private readonly global: Global, scope: Table[]) {
+	constructor(
+		private readonly backStore,
+		private readonly runner,
+		private readonly schema,
+		private readonly cache,
+		private readonly indexStore,
+		scope: Table[]
+	) {
 		super();
-		this.backStore = global.getService(Service.BACK_STORE);
-		this.runner = global.getService(Service.RUNNER);
 		this.scope = new Set<Table>(scope);
-		this.journal = new Journal(this.global, this.scope);
+		this.journal = new Journal(this.schema, this.cache, this.indexStore, this.scope);
 		this.resolver = new Resolver<Relation[]>();
 		this.execResolver = new Resolver<Relation[]>();
 		this.acquireScopeResolver = new Resolver<void>();
@@ -11056,16 +11029,19 @@ interface Transaction {
 }
 
 class RuntimeTransaction implements Transaction {
-	private readonly runner: Runner;
-
 	private task: TransactionTask | UserQueryTask | null;
 
 	private state: TransactionState;
 
 	private readonly stateTransition: StateTransition;
 
-	constructor(private readonly global: Global) {
-		this.runner = global.getService(Service.RUNNER);
+	constructor(
+		private readonly schema: Schema,
+		private readonly cache: Cache,
+		private readonly indexStore: IndexStore,
+		private readonly backStore: BackStore,
+		private readonly runner: Runner
+	) {
 		this.task = null;
 		this.state = TransactionState.CREATED;
 		this.stateTransition = StateTransition.get();
@@ -11085,7 +11061,7 @@ class RuntimeTransaction implements Transaction {
 			return Promise.reject(e);
 		}
 
-		this.task = new UserQueryTask(this.global, taskItems);
+		this.task = new UserQueryTask(this.backStore, this.schema, this.cache, this.indexStore, taskItems);
 		return this.runner.scheduleTask(this.task).then((results) => {
 			this.updateState(TransactionState.FINALIZED);
 			return results.map((relation) => relation.getPayloads());
@@ -11098,7 +11074,13 @@ class RuntimeTransaction implements Transaction {
 	begin(scope: BaseTable[]): Promise<void> {
 		this.updateState(TransactionState.ACQUIRING_SCOPE);
 
-		this.task = new TransactionTask(this.global, scope);
+		this.task = new TransactionTask(
+			this.backStore,
+			this.runner,
+			this.schema,
+			this.cache,
+			this.indexStore,
+			scope);
 		return this.task
 			.acquireScope()
 			.then(() => { this.updateState(TransactionState.ACQUIRED_SCOPE); });
@@ -11825,7 +11807,8 @@ class Database {
 		this.cache = new DefaultCache(this.schema);
 		this.backStore = new Memory(this.schema);
 		this.indexStore = new MemoryIndexStore();
-		this.queryEngine = new DefaultQueryEngine(this.global);
+		this.indexStore.init(this.schema);
+		this.queryEngine = new DefaultQueryEngine(this.indexStore, this.cache);
 		this.runner = new Runner();
 
 		this.import(data);
@@ -11864,7 +11847,7 @@ class Database {
 	// FROM: class RuntimeDatabase
 
 	public select(...columns: Column[]): SelectQuery {
-		return new SelectBuilder(this.queryEngine, this.runner, this.schema, columns);
+		return new SelectBuilder(this.backStore, this.schema, this.cache, this.indexStore, this.queryEngine, this.runner, columns);
 	}
 
 	// public insert(): InsertBuilder {
@@ -11884,11 +11867,17 @@ class Database {
 	// }
 
 	public createTransaction(): Transaction {
-		return new RuntimeTransaction(this.global);
+		return new RuntimeTransaction(
+			this.schema,
+			this.cache,
+			this.indexStore,
+			this.backStore,
+			this.runner
+		);
 	}
 
 	public export(): Promise<object> {
-		const task = new ExportTask(this.global);
+		const task = new ExportTask(this.schema, this.indexStore, this.cache);
 
 		return this.runner.scheduleTask(task).then((results) => {
 			return results[0].getPayloads()[0];
