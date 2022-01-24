@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/explicit-member-accessibility */
+/* eslint-disable @typescript-eslint/no-parameter-properties */
+/* eslint-disable @typescript-eslint/no-type-alias */
 /**
  * Copyright 2016-2021 The Lovefield Project Authors. All Rights Reserved.
  *
@@ -23,15 +26,6 @@ var ConstraintTiming;
     ConstraintTiming[ConstraintTiming["IMMEDIATE"] = 0] = "IMMEDIATE";
     ConstraintTiming[ConstraintTiming["DEFERRABLE"] = 1] = "DEFERRABLE";
 })(ConstraintTiming || (ConstraintTiming = {}));
-var DataStoreType;
-(function (DataStoreType) {
-    DataStoreType[DataStoreType["INDEXED_DB"] = 0] = "INDEXED_DB";
-    DataStoreType[DataStoreType["MEMORY"] = 1] = "MEMORY";
-    DataStoreType[DataStoreType["LOCAL_STORAGE"] = 2] = "LOCAL_STORAGE";
-    DataStoreType[DataStoreType["FIREBASE"] = 3] = "FIREBASE";
-    DataStoreType[DataStoreType["WEB_SQL"] = 4] = "WEB_SQL";
-    DataStoreType[DataStoreType["OBSERVABLE_STORE"] = 5] = "OBSERVABLE_STORE";
-})(DataStoreType || (DataStoreType = {}));
 var Order;
 (function (Order) {
     Order[Order["DESC"] = 0] = "DESC";
@@ -163,111 +157,6 @@ var ErrorCode;
     ErrorCode[ErrorCode["ASSERTION"] = 998] = "ASSERTION";
     ErrorCode[ErrorCode["SIMULATED_ERROR"] = 999] = "SIMULATED_ERROR";
 })(ErrorCode || (ErrorCode = {}));
-class DefaultOptions {
-    constructor() {
-        this.debugMode = false;
-        this.memoryOnly = false;
-        this.exceptionUrl = DefaultOptions.url;
-        this.useGetAll = false;
-    }
-    errorMessage(code) {
-        return code.toString();
-    }
-}
-DefaultOptions.url = "http://google.github.io/lovefield/error_lookup/src/error_lookup.html?c=";
-class Global {
-    constructor() {
-        this.services = new Map();
-    }
-    static get() {
-        if (!Global.instance) {
-            Global.instance = new Global();
-        }
-        if (!Global.instance.opt) {
-            Global.instance.setOptions(new DefaultOptions());
-        }
-        return Global.instance;
-    }
-    clear() {
-        this.services.clear();
-    }
-    registerService(serviceId, service) {
-        this.services.set(serviceId.toString(), service);
-        return service;
-    }
-    getService(serviceId) {
-        const service = this.services.get(serviceId.toString());
-        if (!service) {
-            // 7: Service {0} not registered.
-            throw new Exception(ErrorCode.SERVICE_NOT_FOUND, serviceId.toString());
-        }
-        return service;
-    }
-    isRegistered(serviceId) {
-        return this.services.has(serviceId.toString());
-    }
-    listServices() {
-        return Array.from(this.services.keys());
-    }
-    getOptions() {
-        return this.opt;
-    }
-    setOptions(options) {
-        this.opt = options;
-    }
-}
-class Exception {
-    constructor(code, ...args) {
-        this.code = code;
-        this.args = args;
-        this.message = Global.get().getOptions().exceptionUrl + code.toString();
-        if (args.length) {
-            // Allow at most 4 parameters, each parameter at most 64 chars.
-            for (let i = 0; i < Math.min(4, args.length); ++i) {
-                const val = encodeURIComponent(String(args[i]).slice(0, 64));
-                if (Global.get().getOptions().exceptionUrl.length) {
-                    this.message += `&p${i}=${val}`;
-                }
-                else {
-                    this.message += `|${val}`;
-                }
-            }
-        }
-    }
-    toString() {
-        const template = Global.get()
-            .getOptions()
-            .errorMessage(this.code) || this.code.toString();
-        return template.replace(/{([^}]+)}/g, (match, pattern) => this.args[Number(pattern)]);
-    }
-}
-class ServiceId {
-    constructor(serviceId) {
-        this.serviceId = serviceId;
-    }
-    toString() {
-        return this.serviceId;
-    }
-    // Dummy method to please the compiler (need to use <T> somewhere).
-    getAsType() {
-        return {};
-    }
-}
-const Service = {
-    // The backing data store used by this connection.
-    // following statement fail compilation, need solution.
-    "BACK_STORE": new ServiceId("backstore"),
-    // The shared row cache used by this connection.
-    "CACHE": new ServiceId("cache"),
-    // The shared store of all indices defined.
-    "INDEX_STORE": new ServiceId("indexstore"),
-    // Query engine used for generating execution plan.
-    "QUERY_ENGINE": new ServiceId("engine"),
-    // Query runner which executes transactions.
-    "RUNNER": new ServiceId("runner"),
-    // Finalized schema associated with this connection.
-    "SCHEMA": new ServiceId("schema")
-};
 // The comparison result constant. This must be consistent with the constant
 // required by the sort function of Array.prototype.sort.
 var Favor;
@@ -350,10 +239,10 @@ class UniqueId {
 }
 UniqueId.nextId = 0;
 class InMemoryUpdater {
-    constructor(global) {
-        this.cache = global.getService(Service.CACHE);
-        this.indexStore = global.getService(Service.INDEX_STORE);
-        this.schema = global.getService(Service.SCHEMA);
+    constructor(schema, cache, indexStore) {
+        this.cache = cache;
+        this.indexStore = indexStore;
+        this.schema = schema;
     }
     // Updates all indices and the cache to reflect the changes that are described
     // in the given diffs.
@@ -465,10 +354,8 @@ class TransactionStatsImpl {
     }
 }
 function assert(condition, message = "assertion failed") {
-    if (Global.get().getOptions().debugMode) {
-        if (!condition) {
-            throw new Exception(ErrorCode.ASSERTION, message);
-        }
+    if (!condition) {
+        throw new Exception(ErrorCode.ASSERTION, message);
     }
 }
 // A MapSet maps a key to a set of values, without allowing duplicate entries
@@ -655,10 +542,10 @@ class Info {
     }
 }
 class ConstraintChecker {
-    constructor(global) {
-        this.indexStore = global.getService(Service.INDEX_STORE);
-        this.schema = global.getService(Service.SCHEMA);
-        this.cache = global.getService(Service.CACHE);
+    constructor(schema, cache, indexStore) {
+        this.indexStore = indexStore;
+        this.schema = schema;
+        this.cache = cache;
         this.foreignKeysParentIndices = new Map();
     }
     static didColumnValueChange(rowBefore, rowAfter, indexName) {
@@ -1006,14 +893,14 @@ class TableDiff {
 // backing store. Caches and indices are updated as soon as a change is
 // recorded in the journal.
 class Journal {
-    constructor(global, txScope) {
+    constructor(schema, cache, indexStore, txScope) {
         this.scope = new Map();
         txScope.forEach((tableSchema) => this.scope.set(tableSchema.getName(), tableSchema));
-        this.schema = global.getService(Service.SCHEMA);
-        this.cache = global.getService(Service.CACHE);
-        this.indexStore = global.getService(Service.INDEX_STORE);
-        this.constraintChecker = new ConstraintChecker(global);
-        this.inMemoryUpdater = new InMemoryUpdater(global);
+        this.schema = schema;
+        this.cache = cache;
+        this.indexStore = indexStore;
+        this.constraintChecker = new ConstraintChecker(schema, cache, indexStore);
+        this.inMemoryUpdater = new InMemoryUpdater(schema, cache, indexStore);
         this.terminated = false;
         this.pendingRollback = false;
         this.tableDiffs = new Map();
@@ -1178,8 +1065,7 @@ class Journal {
                 const rowBefore = this.cache.get(rowId);
                 // TODO(dpapad): Explore faster ways to clone an lf.Row.
                 const rowAfter = tbl.deserializeRow(rowBefore.serialize());
-                rowAfter.payload()[update.fkSpec.childColumn]
-                    = update.originalUpdatedRow.payload()[update.fkSpec.parentColumn];
+                rowAfter.payload()[update.fkSpec.childColumn] = update.originalUpdatedRow.payload()[update.fkSpec.parentColumn];
                 this.modifyRow(tbl, [rowBefore /* rowBefore */, rowAfter]);
             }, this);
         }, this);
@@ -1459,8 +1345,7 @@ class SingleKeyRange {
             const favor = SingleKeyRange.compareKey(r1.from, r2.from, true);
             if (favor !== Favor.LHS) {
                 from = r1.from;
-                excludeLower
-                    = favor !== Favor.TIE ? r1.excludeLower : r1.excludeLower && r2.excludeLower;
+                excludeLower = favor !== Favor.TIE ? r1.excludeLower : r1.excludeLower && r2.excludeLower;
             }
             else {
                 from = r2.from;
@@ -1471,8 +1356,7 @@ class SingleKeyRange {
             const favor = SingleKeyRange.compareKey(r1.to, r2.to, false);
             if (favor !== Favor.RHS) {
                 to = r1.to;
-                excludeUpper
-                    = favor !== Favor.TIE ? r1.excludeUpper : r1.excludeUpper && r2.excludeUpper;
+                excludeUpper = favor !== Favor.TIE ? r1.excludeUpper : r1.excludeUpper && r2.excludeUpper;
             }
             else {
                 to = r2.to;
@@ -1496,8 +1380,7 @@ class SingleKeyRange {
         }
         else {
             favor = SingleKeyRange.compareKey(r1.to, r2.to, false);
-            right
-                = favor === Favor.TIE ? r1.excludeUpper ? r1 : r2 : favor === Favor.RHS ? r1 : r2;
+            right = favor === Favor.TIE ? r1.excludeUpper ? r1 : r2 : favor === Favor.RHS ? r1 : r2;
         }
         return new SingleKeyRange(left.from, right.to, left.excludeLower, right.excludeUpper);
     }
@@ -2147,8 +2030,7 @@ class ValuePredicate extends PredicateNode {
             return this.evalAsIn(relation);
         }
         const entries = relation.entries.filter((entry) => {
-            return (this.evaluatorFn(entry.getField(this.column), this.value)
-                !== this.isComplement);
+            return (this.evaluatorFn(entry.getField(this.column), this.value) !== this.isComplement);
         });
         return new Relation(entries, relation.getTables());
     }
@@ -2299,9 +2181,8 @@ class ValuePredicate extends PredicateNode {
 }
 // Base context for all query types.
 class Context extends UniqueId {
-    constructor(schema) {
+    constructor() {
         super();
-        this.schema = schema;
         this.clonedFrom = null;
         this.where = null;
         this.predicateMap = null;
@@ -2346,8 +2227,8 @@ class Context extends UniqueId {
 }
 // Internal representation of SELECT query.
 class SelectContext extends Context {
-    constructor(dbSchema) {
-        super(dbSchema);
+    constructor() {
+        super();
     }
     static orderByToString(orderBy) {
         let out = "";
@@ -2364,7 +2245,7 @@ class SelectContext extends Context {
         return new Set(this.from);
     }
     clone() {
-        const context = new SelectContext(this.schema);
+        const context = new SelectContext();
         context.cloneBase(this);
         if (this.columns) {
             context.columns = this.columns.slice();
@@ -2676,10 +2557,7 @@ class Memory {
     constructor(schema) {
         this.schema = schema;
         this.tables = new Map();
-    }
-    init() {
         this.schema.tables().forEach((table) => { this.initTable(table); }, this);
-        return Promise.resolve();
     }
     getTableInternal(tableName) {
         const table = this.tables.get(tableName) || null;
@@ -2724,7 +2602,7 @@ class Memory {
 class MathHelper {
     static longestCommonSubsequence(array1, array2, comparator, collector) {
         const defaultComparator = (a, b) => a === b;
-        const defaultCollector = (i1, i2) => array1[i1];
+        const defaultCollector = (i1) => array1[i1];
         const compare = comparator || defaultComparator;
         const collect = collector || defaultCollector;
         const length1 = array1.length;
@@ -3037,8 +2915,7 @@ class IndexStats {
     // Signals that a row had been added to index.
     add(key, rowCount) {
         this.totalRows += rowCount;
-        this.maxKeyEncountered
-            = this.maxKeyEncountered === null ? key : key > this.maxKeyEncountered ? key : this.maxKeyEncountered;
+        this.maxKeyEncountered = this.maxKeyEncountered === null ? key : key > this.maxKeyEncountered ? key : this.maxKeyEncountered;
     }
     // Signals that row(s) had been removed from index.
     remove(key, removedCount) {
@@ -3295,8 +3172,7 @@ class BTreeNode {
         this.keys = [];
         this.values = [];
         this.children = [];
-        this.getContainingLeaf
-            = tree.comparator().keyDimensions() === 1 ? this.getContainingLeafSingleKey : this.getContainingLeafMultiKey;
+        this.getContainingLeaf = tree.comparator().keyDimensions() === 1 ? this.getContainingLeafSingleKey : this.getContainingLeafMultiKey;
     }
     static create(tree) {
         // TODO(arthurhsu): Should distinguish internal nodes from leaf nodes to
@@ -4010,14 +3886,11 @@ BTreeNode.MAX_KEY_LEN = BTreeNode.MAX_COUNT - 1;
 BTreeNode.MIN_KEY_LEN = BTreeNode.MAX_COUNT >> 1;
 class SimpleComparator {
     constructor(order) {
-        this.compareFn
-            = order === Order.DESC ? SimpleComparator.compareDescending : SimpleComparator.compareAscending;
-        this.normalizeKeyRange
-            = order === Order.DESC ? (keyRange) => {
-                return keyRange !== undefined && keyRange !== null ? keyRange.reverse() : null;
-            } : (keyRange) => keyRange || null;
-        this.orderRange
-            = order === Order.DESC ? SimpleComparator.orderRangeDescending : SimpleComparator.orderRangeAscending;
+        this.compareFn = order === Order.DESC ? SimpleComparator.compareDescending : SimpleComparator.compareAscending;
+        this.normalizeKeyRange = order === Order.DESC ? (keyRange) => {
+            return keyRange !== undefined && keyRange !== null ? keyRange.reverse() : null;
+        } : (keyRange) => keyRange || null;
+        this.orderRange = order === Order.DESC ? SimpleComparator.orderRangeDescending : SimpleComparator.orderRangeAscending;
     }
     static compareAscending(lhs, rhs) {
         return lhs > rhs ? Favor.LHS : lhs < rhs ? Favor.RHS : Favor.TIE;
@@ -4230,8 +4103,7 @@ class SimpleComparatorWithNull extends SimpleComparator {
     }
     constructor(order) {
         super(order);
-        this.compareFn
-            = order === Order.DESC ? SimpleComparatorWithNull.compareDescending : SimpleComparatorWithNull.compareAscending;
+        this.compareFn = order === Order.DESC ? SimpleComparatorWithNull.compareDescending : SimpleComparatorWithNull.compareAscending;
     }
     isInRange(key, range) {
         return key === null ? range.isAll() : super.isInRange(key, range);
@@ -4933,8 +4805,7 @@ class CombinedPredicate extends PredicateNode {
             if (predicateColumn === null) {
                 predicateColumn = child.column;
             }
-            return (predicateColumn.getNormalizedName()
-                === child.column.getNormalizedName());
+            return (predicateColumn.getNormalizedName() === child.column.getNormalizedName());
         });
     }
 }
@@ -5254,131 +5125,18 @@ class JoinPredicate extends PredicateNode {
 }
 // Exponent of block size, so the block size is 2^(BLOCK_SIZE_EXPONENT).
 JoinPredicate.BLOCK_SIZE_EXPONENT = 8;
-// Internal representation of DELETE query.
-class DeleteContext extends Context {
-    constructor(dbSchema) {
-        super(dbSchema);
-    }
-    getScope() {
-        const scope = new Set();
-        scope.add(this.from);
-        this.expandTableScope(this.from.getName(), scope);
-        return scope;
-    }
-    clone() {
-        const context = new DeleteContext(this.schema);
-        context.cloneBase(this);
-        context.from = this.from;
-        return context;
-    }
-    bind(values) {
-        super.bind(values);
-        this.bindValuesInSearchCondition(values);
-        return this;
-    }
-    // Expands the scope of the given table recursively. It takes into account
-    // CASCADE foreign key constraints.
-    expandTableScope(tableName, scopeSoFar) {
-        const cascadeChildTables = Info.from(this.schema).getChildTables(tableName, ConstraintAction.CASCADE);
-        const childTables = Info.from(this.schema).getChildTables(tableName);
-        childTables.forEach(scopeSoFar.add.bind(scopeSoFar));
-        cascadeChildTables.forEach((childTable) => {
-            this.expandTableScope(childTable.getName(), scopeSoFar);
-        }, this);
-    }
-}
-// Internal representation of INSERT and INSERT_OR_REPLACE queries.
-class InsertContext extends Context {
-    constructor(dbSchema) {
-        super(dbSchema);
-    }
-    getScope() {
-        const scope = new Set();
-        scope.add(this.into);
-        const info = Info.from(this.schema);
-        info.getParentTables(this.into.getName()).forEach(scope.add.bind(scope));
-        if (this.allowReplace) {
-            info.getChildTables(this.into.getName()).forEach(scope.add.bind(scope));
-        }
-        return scope;
-    }
-    clone() {
-        const context = new InsertContext(this.schema);
-        context.cloneBase(this);
-        context.into = this.into;
-        if (this.values) {
-            context.values
-                = this.values instanceof Binder ? this.values : this.values.slice();
-        }
-        context.allowReplace = this.allowReplace;
-        context.binder = this.binder;
-        return context;
-    }
-    bind(values) {
-        super.bind(values);
-        if (this.binder) {
-            if (this.binder instanceof Binder) {
-                this.values = values[this.binder.index];
-            }
-            else {
-                this.values = this.binder.map((val) => {
-                    return (val instanceof Binder ? values[val.index] : val);
-                });
-            }
-        }
-        return this;
-    }
-}
-// Internal representation of UPDATE query.
-class UpdateContext extends Context {
-    constructor(dbSchema) {
-        super(dbSchema);
-    }
-    getScope() {
-        const scope = new Set();
-        scope.add(this.table);
-        const columns = this.set.map((col) => col.column.getNormalizedName());
-        const info = Info.from(this.schema);
-        info.getParentTablesByColumns(columns).forEach(scope.add.bind(scope));
-        info.getChildTablesByColumns(columns).forEach(scope.add.bind(scope));
-        return scope;
-    }
-    clone() {
-        const context = new UpdateContext(this.schema);
-        context.cloneBase(this);
-        context.table = this.table;
-        context.set = this.set ? this.cloneSet(this.set) : this.set;
-        return context;
-    }
-    bind(values) {
-        super.bind(values);
-        this.set.forEach((set) => {
-            if (set.binding !== undefined && set.binding !== -1) {
-                set.value = values[set.binding];
-            }
-        });
-        this.bindValuesInSearchCondition(values);
-        return this;
-    }
-    cloneSet(set) {
-        return set.map((src) => {
-            const clone = { ...src };
-            return clone;
-        });
-    }
-}
 class SqlHelper {
     static toSql(builder, stripValueInfo = false) {
         const query = builder.getQuery();
-        if (query instanceof InsertContext) {
-            return SqlHelper.insertToSql(query, stripValueInfo);
-        }
-        if (query instanceof DeleteContext) {
-            return SqlHelper.deleteToSql(query, stripValueInfo);
-        }
-        if (query instanceof UpdateContext) {
-            return SqlHelper.updateToSql(query, stripValueInfo);
-        }
+        // if (query instanceof InsertContext) {
+        // 	return SqlHelper.insertToSql(query, stripValueInfo);
+        // }
+        // if (query instanceof DeleteContext) {
+        // 	return SqlHelper.deleteToSql(query, stripValueInfo);
+        // }
+        // if (query instanceof UpdateContext) {
+        // 	return SqlHelper.updateToSql(query, stripValueInfo);
+        // }
         if (query instanceof SelectContext) {
             return SqlHelper.selectToSql(query, stripValueInfo);
         }
@@ -5403,21 +5161,6 @@ class SqlHelper {
                 // datetime, string
                 return `'${value.toString()}'`;
         }
-    }
-    static insertToSql(query, stripValueInfo) {
-        let prefix = query.allowReplace ? "INSERT OR REPLACE" : "INSERT";
-        const columns = query.into.getColumns();
-        prefix += " INTO " + query.into.getName() + "(";
-        prefix += columns.map((col) => col.getName()).join(", ");
-        prefix += ") VALUES (";
-        const sqls = query.values.map((row) => {
-            const values = columns.map((col) => {
-                const rawVal = row.payload()[col.getName()];
-                return stripValueInfo ? rawVal !== undefined && rawVal !== null ? "#" : "NULL" : SqlHelper.escapeSqlValue(col.getType(), rawVal);
-            });
-            return prefix + values.join(", ") + ");";
-        });
-        return sqls.join("\n");
     }
     static evaluatorToSql(op) {
         switch (op) {
@@ -5515,32 +5258,6 @@ class SqlHelper {
         }
         return "";
     }
-    static deleteToSql(query, stripValueInfo) {
-        let sql = "DELETE FROM " + query.from.getName();
-        if (query.where) {
-            sql += SqlHelper.predicateToSql(query.where, stripValueInfo);
-        }
-        sql += ";";
-        return sql;
-    }
-    static updateToSql(query, stripValueInfo) {
-        let sql = "UPDATE " + query.table.getName() + " SET ";
-        sql += query.set
-            .map((set) => {
-            const c = set.column;
-            const setter = c.getNormalizedName() + " = ";
-            if (set.binding !== -1) {
-                return setter + "?" + set.binding.toString();
-            }
-            return (setter + SqlHelper.escapeSqlValue(c.getType(), set.value).toString());
-        })
-            .join(", ");
-        if (query.where) {
-            sql += SqlHelper.predicateToSql(query.where, stripValueInfo);
-        }
-        sql += ";";
-        return sql;
-    }
     static selectToSql(query, stripValueInfo) {
         let colList = "*";
         if (query.columns.length) {
@@ -5625,10 +5342,9 @@ class SqlHelper {
     }
 }
 class BaseBuilder {
-    constructor(global, context) {
-        this.global = global;
-        this.queryEngine = global.getService(Service.QUERY_ENGINE);
-        this.runner = global.getService(Service.RUNNER);
+    constructor(queryEngine, runner, context) {
+        this.queryEngine = queryEngine;
+        this.runner = runner;
         this.query = context;
     }
     exec() {
@@ -5684,98 +5400,6 @@ class BaseBuilder {
             this.plan = this.queryEngine.getPlan(this.query);
         }
         return this.plan;
-    }
-}
-class DeleteBuilder extends BaseBuilder {
-    constructor(global) {
-        super(global, new DeleteContext(global.getService(Service.SCHEMA)));
-    }
-    from(table) {
-        this.assertFromPreconditions();
-        this.query.from = table;
-        return this;
-    }
-    where(predicate) {
-        this.assertWherePreconditions();
-        this.query.where = predicate;
-        return this;
-    }
-    assertExecPreconditions() {
-        super.assertExecPreconditions();
-        if (this.query.from === undefined || this.query.from === null) {
-            // 517: Invalid usage of delete().
-            throw new Exception(ErrorCode.INVALID_DELETE);
-        }
-    }
-    assertFromPreconditions() {
-        if (this.query.from) {
-            // 515: from() has already been called.
-            throw new Exception(ErrorCode.DUPLICATE_FROM);
-        }
-    }
-    assertWherePreconditions() {
-        if (this.query.from === undefined || this.query.from === null) {
-            // 548: from() has to be called before where().
-            throw new Exception(ErrorCode.FROM_AFTER_WHERE);
-        }
-        if (this.query.where) {
-            // 516: where() has already been called.
-            throw new Exception(ErrorCode.DUPLICATE_WHERE);
-        }
-    }
-}
-class InsertBuilder extends BaseBuilder {
-    constructor(global, allowReplace = false) {
-        super(global, new InsertContext(global.getService(Service.SCHEMA)));
-        this.query.allowReplace = allowReplace;
-    }
-    assertExecPreconditions() {
-        super.assertExecPreconditions();
-        const context = this.query;
-        if (context.into === undefined
-            || context.into === null
-            || context.values === undefined
-            || context.values === null) {
-            // 518: Invalid usage of insert().
-            throw new Exception(ErrorCode.INVALID_INSERT);
-        }
-        // "Insert or replace" makes no sense for tables that do not have a primary
-        // key.
-        if (context.allowReplace
-            && context.into.getConstraint().getPrimaryKey() === null) {
-            // 519: Attempted to insert or replace in a table with no primary key.
-            throw new Exception(ErrorCode.INVALID_INSERT_OR_REPLACE);
-        }
-    }
-    into(table) {
-        this.assertIntoPreconditions();
-        this.query.into = table;
-        return this;
-    }
-    values(rows) {
-        this.assertValuesPreconditions();
-        if (rows instanceof Binder
-            || rows.some((r) => r instanceof Binder)) {
-            this.query.binder = rows;
-        }
-        else {
-            this.query.values = rows;
-        }
-        return this;
-    }
-    // Asserts whether the preconditions for calling the into() method are met.
-    assertIntoPreconditions() {
-        if (this.query.into !== undefined && this.query.into !== null) {
-            // 520: into() has already been called.
-            throw new Exception(ErrorCode.DUPLICATE_INTO);
-        }
-    }
-    // Asserts whether the preconditions for calling the values() method are met.
-    assertValuesPreconditions() {
-        if (this.query.values !== undefined && this.query.values !== null) {
-            // 521: values() has already been called.
-            throw new Exception(ErrorCode.DUPLICATE_VALUES);
-        }
     }
 }
 // Base class for AggregateColumn and StarColumn which does not support
@@ -5888,8 +5512,9 @@ class op {
     }
 }
 class SelectBuilder extends BaseBuilder {
-    constructor(global, columns) {
-        super(global, new SelectContext(global.getService(Service.SCHEMA)));
+    constructor(queryEngine, runner, schema, columns) {
+        super(queryEngine, runner, new SelectContext());
+        this.schema = schema;
         this.fromAlreadyCalled = false;
         this.whereAlreadyCalled = false;
         this.query.columns = columns;
@@ -5911,6 +5536,11 @@ class SelectBuilder extends BaseBuilder {
         this.checkProjectionList();
     }
     from(...tables) {
+        if (tables.every((element) => { return typeof element === "string"; })) {
+            tables = tables.map((table) => {
+                return this.schema.table(table);
+            });
+        }
         if (this.fromAlreadyCalled) {
             // 515: from() has already been called.
             throw new Exception(ErrorCode.DUPLICATE_FROM);
@@ -5961,8 +5591,7 @@ class SelectBuilder extends BaseBuilder {
             this.query.outerJoinPredicates = new Set();
         }
         let normalizedPredicate = predicate;
-        if (table.getEffectiveName()
-            !== predicate.rightColumn.getTable().getEffectiveName()) {
+        if (table.getEffectiveName() !== predicate.rightColumn.getTable().getEffectiveName()) {
             normalizedPredicate = predicate.reverse();
         }
         this.query.outerJoinPredicates.add(normalizedPredicate.getId());
@@ -6128,49 +5757,6 @@ class SelectBuilder extends BaseBuilder {
         return false;
     }
 }
-class UpdateBuilder extends BaseBuilder {
-    constructor(global, table) {
-        super(global, new UpdateContext(global.getService(Service.SCHEMA)));
-        this.query.table = table;
-    }
-    set(column, value) {
-        const set = {
-            "binding": value instanceof Binder ? value.index : -1,
-            "column": column,
-            "value": value
-        };
-        if (this.query.set) {
-            this.query.set.push(set);
-        }
-        else {
-            this.query.set = [set];
-        }
-        return this;
-    }
-    where(predicate) {
-        this.assertWherePreconditions();
-        this.query.where = predicate;
-        return this;
-    }
-    assertExecPreconditions() {
-        super.assertExecPreconditions();
-        if (this.query.set === undefined || this.query.set === null) {
-            // 532: Invalid usage of update().
-            throw new Exception(ErrorCode.INVALID_UPDATE);
-        }
-        const notBound = this.query.set.some((set) => set.value instanceof Binder);
-        if (notBound) {
-            // 501: Value is not bounded.
-            throw new Exception(ErrorCode.UNBOUND_VALUE);
-        }
-    }
-    assertWherePreconditions() {
-        if (this.query.where) {
-            // 516: where() has already been called.
-            throw new Exception(ErrorCode.DUPLICATE_WHERE);
-        }
-    }
-}
 class RewritePass {
 }
 class LogicalQueryPlanNode extends TreeNode {
@@ -6304,15 +5890,6 @@ class BaseLogicalPlanGenerator {
         return this.rootNode;
     }
 }
-class DeleteNode extends LogicalQueryPlanNode {
-    constructor(table) {
-        super();
-        this.table = table;
-    }
-    toString() {
-        return `delete(${this.table.getName()})`;
-    }
-}
 // Rewrites the logical query plan such that the resulting logical query plan is
 // faster to execute than the original "naive" plan.
 class LogicalPlanRewriter {
@@ -6337,27 +5914,6 @@ class TableAccessNode extends LogicalQueryPlanNode {
         const table = this.table;
         const postfix = table.getAlias() ? ` as ${table.getAlias()}` : "";
         return `table_access(${this.table.getName()}${postfix})`;
-    }
-}
-class DeleteLogicalPlanGenerator extends BaseLogicalPlanGenerator {
-    constructor(query, rewritePasses) {
-        super(query);
-        this.rewritePasses = rewritePasses;
-    }
-    generateInternal() {
-        const deleteNode = new DeleteNode(this.query.from);
-        const selectNode = this.query.where ? new SelectNode(this.query.where.copy()) : null;
-        const tableAccessNode = new TableAccessNode(this.query.from);
-        if (selectNode === null) {
-            deleteNode.addChild(tableAccessNode);
-        }
-        else {
-            selectNode.addChild(tableAccessNode);
-            deleteNode.addChild(selectNode);
-        }
-        // Optimizing the "naive" logical plan.
-        const planRewriter = new LogicalPlanRewriter(deleteNode, this.query, this.rewritePasses);
-        return planRewriter.generate();
     }
 }
 class JoinNode extends LogicalQueryPlanNode {
@@ -6402,34 +5958,6 @@ class ImplicitJoinsPass extends RewritePass {
             }
         }
         rootNode.getChildren().forEach((child) => { this.traverse(child, queryContext); });
-    }
-}
-class InsertNode extends LogicalQueryPlanNode {
-    constructor(table, values) {
-        super();
-        this.table = table;
-        this.values = values;
-    }
-    toString() {
-        return `insert(${this.table.getName()}, R${this.values.length})`;
-    }
-}
-class InsertOrReplaceNode extends LogicalQueryPlanNode {
-    constructor(table, values) {
-        super();
-        this.table = table;
-        this.values = values;
-    }
-    toString() {
-        return `insertOrReplace(${this.table.getName()}, R${this.values.length})`;
-    }
-}
-class InsertLogicalPlanGenerator extends BaseLogicalPlanGenerator {
-    constructor(query) {
-        super(query);
-    }
-    generateInternal() {
-        return this.query.allowReplace ? new InsertOrReplaceNode(this.query.into, this.query.values) : new InsertNode(this.query.into, this.query.values);
     }
 }
 class LogicalQueryPlan {
@@ -6734,33 +6262,6 @@ class SelectLogicalPlanGenerator extends BaseLogicalPlanGenerator {
         this.projectNode = new ProjectNode(this.query.columns || [], this.query.groupBy || null);
     }
 }
-class UpdateNode extends LogicalQueryPlanNode {
-    constructor(table) {
-        super();
-        this.table = table;
-    }
-    toString() {
-        return `update(${this.table.getName()})`;
-    }
-}
-class UpdateLogicalPlanGenerator extends BaseLogicalPlanGenerator {
-    constructor(query) {
-        super(query);
-    }
-    generateInternal() {
-        const updateNode = new UpdateNode(this.query.table);
-        const selectNode = this.query.where !== null ? new SelectNode(this.query.where.copy()) : null;
-        const tableAccessNode = new TableAccessNode(this.query.table);
-        if (selectNode === null) {
-            updateNode.addChild(tableAccessNode);
-        }
-        else {
-            selectNode.addChild(tableAccessNode);
-            updateNode.addChild(selectNode);
-        }
-        return updateNode;
-    }
-}
 // A factory used to create a logical query plan corresponding to a given query.
 class LogicalPlanFactory {
     constructor() {
@@ -6774,17 +6275,15 @@ class LogicalPlanFactory {
     }
     create(query) {
         let generator = null;
-        if (query instanceof InsertContext) {
-            generator = new InsertLogicalPlanGenerator(query);
-        }
-        else if (query instanceof DeleteContext) {
-            generator = new DeleteLogicalPlanGenerator(query, this.deleteOptimizationPasses);
-        }
-        else if (query instanceof SelectContext) {
+        // if (query instanceof InsertContext) {
+        // 	generator = new InsertLogicalPlanGenerator(query);
+        // } else if (query instanceof DeleteContext) {
+        // 	generator = new DeleteLogicalPlanGenerator(query, this.deleteOptimizationPasses);
+        // } else
+        if (query instanceof SelectContext) {
             generator = new SelectLogicalPlanGenerator(query, this.selectOptimizationPasses);
-        }
-        else if (query instanceof UpdateContext) {
-            generator = new UpdateLogicalPlanGenerator(query);
+            // } else if (query instanceof UpdateContext) {
+            // 	generator = new UpdateLogicalPlanGenerator(query);
         }
         else {
             // 513: Unknown query context.
@@ -7130,20 +6629,6 @@ class CrossProductStep extends PhysicalQueryPlanNode {
         return [new Relation(combinedEntries, srcTables)];
     }
 }
-class DeleteStep extends PhysicalQueryPlanNode {
-    constructor(table) {
-        super(1, ExecType.FIRST_CHILD);
-        this.table = table;
-    }
-    toString() {
-        return `delete(${this.table.getName()})`;
-    }
-    execInternal(relations, journal, context) {
-        const rows = relations[0].entries.map((entry) => entry.row);
-        journal.remove(this.table, rows);
-        return [Relation.createEmpty()];
-    }
-}
 // Keep lower case class name for compatibility with Lovefield API.
 class fn {
     static avg(col) {
@@ -7287,8 +6772,7 @@ class JoinStep extends PhysicalQueryPlanNode {
         this.isOuterJoin = isOuterJoin;
         this.indexStore = global.getService(Service.INDEX_STORE);
         this.cache = global.getService(Service.CACHE);
-        this.algorithm
-            = this.predicate.evaluatorType === EvalType.EQ ? JoinAlgorithm.HASH : JoinAlgorithm.NESTED_LOOP;
+        this.algorithm = this.predicate.evaluatorType === EvalType.EQ ? JoinAlgorithm.HASH : JoinAlgorithm.NESTED_LOOP;
         this.indexJoinInfo = null;
     }
     toString() {
@@ -7368,8 +6852,7 @@ class IndexJoinPass extends RewritePass {
         }
         // Finds which of the two joined columns corresponds to the given table.
         const getColumnForTable = (table) => {
-            return table.getEffectiveName()
-                === joinStep.predicate.rightColumn.getTable().getEffectiveName() ? joinStep.predicate.rightColumn : joinStep.predicate.leftColumn;
+            return table.getEffectiveName() === joinStep.predicate.rightColumn.getTable().getEffectiveName() ? joinStep.predicate.rightColumn : joinStep.predicate.leftColumn;
         };
         // Extracts the candidate indexed column for the given execution step node.
         const getCandidate = (executionStep) => {
@@ -7416,8 +6899,7 @@ class BoundedKeyRangeCalculator {
         this.fillMissingKeyRanges(keyRangeMap);
         // If this IndexRangeCandidate refers to a single column index there is no
         // need to perform cartesian product, since there is only one dimension.
-        this.combinations
-            = this.indexSchema.columns.length === 1 ? Array.from(keyRangeMap.values())[0].getValues() : this.calculateCartesianProduct(this.getSortedKeyRangeSets(keyRangeMap));
+        this.combinations = this.indexSchema.columns.length === 1 ? Array.from(keyRangeMap.values())[0].getValues() : this.calculateCartesianProduct(this.getSortedKeyRangeSets(keyRangeMap));
         this.lastQueryContext = queryContext;
         return this.combinations;
     }
@@ -7783,58 +7265,6 @@ class IndexRangeScanPass extends RewritePass {
         tableAccessByRowIdStep.addChild(indexRangeScanStep);
         TreeHelper.replaceNodeWithChain(tableAccessFullStep, tableAccessByRowIdStep, indexRangeScanStep);
         return indexRangeScanStep.getRoot();
-    }
-}
-class InsertStep extends PhysicalQueryPlanNode {
-    constructor(global, table) {
-        super(0, ExecType.NO_CHILD);
-        this.table = table;
-        this.indexStore = global.getService(Service.INDEX_STORE);
-    }
-    static assignAutoIncrementPks(t, values, indexStore) {
-        const table = t;
-        const pkIndexSchema = table.getConstraint().getPrimaryKey();
-        const autoIncrement = pkIndexSchema === null ? false : pkIndexSchema.columns[0].autoIncrement;
-        if (autoIncrement) {
-            const pkColumnName = pkIndexSchema.columns[0].schema.getName();
-            const index = indexStore.get(pkIndexSchema.getNormalizedName());
-            const max = index.stats().maxKeyEncountered;
-            let maxKey = max === null ? 0 : max;
-            values.forEach((row) => {
-                // A value of 0, null or undefined indicates that a primary key should
-                // automatically be assigned.
-                const val = row.payload()[pkColumnName];
-                if (val === 0 || val === null || val === undefined) {
-                    maxKey++;
-                    row.payload()[pkColumnName] = maxKey;
-                }
-            });
-        }
-    }
-    toString() {
-        return `insert(${this.table.getName()})`;
-    }
-    execInternal(relations, journal, queryContext) {
-        const values = queryContext.values;
-        InsertStep.assignAutoIncrementPks(this.table, values, this.indexStore);
-        journal.insert(this.table, values);
-        return [Relation.fromRows(values, [this.table.getName()])];
-    }
-}
-class InsertOrReplaceStep extends PhysicalQueryPlanNode {
-    constructor(global, table) {
-        super(0, ExecType.NO_CHILD);
-        this.table = table;
-        this.indexStore = global.getService(Service.INDEX_STORE);
-    }
-    toString() {
-        return `insert_replace(${this.table.getName()})`;
-    }
-    execInternal(relations, journal, ctx) {
-        const queryContext = ctx;
-        InsertStep.assignAutoIncrementPks(this.table, queryContext.values, this.indexStore);
-        journal.insertOrReplace(this.table, queryContext.values);
-        return [Relation.fromRows(queryContext.values, [this.table.getName()])];
     }
 }
 class LimitStep extends PhysicalQueryPlanNode {
@@ -8239,7 +7669,7 @@ class UnboundedKeyRangeCalculator {
         this.indexSchema = indexSchema;
     }
     getKeyRangeCombinations(queryContext) {
-        return this.indexSchema.columns.length === 1 ? [SingleKeyRange.all()] : [this.indexSchema.columns.map((col) => SingleKeyRange.all())];
+        return this.indexSchema.columns.length === 1 ? [SingleKeyRange.all()] : [this.indexSchema.columns.map(() => SingleKeyRange.all())];
     }
 }
 // The OrderByIndexPass is responsible for modifying a tree that has a
@@ -8373,8 +7803,7 @@ class OrderByIndexPass extends RewritePass {
         }, 0);
         const xorBitmask = ordersLeftBitmask ^ ordersRightBitmask;
         const isNatural = xorBitmask === 0;
-        const isReverse = xorBitmask
-            === 2 ** Math.max(orderBy.length, indexSchema.columns.length) - 1;
+        const isReverse = xorBitmask === 2 ** Math.max(orderBy.length, indexSchema.columns.length) - 1;
         return [isNatural, isReverse];
     }
 }
@@ -8394,32 +7823,10 @@ class PhysicalPlanRewriter {
         return this.rootNode;
     }
 }
-class UpdateStep extends PhysicalQueryPlanNode {
-    constructor(table) {
-        super(1, ExecType.FIRST_CHILD);
-        this.table = table;
-    }
-    toString() {
-        return `update(${this.table.getName()})`;
-    }
-    execInternal(relations, journal, context) {
-        const table = this.table;
-        const rows = relations[0].entries.map((entry) => {
-            // Need to clone the row here before modifying it, because it is a
-            // direct reference to the cache's contents.
-            const clone = table.deserializeRow(entry.row.serialize());
-            context.set.forEach((update) => {
-                clone.payload()[update.column.getName()] = update.value;
-            }, this);
-            return clone;
-        }, this);
-        journal.update(table, rows);
-        return [Relation.createEmpty()];
-    }
-}
 class PhysicalPlanFactory {
-    constructor(global) {
-        this.global = global;
+    //private readonly deleteOptimizationPasses: RewritePass<PhysicalQueryPlanNode>[];
+    constructor(services) {
+        this.services = services;
         this.selectOptimizationPasses = [
             new IndexJoinPass(),
             new IndexRangeScanPass(global),
@@ -8428,23 +7835,27 @@ class PhysicalPlanFactory {
             new LimitSkipByIndexPass(),
             new GetRowCountPass(global)
         ];
-        this.deleteOptimizationPasses = [new IndexRangeScanPass(global)];
+        //this.deleteOptimizationPasses = [new IndexRangeScanPass(global)];
     }
     create(logicalQueryPlan, queryContext) {
         const logicalQueryPlanRoot = logicalQueryPlan.getRoot();
-        if (logicalQueryPlanRoot instanceof InsertOrReplaceNode
-            || logicalQueryPlanRoot instanceof InsertNode) {
-            return this.createPlan(logicalQueryPlan, queryContext);
-        }
+        // if (
+        // 	logicalQueryPlanRoot instanceof InsertOrReplaceNode
+        // 	|| logicalQueryPlanRoot instanceof InsertNode
+        // ) {
+        // 	return this.createPlan(logicalQueryPlan, queryContext);
+        // }
         if (logicalQueryPlanRoot instanceof ProjectNode
             || logicalQueryPlanRoot instanceof LimitNode
             || logicalQueryPlanRoot instanceof SkipNode) {
             return this.createPlan(logicalQueryPlan, queryContext, this.selectOptimizationPasses);
         }
-        if (logicalQueryPlanRoot instanceof DeleteNode
-            || logicalQueryPlanRoot instanceof UpdateNode) {
-            return this.createPlan(logicalQueryPlan, queryContext, this.deleteOptimizationPasses);
-        }
+        // if (
+        // 	logicalQueryPlanRoot instanceof DeleteNode
+        // 	|| logicalQueryPlanRoot instanceof UpdateNode
+        // ) {
+        // 	return this.createPlan(logicalQueryPlan, queryContext, this.deleteOptimizationPasses);
+        // }
         // Should never get here since all cases are handled above.
         // 8: Unknown query plan node.
         throw new Exception(ErrorCode.UNKNOWN_PLAN_NODE);
@@ -8490,18 +7901,15 @@ class PhysicalPlanFactory {
         else if (node instanceof TableAccessNode) {
             return new TableAccessFullStep(this.global, node.table);
         }
-        else if (node instanceof DeleteNode) {
-            return new DeleteStep(node.table);
-        }
-        else if (node instanceof UpdateNode) {
-            return new UpdateStep(node.table);
-        }
-        else if (node instanceof InsertOrReplaceNode) {
-            return new InsertOrReplaceStep(this.global, node.table);
-        }
-        else if (node instanceof InsertNode) {
-            return new InsertStep(this.global, node.table);
-        }
+        // else if (node instanceof DeleteNode) {
+        // 	return new DeleteStep(node.table);
+        // } else if (node instanceof UpdateNode) {
+        // 	return new UpdateStep(node.table);
+        // } else if (node instanceof InsertOrReplaceNode) {
+        // 	return new InsertOrReplaceStep(this.global, node.table);
+        // } else if (node instanceof InsertNode) {
+        // 	return new InsertStep(this.global, node.table);
+        // }
         // 514: Unknown node type.
         throw new Exception(ErrorCode.UNKNOWN_NODE_TYPE);
     }
@@ -8537,8 +7945,7 @@ class ExportTask extends UniqueId {
         });
         return {
             "name": this.schema.name(),
-            "tables": tables,
-            "version": this.schema.version()
+            "tables": tables
         };
     }
     exec() {
@@ -8560,86 +7967,6 @@ class ExportTask extends UniqueId {
     }
     getPriority() {
         return TaskPriority.EXPORT_TASK;
-    }
-}
-// Imports table/rows from given JavaScript object to an empty database.
-class ImportTask extends UniqueId {
-    constructor(global, data) {
-        super();
-        this.global = global;
-        this.data = data;
-        this.schema = global.getService(Service.SCHEMA);
-        this.scope = new Set(this.schema.tables());
-        this.resolver = new Resolver();
-        this.backStore = global.getService(Service.BACK_STORE);
-        this.cache = global.getService(Service.CACHE);
-        this.indexStore = global.getService(Service.INDEX_STORE);
-    }
-    exec() {
-        if (!this.backStore.supportsImport()) {
-            // Import is supported only on MemoryDB / IndexedDB / WebSql.
-            // 300: Not supported.
-            throw new Exception(ErrorCode.NOT_SUPPORTED);
-        }
-        if (!this.isEmptyDB()) {
-            // 110: Attempt to import into a non-empty database.
-            throw new Exception(ErrorCode.IMPORT_TO_NON_EMPTY_DB);
-        }
-        if (this.schema.name() !== this.data["name"]
-            || this.schema.version() !== this.data["version"]) {
-            // 111: Database name/version mismatch for import.
-            throw new Exception(ErrorCode.DB_MISMATCH);
-        }
-        if (this.data["tables"] === undefined || this.data["tables"] === null) {
-            // 112: Import data not found.
-            throw new Exception(ErrorCode.IMPORT_DATA_NOT_FOUND);
-        }
-        return this.import();
-    }
-    getType() {
-        return TransactionType.READ_WRITE;
-    }
-    getScope() {
-        return this.scope;
-    }
-    getResolver() {
-        return this.resolver;
-    }
-    getId() {
-        return this.getUniqueNumber();
-    }
-    getPriority() {
-        return TaskPriority.IMPORT_TASK;
-    }
-    isEmptyDB() {
-        return this.schema.tables().every((t) => {
-            const table = t;
-            const index = this.indexStore.get(table.getRowIdIndexName());
-            if (index.stats().totalRows > 0) {
-                return false;
-            }
-            return true;
-        });
-    }
-    import() {
-        const journal = new Journal(this.global, this.scope);
-        const tx = this.backStore.createTx(this.getType(), Array.from(this.scope.values()), journal);
-        Object.keys(this.data["tables"]).forEach((tableName) => {
-            const tableSchema = this.schema.table(tableName);
-            const payloads = this.data["tables"][tableName];
-            const rows = payloads.map((value) => tableSchema.createRow(value));
-            const table = tx.getTable(tableName, tableSchema.deserializeRow, TableType.DATA);
-            this.cache.setMany(tableName, rows);
-            const indices = this.indexStore.getTableIndices(tableName);
-            rows.forEach((row) => {
-                indices.forEach((index) => {
-                    const key = row.keyOfIndex(index.getName());
-                    index.add(key, row.id());
-                });
-            });
-            table.put(rows);
-        }, this);
-        return tx.commit();
     }
 }
 class LockTableEntry {
@@ -9099,114 +8426,15 @@ class RuntimeTransaction {
         }
     }
 }
-class RuntimeDatabase {
-    constructor(global) {
-        this.global = global;
-        this.schema = global.getService(Service.SCHEMA);
-        // Whether this connection to the database is active.
-        this.isActive = false;
-    }
-    init(options) {
-        // The SCHEMA might have been removed from this.global in the case where
-        // Database#close() was called, therefore it needs to be re-added.
-        this.global.registerService(Service.SCHEMA, this.schema);
-        this.global.registerService(Service.CACHE, new DefaultCache(this.schema));
-        const backStore = this.createBackStore(this.schema, options);
-        this.global.registerService(Service.BACK_STORE, backStore);
-        const indexStore = new MemoryIndexStore();
-        this.global.registerService(Service.INDEX_STORE, indexStore);
-        return backStore
-            .init()
-            .then(() => {
-            this.global.registerService(Service.QUERY_ENGINE, new DefaultQueryEngine(this.global));
-            this.runner = new Runner();
-            this.global.registerService(Service.RUNNER, this.runner);
-            return indexStore.init(this.schema);
-        })
-            .then(() => {
-            this.isActive = true;
-            return this;
-        });
-    }
-    getGlobal() {
-        return this.global;
-    }
-    getSchema() {
-        return this.schema;
-    }
-    select(...columns) {
-        this.checkActive();
-        return new SelectBuilder(this.global, columns);
-    }
-    insert() {
-        this.checkActive();
-        return new InsertBuilder(this.global);
-    }
-    insertOrReplace() {
-        this.checkActive();
-        return new InsertBuilder(this.global, /* allowReplace */ true);
-    }
-    update(table) {
-        this.checkActive();
-        return new UpdateBuilder(this.global, table);
-    }
-    delete() {
-        this.checkActive();
-        return new DeleteBuilder(this.global);
-    }
-    createTransaction(type) {
-        this.checkActive();
-        return new RuntimeTransaction(this.global);
-    }
-    close() {
-        try {
-            const backStore = this.global.getService(Service.BACK_STORE);
-            backStore.close();
-        }
-        catch (e) {
-            // Swallow the exception if DB is not initialized yet.
-        }
-        this.global.clear();
-        this.isActive = false;
-    }
-    export() {
-        this.checkActive();
-        const task = new ExportTask(this.global);
-        return this.runner.scheduleTask(task).then((results) => {
-            return results[0].getPayloads()[0];
-        });
-    }
-    import(d) {
-        const data = d;
-        this.checkActive();
-        const task = new ImportTask(this.global, data);
-        return this.runner.scheduleTask(task);
-    }
-    isOpen() {
-        return this.isActive;
-    }
-    checkActive() {
-        if (!this.isActive) {
-            throw new Exception(ErrorCode.CONNECTION_CLOSED);
-        }
-    }
-    createBackStore(schema, options) {
-        return new Memory(schema);
-    }
-}
 class DatabaseSchemaImpl {
-    constructor(_name, _version) {
+    constructor(_name) {
         this._name = _name;
-        this._version = _version;
         this.tableMap = new Map();
         // Lazy initialization
         this._info = undefined;
     }
     name() {
         return this._name;
-    }
-    version() {
-        return this._version;
     }
     info() {
         if (this._info === undefined) {
@@ -9227,30 +8455,6 @@ class DatabaseSchemaImpl {
     }
     setTable(table) {
         this.tableMap.set(table.getName(), table);
-    }
-}
-class GraphNode {
-    constructor(name) {
-        this.name = name;
-        this.visited = false;
-        this.onStack = false;
-        this.edges = new Set();
-    }
-}
-class ForeignKeySpec {
-    constructor(rawSpec, childTable, name) {
-        this.childTable = childTable;
-        const array = rawSpec.ref.split(".");
-        if (array.length !== 2) {
-            // 540: Foreign key {0} has invalid reference syntax.
-            throw new Exception(ErrorCode.INVALID_FK_REF, name);
-        }
-        this.childColumn = rawSpec.local;
-        this.parentTable = array[0];
-        this.parentColumn = array[1];
-        this.name = `${childTable}.${name}`;
-        this.action = rawSpec.action || ConstraintAction.RESTRICT;
-        this.timing = rawSpec.timing || ConstraintTiming.IMMEDIATE;
     }
 }
 function createPredicate(lhs, rhs, type) {
@@ -9322,8 +8526,7 @@ class ColumnImpl {
             });
             // Normally there should be only one dedicated index for this column,
             // but if there are more, just grab the first one.
-            this.index
-                = indices.length > 0 ? indices[0] : null;
+            this.index = indices.length > 0 ? indices[0] : null;
         }
         return this.index;
     }
@@ -9365,19 +8568,15 @@ class ColumnImpl {
     }
 }
 class Constraint {
-    constructor(primaryKey, notNullable, foreignKeys) {
+    constructor(primaryKey, notNullable) {
         this.primaryKey = primaryKey;
         this.notNullable = notNullable;
-        this.foreignKeys = foreignKeys;
     }
     getPrimaryKey() {
         return this.primaryKey;
     }
     getNotNullable() {
         return this.notNullable;
-    }
-    getForeignKeys() {
-        return this.foreignKeys;
     }
 }
 class IndexImpl {
@@ -9457,7 +8656,6 @@ class TableImpl {
             this[col.name] = colSchema;
             this._columns.push(colSchema);
         }, this);
-        this._referencingFK = null;
         this._functionMap = null;
         this._constraint = null;
         this._evalRegistry = EvalRegistry.get();
@@ -9494,7 +8692,6 @@ class TableImpl {
             };
         });
         const clone = new TableImpl(this._name, colDef, this._indices, this._usePersistentIndex, name);
-        clone._referencingFK = this._referencingFK;
         clone._constraint = this._constraint;
         clone._alias = name;
         return clone;
@@ -9524,7 +8721,7 @@ class TableImpl {
         });
         return new RowImpl(this._functionMap, this._columns, this._indices, dbRecord.id, obj);
     }
-    constructIndices(pkName, indices, uniqueIndices, nullable, fkSpecs) {
+    constructIndices(pkName, indices, uniqueIndices, nullable) {
         if (indices.size === 0) {
             this._constraint = new Constraint(null, [], []);
             return;
@@ -9538,7 +8735,7 @@ class TableImpl {
         this._indices.forEach((index) => this._functionMap.set(index.getNormalizedName(), this.getKeyOfIndexFn(columnMap, index)));
         const pk = pkName === null ? null : new IndexImpl(this._name, pkName, true, this.generateIndexedColumns(indices, columnMap, pkName));
         const notNullable = this._columns.filter((col) => !nullable.has(col.getName()));
-        this._constraint = new Constraint(pk, notNullable, fkSpecs);
+        this._constraint = new Constraint(pk, notNullable);
     }
     generateIndexedColumns(indices, columnMap, indexName) {
         const index = indices.get(indexName);
@@ -9585,107 +8782,17 @@ class TableBuilder {
         this.pkName = null;
         this.indices = new Map();
         this.persistIndex = false;
-        this.fkSpecs = [];
-    }
-    static toPascal(name) {
-        return name[0].toUpperCase() + name.substring(1);
     }
     addColumn(name, type) {
         this.checkNamingRules(name);
         this.checkNameConflicts(name);
         this.columns.set(name, type);
-        if (TableBuilder.NULLABLE_TYPES_BY_DEFAULT.has(type)) {
-            this.addNullable([name]);
-        }
+        //if (TableBuilder.NULLABLE_TYPES_BY_DEFAULT.has(type)) {
+        // 	this.addNullable([name]);
+        //}
         return this;
-    }
-    // Adds a primary key to table.
-    // There are two overloads of this function:
-    //
-    // case 1: (columns: Array<string>, autoInc)
-    //   specifies primary key by given only column names with default ascending
-    //   orders (Order.ASC). When autoInc is true, there can be only one
-    //   column in the columns, its type must be Type.INTEGER, and its order
-    //   must be the default Order.ASC.
-    //
-    // case 2: (columns: Array<IndexedColumnSpec>)
-    //   allows different ordering per-column, but more verbose.
-    addPrimaryKey(columns, autoInc = false) {
-        this.pkName = "pk" + TableBuilder.toPascal(this.name);
-        this.checkNamingRules(this.pkName);
-        this.checkNameConflicts(this.pkName);
-        const cols = this.normalizeColumns(columns, true, undefined, autoInc);
-        this.checkPrimaryKey(cols);
-        if (cols.length === 1) {
-            this.uniqueColumns.add(cols[0].name);
-        }
-        this.uniqueIndices.add(this.pkName);
-        this.indices.set(this.pkName, cols);
-        return this;
-    }
-    // Creates a foreign key on a given table column.
-    addForeignKey(name, rawSpec) {
-        this.checkNamingRules(name);
-        this.checkNameConflicts(name);
-        if (rawSpec.action === undefined) {
-            rawSpec.action = ConstraintAction.RESTRICT;
-        }
-        if (rawSpec.timing === undefined) {
-            rawSpec.timing = ConstraintTiming.IMMEDIATE;
-        }
-        const spec = new ForeignKeySpec(rawSpec, this.name, name);
-        if (spec.action === ConstraintAction.CASCADE
-            && spec.timing === ConstraintTiming.DEFERRABLE) {
-            // 506: Lovefield allows only immediate evaluation of cascading
-            // constraints.
-            throw new Exception(ErrorCode.IMMEDIATE_EVAL_ONLY);
-        }
-        if (!this.columns.has(spec.childColumn)) {
-            // 540: Foreign key {0} has invalid reference syntax.
-            throw new Exception(ErrorCode.INVALID_FK_REF, `${this.name}.${name}`);
-        }
-        this.fkSpecs.push(spec);
-        this.addIndex(name, [spec.childColumn], this.uniqueColumns.has(spec.childColumn));
-        return this;
-    }
-    addUnique(name, columns) {
-        this.checkNamingRules(name);
-        this.checkNameConflicts(name);
-        const cols = this.normalizeColumns(columns, true);
-        if (cols.length === 1) {
-            this.uniqueColumns.add(cols[0].name);
-            this.markFkIndexForColumnUnique(cols[0].name);
-        }
-        this.indices.set(name, cols);
-        this.uniqueIndices.add(name);
-        return this;
-    }
-    addNullable(columns) {
-        this.normalizeColumns(columns, false).forEach((col) => this.nullable.add(col.name));
-        return this;
-    }
-    // Mimics SQL CREATE INDEX.
-    // There are two overloads of this function:
-    // case 1: (name, columns: !Array<string>, unique, order)
-    //   adds an index by column names only. All columns have same ordering.
-    // case 2: (name, columns: !Array<!TableBuilder.IndexedColumnSpec>, unique)
-    //   adds an index, allowing customization of ordering, but more verbose.
-    addIndex(name, columns, unique = false, order = Order.ASC) {
-        this.checkNamingRules(name);
-        this.checkNameConflicts(name);
-        this.indices.set(name, this.normalizeColumns(columns, true, order));
-        if (unique) {
-            this.uniqueIndices.add(name);
-        }
-        return this;
-    }
-    persistentIndex(value) {
-        this.persistIndex = value;
     }
     getSchema() {
-        this.checkPrimaryKeyNotForeignKey();
-        this.checkPrimaryKeyDuplicateIndex();
-        this.checkPrimaryKeyNotNullable();
         const columns = Array.from(this.columns.keys()).map((colName) => {
             return {
                 "name": colName,
@@ -9698,11 +8805,8 @@ class TableBuilder {
         const table = new TableImpl(this.name, columns, null, this.persistIndex);
         // Columns shall be constructed within TableImpl ctor, now we can
         // instruct it to construct proper index schema.
-        table.constructIndices(this.pkName, this.indices, this.uniqueIndices, this.nullable, this.fkSpecs);
+        table.constructIndices(this.pkName, this.indices, this.uniqueIndices, this.nullable);
         return table;
-    }
-    getFkSpecs() {
-        return this.fkSpecs;
     }
     checkNamingRules(name) {
         if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(name)) {
@@ -9722,322 +8826,407 @@ class TableBuilder {
             throw new Exception(ErrorCode.NAME_IN_USE, `${this.name}.${name}`);
         }
     }
-    checkPrimaryKey(columns) {
-        let hasAutoIncrement = false;
-        columns.forEach((column) => {
-            const columnType = this.columns.get(column.name);
-            hasAutoIncrement
-                = hasAutoIncrement || column.autoIncrement;
-            if (column.autoIncrement && columnType !== Type.INTEGER) {
-                // 504: Can not use autoIncrement with a non-integer primary key.
-                throw new Exception(ErrorCode.INVALID_AUTO_KEY_TYPE);
-            }
-        });
-        if (hasAutoIncrement && columns.length > 1) {
-            // 505: Can not use autoIncrement with a cross-column primary key.
-            throw new Exception(ErrorCode.INVALID_AUTO_KEY_COLUMN);
-        }
-    }
-    // Checks whether any primary key column is also used as a foreign key child
-    // column, and throws an exception if such a column is found.
-    checkPrimaryKeyNotForeignKey() {
-        if (this.pkName === null) {
-            return;
-        }
-        const index = this.indices.get(this.pkName);
-        if (index) {
-            const pkColumns = index.map((column) => column.name);
-            let fkSpecIndex = 0;
-            const conflict = this.fkSpecs.some((fkSpec, i) => {
-                fkSpecIndex = i;
-                return pkColumns.includes(fkSpec.childColumn);
-            });
-            if (conflict) {
-                // 543: Foreign key {0}. A primary key column can't also be a foreign
-                // key child column.
-                throw new Exception(ErrorCode.PK_CANT_BE_FK, this.fkSpecs[fkSpecIndex].name);
-            }
-        } // else nothing to check.
-    }
-    // Checks whether the primary key index is identical (in terms of indexed
-    // columns) with another explicitly added index.
-    checkPrimaryKeyDuplicateIndex() {
-        if (this.pkName === null) {
-            return;
-        }
-        const index = this.indices.get(this.pkName);
-        if (index) {
-            const extractName = (column) => column.name;
-            const pkColumnsJson = JSON.stringify(index.map(extractName));
-            this.indices.forEach((indexedColumnSpecs, indexName) => {
-                if (indexName === this.pkName) {
-                    return;
-                }
-                if (JSON.stringify(indexedColumnSpecs.map(extractName)) === pkColumnsJson) {
-                    // 544: Duplicate primary key index found at {0}
-                    throw new Exception(ErrorCode.DUPLICATE_PK, `${this.name}.${indexName}`);
-                }
-            });
-        } // else nothing to check.
-    }
-    // Checks whether any primary key column has also been marked as nullable.
-    checkPrimaryKeyNotNullable() {
-        if (this.pkName === null) {
-            return;
-        }
-        const index = this.indices.get(this.pkName);
-        if (index) {
-            index.forEach((indexedColumnSpec) => {
-                if (this.nullable.has(indexedColumnSpec.name)) {
-                    // 545: Primary key column {0} can't be marked as nullable
-                    throw new Exception(ErrorCode.NULLABLE_PK, `${this.name}.${indexedColumnSpec.name}`);
-                }
-            });
-        } // else nothing to check.
-    }
-    // Convert different column representations (column name only or column
-    // objects) into column object array. Also performs consistency check to make
-    // sure referred columns are actually defined.
-    normalizeColumns(columns, checkIndexable, sortOrder = Order.ASC, autoInc = false) {
-        let normalized = null;
-        if (typeof columns[0] === "string") {
-            const array = columns;
-            normalized = array.map((col) => {
-                return {
-                    "autoIncrement": autoInc || false,
-                    "name": col,
-                    "order": sortOrder
-                };
-            });
-        }
-        else {
-            normalized = columns;
-        }
-        normalized.forEach((col) => {
-            if (!this.columns.has(col.name)) {
-                // 508: Table {0} does not have column: {1}.
-                throw new Exception(ErrorCode.COLUMN_NOT_FOUND, this.name, col.name);
-            }
-            if (checkIndexable) {
-                const type = this.columns.get(col.name);
-                if (type === Type.ARRAY_BUFFER || type === Type.OBJECT) {
-                    // 509: Attempt to index table {0} on non-indexable column {1}.
-                    throw new Exception(ErrorCode.COLUMN_NOT_INDEXABLE, this.name, col.name);
-                }
-            }
-        });
-        return normalized;
-    }
-    markFkIndexForColumnUnique(column) {
-        this.fkSpecs.forEach((fkSpec) => {
-            if (fkSpec.childColumn === column) {
-                this.uniqueIndices.add(fkSpec.name.split(".")[1]);
-            }
-        });
-    }
 }
 TableBuilder.NULLABLE_TYPES_BY_DEFAULT = new Set([
     Type.ARRAY_BUFFER,
     Type.OBJECT
 ]);
-class SchemaBuilder {
-    constructor(dbName, dbVersion) {
-        this.schema = new DatabaseSchemaImpl(dbName, dbVersion);
-        this.tableBuilders = new Map();
-        this.finalized = false;
-        this.db = null;
-        this.connectInProgress = false;
-    }
-    getSchema() {
-        console.log("getSchema");
-        if (!this.finalized) {
-            this.finalize();
+class Database {
+    constructor(data) {
+        this.schema = new DatabaseSchemaImpl("db");
+        if (Array.isArray(data)) {
+            data = { "table": data };
         }
-        return this.schema;
-    }
-    getGlobal() {
-        console.log("getGlobal");
-        const namespaceGlobalId = new ServiceId(`ns_${this.schema.name()}`);
-        const global = Global.get();
-        let namespacedGlobal;
-        if (!global.isRegistered(namespaceGlobalId)) {
-            namespacedGlobal = new Global();
-            global.registerService(namespaceGlobalId, namespacedGlobal);
-        }
-        else {
-            namespacedGlobal = global.getService(namespaceGlobalId);
-        }
-        return namespacedGlobal;
-    }
-    // Instantiates a connection to the database. Note: This method can only be
-    // called once per Builder instance. Subsequent calls will throw an error,
-    // unless the previous DB connection has been closed first.
-    connect(options) {
-        console.log("connect");
-        if (this.connectInProgress || this.db !== null && this.db.isOpen()) {
-            // 113: Attempt to connect() to an already connected/connecting database.
-            throw new Exception(ErrorCode.ALREADY_CONNECTED);
-        }
-        this.connectInProgress = true;
-        if (this.db === null) {
-            const global = this.getGlobal();
-            if (!global.isRegistered(Service.SCHEMA)) {
-                global.registerService(Service.SCHEMA, this.getSchema());
+        for (const [tableName, table] of Object.entries(data)) {
+            const tableBuilder = new TableBuilder(tableName);
+            for (const [columnName, value] of table.length > 0 ? Object.entries(table[0]) : []) {
+                let type;
+                switch (Object.prototype.toString.call(value).slice(8, -1)) {
+                    case "ArrayBuffer":
+                        type = Type.ARRAY_BUFFER;
+                        break;
+                    case "Boolean":
+                        type = Type.BOOLEAN;
+                        break;
+                    case "Date":
+                        type = Type.DATE_TIME;
+                        break;
+                    case "Number":
+                        type = Type.NUMBER;
+                        break;
+                    case "String":
+                        type = Type.STRING;
+                        break;
+                    default:
+                        type = Type.OBJECT;
+                        break;
+                }
+                tableBuilder.addColumn(columnName, type);
             }
-            this.db = new RuntimeDatabase(global);
+            this.schema.setTable(tableBuilder.getSchema());
         }
-        return this.db.init(options).then((db) => {
-            this.connectInProgress = false;
-            return db;
-        }, (e) => {
-            this.connectInProgress = false;
-            // TODO(arthurhsu): Add a new test case to verify that failed init
-            // call allows the database to be deleted since we close it properly
-            // here.
-            this.db.close();
-            throw e;
-        });
+        this.cache = new DefaultCache(this.schema);
+        this.backStore = new Memory(this.schema);
+        this.indexStore = new MemoryIndexStore();
+        this.queryEngine = new DefaultQueryEngine(this.global);
+        this.runner = new Runner();
+        this.import(data);
     }
-    createTable(tableName) {
-        console.log("createTable");
-        if (this.tableBuilders.has(tableName)) {
-            // 503: Name {0} is already defined.
-            throw new Exception(ErrorCode.NAME_IN_USE, tableName);
+    // FROM: class DatabaseSchemaImpl
+    name() {
+        return this.schema._name;
+    }
+    info() {
+        if (this.schema._info === undefined) {
+            this.schema._info = new Info(this);
         }
-        else if (this.finalized) {
-            // 535: Schema is already finalized.
-            throw new Exception(ErrorCode.SCHEMA_FINALIZED);
-        }
-        this.tableBuilders.set(tableName, new TableBuilder(tableName));
-        const ret = this.tableBuilders.get(tableName);
+        return this.schema._info;
+    }
+    tables() {
+        return Array.from(this.schema.tableMap.values());
+    }
+    table(tableName) {
+        const ret = this.schema.tableMap.get(tableName);
         if (!ret) {
-            throw new Exception(ErrorCode.ASSERTION, "Builder.createTable");
+            // 101: Table {0} not found.
+            throw new Exception(ErrorCode.TABLE_NOT_FOUND, tableName);
         }
         return ret;
     }
-    // Builds the graph of foreign key relationships and checks for
-    // loop in the graph.
-    checkFkCycle() {
-        console.log("checkFkCycle");
-        // Builds graph.
-        const nodeMap = new Map();
-        this.schema.tables().forEach((table) => {
-            nodeMap.set(table.getName(), new GraphNode(table.getName()));
-        }, this);
-        this.tableBuilders.forEach((builder, tableName) => {
-            builder.getFkSpecs().forEach((spec) => {
-                const parentNode = nodeMap.get(spec.parentTable);
-                if (parentNode) {
-                    parentNode.edges.add(tableName);
-                }
-            });
+    setTable(table) {
+        this.schema.tableMap.set(table.getName(), table);
+    }
+    // FROM: class RuntimeDatabase
+    select(...columns) {
+        return new SelectBuilder(this.queryEngine, this.runner, this.schema, columns);
+    }
+    // public insert(): InsertBuilder {
+    // 	return new InsertBuilder(this.global);
+    // }
+    // public insertOrReplace(): InsertBuilder {
+    // 	return new InsertBuilder(this.global, /* allowReplace */ true);
+    // }
+    // public update(table: Table): UpdateBuilder {
+    // 	return new UpdateBuilder(this.global, table);
+    // }
+    // public delete(): DeleteBuilder {
+    // 	return new DeleteBuilder(this.global);
+    // }
+    createTransaction() {
+        return new RuntimeTransaction(this.global);
+    }
+    export() {
+        const task = new ExportTask(this.global);
+        return this.runner.scheduleTask(task).then((results) => {
+            return results[0].getPayloads()[0];
         });
-        // Checks for cycle.
-        Array.from(nodeMap.values()).forEach((graphNode) => { this.checkCycleUtil(graphNode, nodeMap); });
     }
-    // Performs foreign key checks like validity of names of parent and
-    // child columns, matching of types and uniqueness of referred column
-    // in the parent.
-    checkForeignKeyValidity(builder) {
-        console.log("checkForeignKeyValidity");
-        builder.getFkSpecs().forEach((specs) => {
-            const parentTableName = specs.parentTable;
-            const table = this.tableBuilders.get(parentTableName);
-            if (!table) {
-                // 536: Foreign key {0} refers to invalid table.
-                throw new Exception(ErrorCode.INVALID_FK_TABLE);
-            }
-            const parentSchema = table.getSchema();
-            const parentColName = specs.parentColumn;
-            if (!Object.prototype.hasOwnProperty.call(parentSchema, parentColName)) {
-                // 537: Foreign key {0} refers to invalid column.
-                throw new Exception(ErrorCode.INVALID_FK_COLUMN);
-            }
-            const localSchema = builder.getSchema();
-            const localColName = specs.childColumn;
-            if (localSchema[localColName].getType()
-                !== parentSchema[parentColName].getType()) {
-                // 538: Foreign key {0} column type mismatch.
-                throw new Exception(ErrorCode.INVALID_FK_COLUMN_TYPE, specs.name);
-            }
-            if (!parentSchema[parentColName].isUnique()) {
-                // 539: Foreign key {0} refers to non-unique column.
-                throw new Exception(ErrorCode.FK_COLUMN_NONUNIQUE, specs.name);
-            }
-        }, this);
-    }
-    // Performs checks to avoid chains of foreign keys on same column.
-    checkForeignKeyChain(builder) {
-        console.log("checkForeignKeyChain");
-        const fkSpecArray = builder.getFkSpecs();
-        fkSpecArray.forEach((specs) => {
-            const parentBuilder = this.tableBuilders.get(specs.parentTable);
-            if (parentBuilder) {
-                parentBuilder.getFkSpecs().forEach((parentSpecs) => {
-                    if (parentSpecs.childColumn === specs.parentColumn) {
-                        // 534: Foreign key {0} refers to source column of another
-                        // foreign key.
-                        throw new Exception(ErrorCode.FK_COLUMN_IN_USE, specs.name);
-                    }
-                }, this);
-            }
-        }, this);
-    }
-    finalize() {
-        console.log("finalize");
-        if (!this.finalized) {
-            this.tableBuilders.forEach((builder) => {
-                this.checkForeignKeyValidity(builder);
-                this.schema.setTable(builder.getSchema());
-            });
-            Array.from(this.tableBuilders.values()).forEach(this.checkForeignKeyChain, this);
-            this.checkFkCycle();
-            this.tableBuilders.clear();
-            this.finalized = true;
-        }
-    }
-    // Checks for loop in the graph recursively. Ignores self loops.
-    // This algorithm is based on Lemma 22.11 in "Introduction To Algorithms
-    // 3rd Edition By Cormen et Al". It says that a directed graph G
-    // can be acyclic if and only DFS of G yields no back edges.
-    // @see http://www.geeksforgeeks.org/detect-cycle-in-a-graph/
-    checkCycleUtil(graphNode, nodeMap) {
-        console.log("checkCycleUtil");
-        if (!graphNode.visited) {
-            graphNode.visited = true;
-            graphNode.onStack = true;
-            graphNode.edges.forEach((edge) => {
-                const childNode = nodeMap.get(edge);
-                if (childNode) {
-                    if (!childNode.visited) {
-                        this.checkCycleUtil(childNode, nodeMap);
-                    }
-                    else if (childNode.onStack) {
-                        // Checks for self loop, in which case, it does not throw an
-                        // exception.
-                        if (graphNode !== childNode) {
-                            // 533: Foreign key loop detected.
-                            throw new Exception(ErrorCode.FK_LOOP);
-                        }
-                    }
+    import(data) {
+        const scope = new Set(this.schema.tables());
+        const transaction = this.backStore.createTx(TransactionType.READ_WRITE, Array.from(scope.values()), new Journal(this.schema, this.cache, this.indexStore, scope));
+        for (const [tableName, tableData] of Object.entries(data)) {
+            const tableSchema = this.schema.table(tableName);
+            const payloads = tableData;
+            const rows = payloads.map((value) => tableSchema.createRow(value));
+            const table = transaction.getTable(tableName, tableSchema.deserializeRow, TableType.DATA);
+            this.cache.setMany(tableName, rows);
+            const indices = this.indexStore.getTableIndices(tableName);
+            for (const row of rows) {
+                for (const index of indices) {
+                    const key = row.keyOfIndex(index.getName());
+                    index.add(key, row.id());
                 }
-            }, this);
+            }
+            table.put(rows);
         }
-        graphNode.onStack = false;
+        return transaction.commit();
     }
 }
-// Keep lower case class name for compatibility with Lovefield API.
-// TODO(arthurhsu): FIXME: Builder should be a public interface, not concrete
-// class. Currently Builder has no @export.
-class schema {
-    // Returns a builder.
-    // Note that Lovefield builder is a stateful object, and it remembers it has
-    // been used for connecting a database instance. Once the connection is closed
-    // or dropped, the builder cannot be used to reconnect. Instead, the caller
-    // needs to construct a new builder for doing so.
-    static create(name, version) {
-        return new SchemaBuilder(name, version);
-    }
+function query(objects) {
+    return new Database(objects);
 }
 
-export { ConstraintAction, Order, Type, schema };
+//import * as fs from "fs";
+(async function () {
+    /*
+    const schemaBuilder = schema.create("idk", 1);
+
+    schemaBuilder
+        .createTable("Job")
+        .addColumn("id", Type.STRING)
+        .addColumn("title", Type.STRING)
+        .addColumn("minSalary", Type.NUMBER)
+        .addColumn("maxSalary", Type.NUMBER)
+        .addPrimaryKey(["id"])
+        .addIndex("idx_maxSalary", ["maxSalary"], false, Order.DESC);
+
+    schemaBuilder
+        .createTable("JobHistory")
+        .addColumn("employeeId", Type.STRING)
+        .addColumn("startDate", Type.DATE_TIME)
+        .addColumn("endDate", Type.DATE_TIME)
+        .addColumn("jobId", Type.STRING)
+        .addColumn("departmentId", Type.STRING)
+        .addForeignKey("fk_EmployeeId", {
+            "action": ConstraintAction.RESTRICT,
+            "local": "employeeId",
+            "ref": "Employee.id"
+        })
+        .addForeignKey("fk_DepartmentId", {
+            "action": ConstraintAction.RESTRICT,
+            "local": "departmentId",
+            "ref": "Department.id"
+        });
+
+    schemaBuilder
+        .createTable("Employee")
+        .addColumn("id", Type.STRING)
+        .addColumn("firstName", Type.STRING)
+        .addColumn("lastName", Type.STRING)
+        .addColumn("email", Type.STRING)
+        .addColumn("phoneNumber", Type.STRING)
+        .addColumn("hireDate", Type.DATE_TIME)
+        .addColumn("jobId", Type.STRING)
+        .addColumn("salary", Type.NUMBER)
+        .addColumn("commissionPercent", Type.NUMBER)
+        .addColumn("managerId", Type.STRING)
+        .addColumn("departmentId", Type.STRING)
+        .addColumn("photo", Type.ARRAY_BUFFER)
+        .addPrimaryKey(["id"])
+        .addForeignKey("fk_JobId", {
+            "action": ConstraintAction.RESTRICT,
+            "local": "jobId",
+            "ref": "Job.id"
+        })
+        .addForeignKey("fk_DepartmentId", {
+            "action": ConstraintAction.RESTRICT,
+            "local": "departmentId",
+            "ref": "Department.id"
+        })
+        .addIndex("idx_salary", ["salary"], false, Order.DESC)
+        .addNullable(["hireDate"]);
+
+    schemaBuilder
+        .createTable("Department")
+        .addColumn("id", Type.STRING)
+        .addColumn("name", Type.STRING)
+        .addColumn("managerId", Type.STRING)
+        .addColumn("locationId", Type.STRING)
+        .addPrimaryKey(["id"])
+        .addForeignKey("fk_LocationId", {
+            "action": ConstraintAction.RESTRICT,
+            "local": "locationId",
+            "ref": "Location.id"
+        });
+
+    schemaBuilder
+        .createTable("Location")
+        .addColumn("id", Type.STRING)
+        .addColumn("streetAddress", Type.STRING)
+        .addColumn("postalCode", Type.STRING)
+        .addColumn("city", Type.STRING)
+        .addColumn("stateProvince", Type.STRING)
+        .addColumn("countryId", Type.INTEGER)
+        .addPrimaryKey(["id"])
+        .addForeignKey("fk_CountryId", {
+            "action": ConstraintAction.RESTRICT,
+            "local": "countryId",
+            "ref": "Country.id"
+        });
+
+    schemaBuilder
+        .createTable("Country")
+        .addColumn("id", Type.INTEGER)
+        .addColumn("name", Type.STRING)
+        .addColumn("regionId", Type.STRING)
+        .addPrimaryKey(["id"], true)
+        .addForeignKey("fk_RegionId", {
+            "action": ConstraintAction.RESTRICT,
+            "local": "regionId",
+            "ref": "Region.id"
+        });
+
+    schemaBuilder
+        .createTable("Region")
+        .addColumn("id", Type.STRING)
+        .addColumn("name", Type.STRING)
+        .addPrimaryKey(["id"]);
+
+    schemaBuilder
+        .createTable("Holiday")
+        .addColumn("name", Type.STRING)
+        .addColumn("begin", Type.DATE_TIME)
+        .addColumn("end", Type.DATE_TIME)
+        .addIndex("idx_begin", ["begin"], false, Order.ASC)
+        .addPrimaryKey(["name"])
+        .persistentIndex(true);
+
+    schemaBuilder
+        .createTable("DummyTable")
+        .addColumn("arraybuffer", Type.ARRAY_BUFFER)
+        .addColumn("boolean", Type.BOOLEAN)
+        .addColumn("datetime", Type.DATE_TIME)
+        .addColumn("integer", Type.INTEGER)
+        .addColumn("number", Type.NUMBER)
+        .addColumn("string", Type.STRING)
+        .addColumn("string2", Type.STRING)
+        .addColumn("proto", Type.OBJECT)
+        .addPrimaryKey(["string", "number"])
+        .addUnique("uq_constraint", ["integer", "string2"])
+        .addNullable(["datetime"]);
+
+    schemaBuilder
+        .createTable("CrossColumnTable")
+        .addColumn("integer1", Type.INTEGER)
+        .addColumn("integer2", Type.INTEGER)
+        .addColumn("string1", Type.STRING)
+        .addColumn("string2", Type.STRING)
+        .addNullable(["string1", "string2"])
+        .addIndex("idx_ascDesc", [
+            {
+                "name": "integer1",
+                "order": Order.ASC
+            },
+            {
+                "name": "integer2",
+                "order": Order.DESC
+            }
+        ], true)
+        .addIndex("idx_crossNull", ["string1", "string2"], true)
+        .persistentIndex(true);
+
+    const db = await schemaBuilder.connect();
+
+    const dataGenerator = new MockDataGenerator();
+
+    dataGenerator.generate(50, 300, 10);
+
+    db
+        .createTransaction()
+        .exec([
+            db.insert().into(db.getSchema().table("Region")).values(dataGenerator.sampleRegions),
+            db.insert().into(db.getSchema().table("Country")).values(dataGenerator.sampleCountries),
+            db.insert().into(db.getSchema().table("Location")).values(dataGenerator.sampleLocations),
+            db.insert().into(db.getSchema().table("Department")).values(dataGenerator.sampleDepartments),
+            db.insert().into(db.getSchema().table("Job")).values(dataGenerator.sampleJobs),
+            db.insert().into(db.getSchema().table("Employee")).values(dataGenerator.sampleEmployees),
+            db.insert().into(db.getSchema().table("CrossColumnTable")).values((() => {
+                const sampleRows = new Array(20);
+                const padZeros = (n: number) => (n < 10 ? `0${n}` : `${n}`);
+
+                for (let i = 0; i < 20; i++) {
+                    sampleRows[i] = db.getSchema().table("CrossColumnTable").createRow({
+                        "integer1": i,
+                        "integer2": i * 10,
+                        // Generating a null value for i = [10, 12, 14].
+                        "string1":
+                            i % 2 === 0 && i >= 10 && i < 15 ? null : `string1_${padZeros(i)}`,
+                        // Generating a null value for i = 16 and 18.
+                        "string2": i % 2 === 0 && i >= 15 ? null : `string2_${i * 10}`
+                    });
+                }
+                return sampleRows;
+            })())
+        ]);
+
+    const results = await db.select().from(db.getSchema().table("Job")).where(db.getSchema().table("Job").col("minSalary").gte(300000)).exec();
+
+    console.log(results);
+
+    fs.writeFileSync(path.join(__dirname, "output.json"), JSON.stringify(await db.export(), undefined, 4));
+
+    */
+    /*
+    const schemaBuilder2 = schema.create("idk", 1);
+
+    schemaBuilder2
+        .createTable("Job")
+        .addColumn("id", Type.STRING)
+        .addColumn("title", Type.STRING)
+        .addColumn("minSalary", Type.NUMBER)
+        .addColumn("maxSalary", Type.NUMBER);
+
+    schemaBuilder2
+        .createTable("JobHistory")
+        .addColumn("employeeId", Type.STRING)
+        .addColumn("startDate", Type.DATE_TIME)
+        .addColumn("endDate", Type.DATE_TIME)
+        .addColumn("jobId", Type.STRING)
+        .addColumn("departmentId", Type.STRING);
+
+    schemaBuilder2
+        .createTable("Employee")
+        .addColumn("id", Type.STRING)
+        .addColumn("firstName", Type.STRING)
+        .addColumn("lastName", Type.STRING)
+        .addColumn("email", Type.STRING)
+        .addColumn("phoneNumber", Type.STRING)
+        .addColumn("hireDate", Type.DATE_TIME)
+        .addColumn("jobId", Type.STRING)
+        .addColumn("salary", Type.NUMBER)
+        .addColumn("commissionPercent", Type.NUMBER)
+        .addColumn("managerId", Type.STRING)
+        .addColumn("departmentId", Type.STRING)
+        .addColumn("photo", Type.ARRAY_BUFFER);
+
+    schemaBuilder2
+        .createTable("Department")
+        .addColumn("id", Type.STRING)
+        .addColumn("name", Type.STRING)
+        .addColumn("managerId", Type.STRING)
+        .addColumn("locationId", Type.STRING);
+
+    schemaBuilder2
+        .createTable("Location")
+        .addColumn("id", Type.STRING)
+        .addColumn("streetAddress", Type.STRING)
+        .addColumn("postalCode", Type.STRING)
+        .addColumn("city", Type.STRING)
+        .addColumn("stateProvince", Type.STRING)
+        .addColumn("countryId", Type.INTEGER);
+
+    schemaBuilder2
+        .createTable("Country")
+        .addColumn("id", Type.INTEGER)
+        .addColumn("name", Type.STRING)
+        .addColumn("regionId", Type.STRING);
+
+    schemaBuilder2
+        .createTable("Region")
+        .addColumn("id", Type.STRING)
+        .addColumn("name", Type.STRING);
+
+    schemaBuilder2
+        .createTable("Holiday")
+        .addColumn("name", Type.STRING)
+        .addColumn("begin", Type.DATE_TIME)
+        .addColumn("end", Type.DATE_TIME);
+
+    schemaBuilder2
+        .createTable("DummyTable")
+        .addColumn("arraybuffer", Type.ARRAY_BUFFER)
+        .addColumn("boolean", Type.BOOLEAN)
+        .addColumn("datetime", Type.DATE_TIME)
+        .addColumn("integer", Type.INTEGER)
+        .addColumn("number", Type.NUMBER)
+        .addColumn("string", Type.STRING)
+        .addColumn("string2", Type.STRING)
+        .addColumn("proto", Type.OBJECT);
+
+    schemaBuilder2
+        .createTable("CrossColumnTable")
+        .addColumn("integer1", Type.INTEGER)
+        .addColumn("integer2", Type.INTEGER)
+        .addColumn("string1", Type.STRING)
+        .addColumn("string2", Type.STRING);
+
+    const db2 = await schemaBuilder2.connect(); // Make sure the database is empty.
+    */
+    const json = JSON.parse(fs.readFileSync(path.join(__dirname, "output.json"), { "encoding": "utf8" }))["tables"];
+    //await db2.import(json);
+    //const results = await db2.select().from(db2.getSchema().table("Job")).where(db2.getSchema().table("Job").col("minSalary").gte(300000)).exec();
+    const db = query(json);
+    const job = db.table("Job");
+    const results = await db.select().from(job).where(job.col("minSalary").gte(300000)).exec();
+    console.log(results);
+})();
