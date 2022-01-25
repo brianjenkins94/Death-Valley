@@ -23,11 +23,6 @@ export enum ConstraintAction {
 	CASCADE = 1
 }
 
-enum ConstraintTiming {
-	IMMEDIATE = 0,
-	DEFERRABLE = 1
-}
-
 export enum Order {
 	DESC = 0,
 	ASC = 1
@@ -845,7 +840,6 @@ interface BaseTable extends Table {
 	getIndices: () => Index[];
 	persistentIndex: () => boolean;
 	getAlias: () => string;
-	getConstraint: () => Constraint;
 	getEffectiveName: () => string;
 	getRowIdIndexName: () => string;
 	deserializeRow: (dbRecord: RawRow) => Row;
@@ -862,66 +856,6 @@ interface BaseColumn extends Column {
 	[key: string]: unknown;
 }
 
-class ConstraintChecker {
-	private static didColumnValueChange(
-		rowBefore: Row,
-		rowAfter: Row,
-		indexName: string
-	): boolean {
-		const deletionOrAddition = rowBefore === null ? rowAfter !== null : rowAfter === null;
-		return (
-			deletionOrAddition
-			|| rowBefore.keyOfIndex(indexName) !== rowAfter.keyOfIndex(indexName)
-		);
-	}
-
-	private readonly indexStore: IndexStore;
-
-	private readonly schema: Schema;
-
-	private readonly cache: Cache;
-
-	// A map where the keys are normalized lf.schema.ForeignKeySpec names, and the
-	// values are corresponding parent column indices. The map is used such that
-	// this association does not have to be detected more than once.
-	private readonly foreignKeysParentIndices: Map<string, RuntimeIndex>;
-
-	constructor(schema, cache, indexStore) {
-		this.indexStore = indexStore;
-		this.schema = schema;
-		this.cache = cache;
-		this.foreignKeysParentIndices = new Map();
-	}
-
-	// Finds the index corresponding to the parent column of the given foreign
-	// key by querying the schema and the IndexStore.
-	// Returns the index corresponding to the parent column of the
-	// given foreign key constraint.
-	private findParentIndex(foreignKeySpec: ForeignKeySpec): RuntimeIndex {
-		const parentTable = this.schema.table(foreignKeySpec.parentTable);
-		const parentColumn = parentTable[foreignKeySpec.parentColumn] as BaseColumn;
-		// getIndex() must find an index since the parent of a foreign key
-		// constraint must have a dedicated index.
-		const parentIndexSchema: Index = parentColumn.getIndex();
-		return this.indexStore.get(parentIndexSchema.getNormalizedName());
-	}
-
-	// Gets the index corresponding to the parent column of the given foreign key.
-	// Leverages this.foreignKeysParentIndices map, such that the work for finding
-	// the parent index happens only once per foreign key.
-	// Returns the index corresponding to the parent column of the
-	// given foreign key constraint.
-	private getParentIndex(foreignKeySpec: ForeignKeySpec): RuntimeIndex {
-		let parentIndex = this.foreignKeysParentIndices.get(foreignKeySpec.name);
-		if (parentIndex === undefined) {
-			parentIndex = this.findParentIndex(foreignKeySpec);
-			this.foreignKeysParentIndices.set(foreignKeySpec.name, parentIndex);
-		}
-
-		return parentIndex;
-	}
-}
-
 class TableDiff {
 	private readonly added: Map<number, Row>;
 
@@ -935,17 +869,14 @@ class TableDiff {
 		this.deleted = new Map();
 	}
 
-	// Appears UNUSED
 	getName(): string {
 		return this.name;
 	}
 
-	// Appears UNUSED
 	getAdded(): Map<number, Row> {
 		return this.added;
 	}
 
-	// Appears UNUSED
 	getModified(): Map<number, Modification> {
 		return this.modified;
 	}
@@ -954,7 +885,6 @@ class TableDiff {
 		return this.deleted;
 	}
 
-	// Appears UNUSED
 	add(row: Row): void {
 		if (this.deleted.has(row.id())) {
 			const modification: Modification = [
@@ -1503,14 +1433,14 @@ class SingleKeyRange {
 		excludeL = false,
 		excludeR = false
 	): Favor {
-		const flip = (favor: Favor) => (isLeftHandSide ? favor : favor === Favor.LHS ? Favor.RHS : Favor.LHS);
+		const flip = (favor: Favor) => isLeftHandSide ? favor : favor === Favor.LHS ? Favor.RHS : Favor.LHS;
 
 		// The following logic is implemented for LHS. RHS is achieved using flip().
-		const tieLogic = () => (!SingleKeyRange.xor(excludeL, excludeR)
+		const tieLogic = () => !SingleKeyRange.xor(excludeL, excludeR)
 			? Favor.TIE
 			: excludeL
 				? flip(Favor.LHS)
-				: flip(Favor.RHS));
+				: flip(Favor.RHS);
 
 		if (SingleKeyRange.isUnbound(l)) {
 			return !SingleKeyRange.isUnbound(r) ? flip(Favor.RHS) : tieLogic();
@@ -1675,6 +1605,7 @@ class Row {
 		return Row.nextId++;
 	}
 
+	// Appears UNUSED
 	// Sets the global row id. This is supposed to be called by BackStore
 	// instances during initialization only.
 	// NOTE: nextId is currently shared among different databases. It is
@@ -1687,6 +1618,7 @@ class Row {
 		Row.nextId = nextId;
 	}
 
+	// Appears UNUSED
 	// Updates global row id. Guarantees that the |nextId_| value will only be
 	// increased. This is supposed to be called by BackStore instances during
 	// initialization only.
@@ -1701,6 +1633,7 @@ class Row {
 		return new Row(data.id, data.value);
 	}
 
+	// Appears UNUSED
 	// Creates a new Row instance with an automatically assigned ID.
 	static create(payload?: PayloadType): Row {
 		return new Row(Row.getNextId(), payload || {});
@@ -1753,6 +1686,7 @@ class Row {
 		return this.id_;
 	}
 
+	// Appears UNUSED
 	// Set the ID of this row instance.
 	assignRowId(id: number): void {
 		this.id_ = id;
@@ -1770,6 +1704,7 @@ class Row {
 		return this.payload_;
 	}
 
+	// Appears UNUSED
 	serialize(): RawRow {
 		return { "id": this.id_, "value": this.toDbPayload() };
 	}
@@ -2241,6 +2176,7 @@ class ValuePredicate extends PredicateNode {
 		return tables;
 	}
 
+	// Appears UNUSED
 	setBinder(binder: unknown): void {
 		this.binder = binder;
 	}
@@ -2702,12 +2638,10 @@ class MemoryTable implements RuntimeTable {
 		return this.data;
 	}
 
-	// Appears UNUSED
 	get(ids: number[]): Promise<Row[]> {
 		return Promise.resolve(this.getSync(ids));
 	}
 
-	// Appears UNUSED
 	putSync(rows: Row[]): void {
 		rows.forEach((row) => this.data.set(row.id(), row));
 	}
@@ -6659,12 +6593,12 @@ class SelectBuilder extends BaseBuilder<SelectContext> {
 	// Appears UNUSED
 	// Provides a clone of this select builder. This is useful when the user needs
 	// to observe the same query with different parameter bindings.
-	clone(): SelectBuilder {
-		const builder = new SelectBuilder(this.backStore, this.schema, this.cache, this.indexStore, this.queryEngine, this.runner, this.query.columns);
-		builder.query = this.query.clone();
-		builder.query.clonedFrom = null; // The two builders are not related.
-		return builder;
-	}
+	// clone(): SelectBuilder {
+	// 	const builder = new SelectBuilder(this.backStore, this.schema, this.cache, this.indexStore, this.queryEngine, this.runner, this.query.columns);
+	// 	builder.query = this.query.clone();
+	// 	builder.query.clonedFrom = null; // The two builders are not related.
+	// 	return builder;
+	// }
 
 	// Checks that usage of lf.fn.distinct() is correct. Specifically if an
 	// lf.fn.distinct() column is requested, then it can't be combined with any
@@ -6938,8 +6872,7 @@ interface LogicalPlanGenerator {
 
 // TODO(arthurhsu): this abstract base class is not necessary. Refactor to
 // remove and simplify code structure.
-abstract class BaseLogicalPlanGenerator<T extends Context>
-	implements LogicalPlanGenerator {
+abstract class BaseLogicalPlanGenerator<T extends Context> implements LogicalPlanGenerator {
 	private rootNode: LogicalQueryPlanNode;
 
 	constructor(protected query: T) {
@@ -7523,10 +7456,6 @@ class UnknownTable implements BaseTable {
 
 	deserializeRow(dbRecord: RawRow): Row {
 		throw new Exception(ErrorCode.NOT_SUPPORTED);
-	}
-
-	getConstraint(): Constraint {
-		return null as unknown as Constraint;
 	}
 
 	as(alias: string): BaseTable {
@@ -10338,47 +10267,6 @@ class DatabaseSchemaImpl implements Schema {
 	}
 }
 
-interface RawForeignKeySpec {
-	local: string;
-	ref: string;
-	action?: ConstraintAction;
-	timing?: ConstraintTiming;
-}
-
-class ForeignKeySpec {
-	childColumn: string;
-
-	parentTable: string;
-
-	parentColumn: string;
-
-	// Normalized name of this foreign key constraint.
-	name: string;
-
-	action: ConstraintAction;
-
-	timing: ConstraintTiming;
-
-	constructor(
-		rawSpec: RawForeignKeySpec,
-		readonly childTable: string,
-		name: string
-	) {
-		const array = rawSpec.ref.split(".");
-		if (array.length !== 2) {
-			// 540: Foreign key {0} has invalid reference syntax.
-			throw new Exception(ErrorCode.INVALID_FK_REF, name);
-		}
-
-		this.childColumn = rawSpec.local;
-		this.parentTable = array[0];
-		this.parentColumn = array[1];
-		this.name = `${childTable}.${name}`;
-		this.action = rawSpec.action || ConstraintAction.RESTRICT;
-		this.timing = rawSpec.timing || ConstraintTiming.IMMEDIATE;
-	}
-}
-
 function createPredicate<T>(
 	lhs: Column,
 	rhs: Column | T,
@@ -10530,19 +10418,6 @@ class ColumnImpl implements BaseColumn {
 	}
 }
 
-// Appears UNUSED
-class Constraint {
-	constructor(readonly primaryKey: IndexImpl, readonly notNullable: Column[]) { }
-
-	getPrimaryKey(): IndexImpl {
-		return this.primaryKey;
-	}
-
-	getNotNullable(): Column[] {
-		return this.notNullable;
-	}
-}
-
 interface IndexedColumn {
 	schema: Column;
 	order: Order;
@@ -10650,14 +10525,14 @@ class TableImpl implements BaseTable {
 	private _alias: string;
 
 	private readonly _columns: Column[];
-	private _functionMap: Map<string, (payload: PayloadType) => Key>;
+	private readonly _functionMap: Map<string, (payload: PayloadType) => Key>;
 
 	private readonly _evalRegistry: EvalRegistry;
 
 	constructor(
 		readonly _name: string,
 		cols: ColumnDef[],
-		private _indices: IndexImpl[],
+		private readonly _indices: IndexImpl[],
 		readonly _usePersistentIndex: boolean,
 		alias?: string
 	) {
@@ -10741,15 +10616,7 @@ class TableImpl implements BaseTable {
 		return new RowImpl(this._functionMap, this._columns, this._indices, dbRecord.id, obj);
 	}
 }
-
-// Dynamic Table schema builder
-// TODO(arthurhsu): FIXME: use a public interface here.
 class TableBuilder {
-	private static readonly NULLABLE_TYPES_BY_DEFAULT: Set<Type> = new Set<Type>([
-		Type.ARRAY_BUFFER,
-		Type.OBJECT
-	]);
-
 	private readonly name: string;
 
 	private readonly columns: Map<string, Type>;
@@ -10759,8 +10626,6 @@ class TableBuilder {
 	private readonly uniqueIndices: Set<string>;
 
 	private readonly nullable: Set<string>;
-
-	private readonly pkName: string;
 
 	private readonly indices: Map<string, IndexedColumnSpec[]>;
 
@@ -10773,7 +10638,6 @@ class TableBuilder {
 		this.uniqueColumns = new Set<string>();
 		this.uniqueIndices = new Set<string>();
 		this.nullable = new Set<string>();
-		this.pkName = null as unknown as string;
 		this.indices = new Map<string, IndexedColumnSpec[]>();
 		this.persistIndex = false;
 	}
@@ -10888,10 +10752,6 @@ class Database {
 
 	// FROM: class DatabaseSchemaImpl
 
-	name(): string {
-		return this.schema._name;
-	}
-
 	tables(): Table[] {
 		return Array.from(this.schema.tableMap.values());
 	}
@@ -10914,22 +10774,6 @@ class Database {
 	public select(...columns: Column[]): SelectQuery {
 		return new SelectBuilder(this.backStore, this.schema, this.cache, this.indexStore, this.queryEngine, this.runner, columns);
 	}
-
-	// public insert(): InsertBuilder {
-	// 	return new InsertBuilder(this.global);
-	// }
-
-	// public insertOrReplace(): InsertBuilder {
-	// 	return new InsertBuilder(this.global, /* allowReplace */ true);
-	// }
-
-	// public update(table: Table): UpdateBuilder {
-	// 	return new UpdateBuilder(this.global, table);
-	// }
-
-	// public delete(): DeleteBuilder {
-	// 	return new DeleteBuilder(this.global);
-	// }
 
 	public createTransaction(): Transaction {
 		return new RuntimeTransaction(this.schema, this.cache, this.indexStore, this.backStore, this.runner);
