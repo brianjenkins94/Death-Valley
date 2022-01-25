@@ -885,8 +885,8 @@ interface BaseTable extends Table {
 
 // Read-only objects that provides information for schema metadata.
 class Info {
-	static from(dbSchema: Schema): Info {
-		return (dbSchema as DatabaseSchemaImpl).info();
+	static from(schema: Schema): Info {
+		return (schema as DatabaseSchemaImpl).info();
 	}
 
 	// A mapping from table name to its referencing CASCADE foreign keys.
@@ -911,7 +911,7 @@ class Info {
 	// The map of full qualified column name to their child table name.
 	private readonly colChild: MapSet<string, string>;
 
-	constructor(private readonly dbSchema: Schema) {
+	constructor(private readonly schema: Schema) {
 		this.cascadeReferringFk = new MapSet();
 		this.restrictReferringFk = new MapSet();
 		this.parents = new MapSet();
@@ -921,14 +921,14 @@ class Info {
 		this.restrictChildren = new MapSet();
 		this.colChild = new MapSet();
 
-		this.dbSchema.tables().forEach((t) => {
+		this.schema.tables().forEach((t) => {
 			const table = t as BaseTable;
 			const tableName = table.getName();
 			table
 				.getConstraint()
 				.getForeignKeys()
 				.forEach((fkSpec) => {
-					this.parents.set(tableName, this.dbSchema.table(fkSpec.parentTable));
+					this.parents.set(tableName, this.schema.table(fkSpec.parentTable));
 					this.children.set(fkSpec.parentTable, table);
 					if (fkSpec.action === ConstraintAction.RESTRICT) {
 						this.restrictReferringFk.set(fkSpec.parentTable, fkSpec);
@@ -981,7 +981,7 @@ class Info {
 			}
 		}, this);
 		const tables = Array.from(tableNames.values());
-		return tables.map((tableName) => this.dbSchema.table(tableName));
+		return tables.map((tableName) => this.schema.table(tableName));
 	}
 
 	// Looks up child tables for given tables.
@@ -1008,7 +1008,7 @@ class Info {
 			}
 		}, this);
 		const tables = Array.from(tableNames.values());
-		return tables.map((tableName) => this.dbSchema.table(tableName));
+		return tables.map((tableName) => this.schema.table(tableName));
 	}
 
 	private expandScope(tableName: string, map: MapSet<string, Table>): Table[] {
@@ -3667,54 +3667,6 @@ class Memory implements BackStore {
 
 // Port of goog.math methods used by Lovefield.
 class MathHelper {
-	static longestCommonSubsequence<T>(
-		array1: T[],
-		array2: T[],
-		comparator?: (l: T, r: T) => boolean,
-		collector?: (idx1: number, idx2: number) => T
-	): T[] {
-		const defaultComparator = (a: T, b: T) => a === b;
-		const defaultCollector = (i1: number) => array1[i1];
-		const compare = comparator || defaultComparator;
-		const collect = collector || defaultCollector;
-		const length1 = array1.length;
-		const length2 = array2.length;
-
-		const arr: number[][] = [];
-		let i: number;
-		let j: number;
-		for (i = 0; i < length1 + 1; ++i) {
-			arr[i] = [];
-			arr[i][0] = 0;
-		}
-		for (j = 0; j < length2 + 1; ++j) {
-			arr[0][j] = 0;
-		}
-		for (i = 1; i < length1 + 1; ++i) {
-			for (j = 1; j < length2 + 1; ++j) {
-				arr[i][j] = compare(array1[i - 1], array2[j - 1]) ? arr[i - 1][j - 1] + 1 : Math.max(arr[i - 1][j], arr[i][j - 1]);
-			}
-		}
-
-		// Backtracking
-		const result: T[] = [];
-		i = length1;
-		j = length2;
-		while (i > 0 && j > 0) {
-			if (compare(array1[i - 1], array2[j - 1])) {
-				result.unshift(collect(i - 1, j - 1));
-				i--;
-				j--;
-			} else if (arr[i - 1][j] > arr[i][j - 1]) {
-				i--;
-			} else {
-				j--;
-			}
-		}
-
-		return result;
-	}
-
 	static sum(...args: number[]): number {
 		return args.reduce((sum, value) => sum + value, 0);
 	}
@@ -3824,11 +3776,11 @@ class DefaultCache implements Cache {
 
 	private readonly tableRows: Map<string, Set<number>>;
 
-	constructor(dbSchema: Schema) {
+	constructor(schema: Schema) {
 		this.map = new Map<number, Row>();
 		this.tableRows = new Map<string, Set<number>>();
 
-		dbSchema.tables().forEach((table) => {
+		schema.tables().forEach((table) => {
 			this.tableRows.set(table.getName(), new Set<number>());
 		}, this);
 	}
@@ -3940,28 +3892,6 @@ class ArrayHelper {
 		return true;
 	}
 
-	// Randomly shuffle an array's element.
-	static shuffle<T>(arr: T[]): void {
-		for (let i = arr.length - 1; i > 0; i--) {
-			// Choose a random array index in [0, i] (inclusive with i).
-			const j = Math.floor(Math.random() * (i + 1));
-			const tmp = arr[i];
-			arr[i] = arr[j];
-			arr[j] = tmp;
-		}
-	}
-
-	// Clone the array.
-	static clone<T>(arr: T[]): T[] {
-		const length = arr.length;
-		if (length > 0) {
-			const rv = new Array(length);
-			arr.forEach((v, i) => rv[i] = v);
-			return rv;
-		}
-		return [];
-	}
-
 	// Flatten the array.
 	static flatten(...arr: unknown[]): unknown[] {
 		const CHUNK_SIZE = 8192;
@@ -4021,21 +3951,6 @@ class ArrayHelper {
 		return result;
 	}
 
-	// Returns an object whose keys are all unique return values of sorter.
-	static bucket<T>(arr: T[], sorter: (v: T) => number): object {
-		type BucketType = Record<number, T[]>;
-		const bucket: BucketType = {};
-
-		arr.forEach((v) => {
-			const key = sorter(v);
-			if (bucket[key] === undefined) {
-				bucket[key] = [];
-			}
-			bucket[key].push(v);
-		});
-		return bucket;
-	}
-
 	// Returns lowest index of the target value if found, otherwise
 	// (-(insertion point) - 1). The insertion point is where the value should
 	// be inserted into arr to preserve the sorted property.  Return value >= 0
@@ -4071,28 +3986,6 @@ class ArrayHelper {
 
 // Helper functions for index structures.
 class IndexHelper {
-	// Java's String.hashCode method.
-	//
-	// for each character c in string
-	//   hash = hash * 31 + c
-	static hashCode(value: string): number {
-		let hash = 0;
-		for (let i = 0; i < value.length; ++i) {
-			hash = (hash << 5) - hash + value.charCodeAt(i);
-			hash &= hash; // Convert to 32-bit integer.
-		}
-		return hash;
-	}
-
-	// Compute hash key for an array.
-	static hashArray(values: object[]): string {
-		const keys = values.map((value) => {
-			return value !== undefined && value !== null ? IndexHelper.hashCode(value.toString()).toString(32) : "";
-		});
-
-		return keys.join("_");
-	}
-
 	// Slice result array by limit and skip.
 	// Note: For performance reasons the input array might be modified in place.
 	static slice(
@@ -10484,9 +10377,6 @@ class ExportTask extends UniqueId implements Task {
 
 	// Grabs contents from the cache and exports them as a plain object.
 	execSync(): PayloadType {
-		//const indexStore = this.global.getService(Service.INDEX_STORE);
-		//const cache = this.global.getService(Service.CACHE);
-
 		const tables: PayloadType = {};
 		(this.schema.tables() as BaseTable[]).forEach((table) => {
 			const rowIds = this.indexStore.get(table.getRowIdIndexName())
@@ -11601,7 +11491,7 @@ class TableImpl implements BaseTable {
 		nullable: Set<string>
 	): void {
 		if (indices.size === 0) {
-			this._constraint = new Constraint(null as unknown as IndexImpl, [], []);
+			this._constraint = new Constraint(null as unknown as IndexImpl, []);
 			return;
 		}
 
@@ -11685,11 +11575,11 @@ class TableBuilder {
 
 	private readonly nullable: Set<string>;
 
-	private pkName: string;
+	private readonly pkName: string;
 
 	private readonly indices: Map<string, IndexedColumnSpec[]>;
 
-	private persistIndex: boolean;
+	private readonly persistIndex: boolean;
 
 	constructor(tableName: string) {
 		this.checkNamingRules(tableName);
@@ -11757,12 +11647,12 @@ class TableBuilder {
 }
 
 class Database {
-	private schema: DatabaseSchemaImpl;
-	private cache: DefaultCache;
-	private backStore: Memory;
-	private indexStore: MemoryIndexStore;
-	private queryEngine: DefaultQueryEngine;
-	private runner: Runner;
+	private readonly schema: DatabaseSchemaImpl;
+	private readonly cache: DefaultCache;
+	private readonly backStore: Memory;
+	private readonly indexStore: MemoryIndexStore;
+	private readonly queryEngine: DefaultQueryEngine;
+	private readonly runner: Runner;
 
 	public constructor(data) {
 		this.schema = new DatabaseSchemaImpl("db");
