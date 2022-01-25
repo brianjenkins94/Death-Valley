@@ -691,10 +691,8 @@ class InMemoryUpdater {
 	): void {
 		// Using 'undefined' as a special value to indicate insertion/
 		// deletion instead of 'null', since 'null' can be a valid index key.
-		const keyNow
-			= modification[1] === null ? undefined : modification[1].keyOfIndex(index.getName());
-		const keyThen
-			= modification[0] === null ? undefined : modification[0].keyOfIndex(index.getName());
+		const keyNow = modification[1] === null ? undefined : modification[1].keyOfIndex(index.getName());
+		const keyThen = modification[0] === null ? undefined : modification[0].keyOfIndex(index.getName());
 
 		if (keyThen === undefined && keyNow !== undefined) {
 			// Insertion
@@ -954,8 +952,7 @@ class ConstraintChecker {
 		rowAfter: Row,
 		indexName: string
 	): boolean {
-		const deletionOrAddition
-			= rowBefore === null ? rowAfter !== null : rowAfter === null;
+		const deletionOrAddition = rowBefore === null ? rowAfter !== null : rowAfter === null;
 		return (
 			deletionOrAddition
 			|| rowBefore.keyOfIndex(indexName) !== rowAfter.keyOfIndex(indexName)
@@ -1684,8 +1681,7 @@ class SingleKeyRange {
 			const favor = SingleKeyRange.compareKey(r1.from, r2.from, true);
 			if (favor !== Favor.LHS) {
 				from = r1.from;
-				excludeLower
-					= favor !== Favor.TIE ? r1.excludeLower : r1.excludeLower && r2.excludeLower;
+				excludeLower = favor !== Favor.TIE ? r1.excludeLower : r1.excludeLower && r2.excludeLower;
 			} else {
 				from = r2.from;
 				excludeLower = r2.excludeLower;
@@ -1695,8 +1691,7 @@ class SingleKeyRange {
 			const favor = SingleKeyRange.compareKey(r1.to, r2.to, false);
 			if (favor !== Favor.RHS) {
 				to = r1.to;
-				excludeUpper
-					= favor !== Favor.TIE ? r1.excludeUpper : r1.excludeUpper && r2.excludeUpper;
+				excludeUpper = favor !== Favor.TIE ? r1.excludeUpper : r1.excludeUpper && r2.excludeUpper;
 			} else {
 				to = r2.to;
 				excludeUpper = r2.excludeUpper;
@@ -1713,8 +1708,7 @@ class SingleKeyRange {
 		}
 
 		let favor = SingleKeyRange.compareKey(r1.from, r2.from, true);
-		const left
-			= favor === Favor.TIE ? r1.excludeLower ? r1 : r2 : favor !== Favor.RHS ? r1 : r2;
+		const left = favor === Favor.TIE ? r1.excludeLower ? r1 : r2 : favor !== Favor.RHS ? r1 : r2;
 
 		// right side boundary test is different, null is considered greater.
 		let right: SingleKeyRange;
@@ -1722,8 +1716,7 @@ class SingleKeyRange {
 			right = SingleKeyRange.isUnbound(r1.to) ? r2 : r1;
 		} else {
 			favor = SingleKeyRange.compareKey(r1.to, r2.to, false);
-			right
-				= favor === Favor.TIE ? r1.excludeUpper ? r1 : r2 : favor === Favor.RHS ? r1 : r2;
+			right = favor === Favor.TIE ? r1.excludeUpper ? r1 : r2 : favor === Favor.RHS ? r1 : r2;
 		}
 		return new SingleKeyRange(left.from, right.to, left.excludeLower, right.excludeUpper);
 	}
@@ -1845,12 +1838,10 @@ class SingleKeyRange {
 	}
 
 	contains(key: SingleKey): boolean {
-		const left
-			= SingleKeyRange.isUnbound(this.from)
+		const left = SingleKeyRange.isUnbound(this.from)
 			|| key > this.from
 			|| key === this.from && !this.excludeLower;
-		const right
-			= SingleKeyRange.isUnbound(this.to)
+		const right = SingleKeyRange.isUnbound(this.to)
 			|| key < this.to
 			|| key === this.to && !this.excludeUpper;
 		return left && right;
@@ -2485,8 +2476,7 @@ class ValuePredicate extends PredicateNode {
 
 		const entries = relation.entries.filter((entry) => {
 			return (
-				this.evaluatorFn(entry.getField(this.column), this.value)
-				!== this.isComplement
+				this.evaluatorFn(entry.getField(this.column), this.value) !== this.isComplement
 			);
 		});
 		return new Relation(entries, relation.getTables());
@@ -2873,8 +2863,7 @@ abstract class QueryTask extends UniqueId implements Task {
 	}
 
 	exec(): Promise<Relation[]> {
-		const journal
-			= this.txType === TransactionType.READ_ONLY ? undefined : new Journal(this.schema, this.cache, this.indexStore, this.combinedScope);
+		const journal = this.txType === TransactionType.READ_ONLY ? undefined : new Journal(this.schema, this.cache, this.indexStore, this.combinedScope);
 		const results: Relation[] = [];
 
 		const remainingPlans = this.plans.slice();
@@ -3045,8 +3034,7 @@ abstract class BaseTx implements Tx {
 	}
 
 	commit(): Promise<unknown> {
-		const promise
-			= this.txType === TransactionType.READ_ONLY ? this.commitInternal() : this.commitReadWrite();
+		const promise = this.txType === TransactionType.READ_ONLY ? this.commitInternal() : this.commitReadWrite();
 		return promise.then((results: unknown) => {
 			this.success = true;
 			return results;
@@ -3248,8 +3236,7 @@ class MathHelper {
 		}
 
 		const mean = MathHelper.average.apply(null, args);
-		const sampleVariance
-			= MathHelper.sum.apply(null, args.map((val) => (val - mean) ** 2))
+		const sampleVariance = MathHelper.sum.apply(null, args.map((val) => (val - mean) ** 2))
 			/ (args.length - 1);
 		return Math.sqrt(sampleVariance);
 	}
@@ -3530,8 +3517,7 @@ class ArrayHelper {
 	): number {
 		let left = 0;
 		let right = arr.length;
-		const comp: (l: T, r: T) => number
-			= comparator
+		const comp: (l: T, r: T) => number = comparator
 			|| (ArrayHelper.defaultComparator as unknown as (l: T, r: T) => number);
 		while (left < right) {
 			const middle = left + right >> 1;
@@ -3606,8 +3592,7 @@ class IndexStats {
 	add(key: Key, rowCount: number): void {
 		this.totalRows += rowCount;
 
-		this.maxKeyEncountered
-			= this.maxKeyEncountered === null ? key : key > this.maxKeyEncountered ? key : this.maxKeyEncountered;
+		this.maxKeyEncountered = this.maxKeyEncountered === null ? key : key > this.maxKeyEncountered ? key : this.maxKeyEncountered;
 	}
 
 	// Signals that row(s) had been removed from index.
@@ -3716,8 +3701,7 @@ class BTree implements RuntimeIndex {
 		}
 
 		const reverse = reverseOrder || false;
-		const limit
-			= rawLimit !== undefined && rawLimit !== null ? Math.min(rawLimit, this.stats().totalRows) : this.stats().totalRows;
+		const limit = rawLimit !== undefined && rawLimit !== null ? Math.min(rawLimit, this.stats().totalRows) : this.stats().totalRows;
 		const skip = rawSkip || 0;
 		const maxCount = Math.min(Math.max(this.stats().totalRows - skip, 0), limit);
 		if (maxCount === 0) {
@@ -4117,8 +4101,7 @@ class BTreeNode {
 		this.keys = [];
 		this.values = [];
 		this.children = [];
-		this.getContainingLeaf
-			= tree.comparator().keyDimensions() === 1 ? this.getContainingLeafSingleKey : this.getContainingLeafMultiKey;
+		this.getContainingLeaf = tree.comparator().keyDimensions() === 1 ? this.getContainingLeafSingleKey : this.getContainingLeafMultiKey;
 	}
 
 	// Dump the tree as string. For example, if the tree is
@@ -4762,16 +4745,13 @@ class SimpleComparator implements Comparator {
 	) => Favor;
 
 	constructor(order: Order) {
-		this.compareFn
-			= order === Order.DESC ? SimpleComparator.compareDescending : SimpleComparator.compareAscending;
+		this.compareFn = order === Order.DESC ? SimpleComparator.compareDescending : SimpleComparator.compareAscending;
 
-		this.normalizeKeyRange
-			= order === Order.DESC ? (keyRange?: SingleKeyRange) => {
-				return keyRange !== undefined && keyRange !== null ? keyRange.reverse() : null;
-			} : (keyRange?: SingleKeyRange) => keyRange || null;
+		this.normalizeKeyRange = order === Order.DESC ? (keyRange?: SingleKeyRange) => {
+			return keyRange !== undefined && keyRange !== null ? keyRange.reverse() : null;
+		} : (keyRange?: SingleKeyRange) => keyRange || null;
 
-		this.orderRange
-			= order === Order.DESC ? SimpleComparator.orderRangeDescending : SimpleComparator.orderRangeAscending;
+		this.orderRange = order === Order.DESC ? SimpleComparator.orderRangeDescending : SimpleComparator.orderRangeAscending;
 	}
 
 	// Checks if the range covers "left" or "right" of the key (inclusive).
@@ -5014,8 +4994,7 @@ class SimpleComparatorWithNull extends SimpleComparator {
 	constructor(order: Order) {
 		super(order);
 
-		this.compareFn
-			= order === Order.DESC ? SimpleComparatorWithNull.compareDescending : SimpleComparatorWithNull.compareAscending;
+		this.compareFn = order === Order.DESC ? SimpleComparatorWithNull.compareDescending : SimpleComparatorWithNull.compareAscending;
 	}
 
 	override isInRange(key: SingleKey, range: SingleKeyRange): boolean {
@@ -5844,8 +5823,7 @@ class CombinedPredicate extends PredicateNode {
 	private isKeyRangeCompatibleOr(): boolean {
 		let predicateColumn: Column | null = null;
 		return this.getChildren().every((child) => {
-			const isCandidate
-				= child instanceof ValuePredicate && child.isKeyRangeCompatible();
+			const isCandidate = child instanceof ValuePredicate && child.isKeyRangeCompatible();
 			if (!isCandidate) {
 				return false;
 			}
@@ -5904,8 +5882,7 @@ class JoinPredicate extends PredicateNode {
 	}
 
 	getTables(results?: Set<Table>): Set<Table> {
-		const tables
-			= results !== undefined && results !== null ? results : new Set<BaseTable>();
+		const tables = results !== undefined && results !== null ? results : new Set<BaseTable>();
 		tables.add(this.leftColumn.getTable());
 		tables.add(this.rightColumn.getTable());
 		return tables;
@@ -5983,8 +5960,7 @@ class JoinPredicate extends PredicateNode {
 		// Since block size is a power of two, we can use bitwise operators.
 		const blockNumBits = JoinPredicate.BLOCK_SIZE_EXPONENT;
 		// This is equivalent to Math.ceil(rightEntriesLength/blockSize).
-		const blockCount
-			= rightEntriesLength + (1 << blockNumBits) - 1 >> blockNumBits;
+		const blockCount = rightEntriesLength + (1 << blockNumBits) - 1 >> blockNumBits;
 		let currentBlock = 0;
 		// The inner loop is executed in blocks. Blocking helps in pre-fetching
 		// the next contents by CPU and also reduces cache misses as long as a block
@@ -6860,8 +6836,7 @@ class SelectBuilder extends BaseBuilder<SelectContext> {
 		}
 		let normalizedPredicate = predicate;
 		if (
-			(table as BaseTable).getEffectiveName()
-			!== (predicate.rightColumn.getTable() as BaseTable).getEffectiveName()
+			(table as BaseTable).getEffectiveName() !== (predicate.rightColumn.getTable() as BaseTable).getEffectiveName()
 		) {
 			normalizedPredicate = predicate.reverse();
 		}
@@ -6951,8 +6926,7 @@ class SelectBuilder extends BaseBuilder<SelectContext> {
 		const distinctColumns = this.query.columns.filter((column) => column instanceof AggregatedColumn
 			&& column.aggregatorType === FnType.DISTINCT);
 
-		const isValidCombination
-			= distinctColumns.length === 0
+		const isValidCombination = distinctColumns.length === 0
 			|| distinctColumns.length === 1 && this.query.columns.length === 1;
 
 		if (!isValidCombination) {
@@ -6987,8 +6961,7 @@ class SelectBuilder extends BaseBuilder<SelectContext> {
 	// columns, or only aggregated columns. See checkProjectionList_ for details.
 	private checkProjectionListNotMixed(): void {
 		const aggregatedColumnsExist = this.query.columns.some((column) => column instanceof AggregatedColumn);
-		const nonAggregatedColumnsExist
-			= this.query.columns.some((column) => !(column instanceof AggregatedColumn)) || this.query.columns.length === 0;
+		const nonAggregatedColumnsExist = this.query.columns.some((column) => !(column instanceof AggregatedColumn)) || this.query.columns.length === 0;
 
 		if (aggregatedColumnsExist && nonAggregatedColumnsExist) {
 			// 526: Invalid projection list: mixing aggregated with non-aggregated
@@ -7000,8 +6973,7 @@ class SelectBuilder extends BaseBuilder<SelectContext> {
 	// type and column type.
 	private checkAggregations(): void {
 		this.query.columns.forEach((column) => {
-			const isValidAggregation
-				= !(column instanceof AggregatedColumn)
+			const isValidAggregation = !(column instanceof AggregatedColumn)
 				|| this.isAggregationValid(column.aggregatorType, column.getType());
 
 			if (!isValidAggregation) {
@@ -7315,8 +7287,7 @@ class ImplicitJoinsPass extends RewritePass<LogicalQueryPlanNode> {
 
 			const child = rootNode.getChildAt(0);
 			if (child instanceof CrossProductNode) {
-				const isOuterJoin
-					= queryContext.outerJoinPredicates
+				const isOuterJoin = queryContext.outerJoinPredicates
 					&& queryContext.outerJoinPredicates.has(predicateId);
 				const joinNode = new JoinNode(rootNode.predicate, isOuterJoin);
 				TreeHelper.replaceChainWithNode(rootNode, child, joinNode);
@@ -7639,8 +7610,7 @@ class SelectLogicalPlanGenerator extends BaseLogicalPlanGenerator<SelectContext>
 		];
 
 		let lastExistingParentIndex = -1;
-		let rootNode: LogicalQueryPlanNode
-			= null as unknown as LogicalQueryPlanNode;
+		let rootNode: LogicalQueryPlanNode = null as unknown as LogicalQueryPlanNode;
 		for (let i = 0; i < parentOrder.length; i++) {
 			const node = parentOrder[i];
 			if (node !== null) {
@@ -7741,8 +7711,7 @@ class LogicalPlanFactory {
 	}
 
 	create(query: Context): LogicalQueryPlan {
-		let generator: LogicalPlanGenerator
-			= null as unknown as LogicalPlanGenerator;
+		let generator: LogicalPlanGenerator = null as unknown as LogicalPlanGenerator;
 		// if (query instanceof InsertContext) {
 		// 	generator = new InsertLogicalPlanGenerator(query);
 		// } else if (query instanceof DeleteContext) {
@@ -8329,8 +8298,7 @@ class GetRowCountPass extends RewritePass<PhysicalQueryPlanNode> {
 
 	private canOptimize(queryContext: SelectContext): boolean {
 		const isDefAndNotNull = (v: unknown) => v !== null && v !== undefined;
-		const isCandidate
-			= queryContext.columns.length === 1
+		const isCandidate = queryContext.columns.length === 1
 			&& queryContext.from.length === 1
 			&& !isDefAndNotNull(queryContext.where)
 			&& !isDefAndNotNull(queryContext.limit)
@@ -8403,8 +8371,7 @@ class JoinStep extends PhysicalQueryPlanNode {
 		readonly isOuterJoin: boolean
 	) {
 		super(2, ExecType.ALL);
-		this.algorithm
-			= this.predicate.evaluatorType === EvalType.EQ ? JoinAlgorithm.HASH : JoinAlgorithm.NESTED_LOOP;
+		this.algorithm = this.predicate.evaluatorType === EvalType.EQ ? JoinAlgorithm.HASH : JoinAlgorithm.NESTED_LOOP;
 		this.indexJoinInfo = null as unknown as IndexJoinInfo;
 	}
 
@@ -8513,10 +8480,9 @@ class IndexJoinPass extends RewritePass<PhysicalQueryPlanNode> {
 
 		// Finds which of the two joined columns corresponds to the given table.
 		const getColumnForTable = (table: BaseTable): Column => {
-			return table.getEffectiveName()
-				=== (
-					joinStep.predicate.rightColumn.getTable() as BaseTable
-				).getEffectiveName() ? joinStep.predicate.rightColumn : joinStep.predicate.leftColumn;
+			return table.getEffectiveName() === (
+				joinStep.predicate.rightColumn.getTable() as BaseTable
+			).getEffectiveName() ? joinStep.predicate.rightColumn : joinStep.predicate.leftColumn;
 		};
 
 		// Extracts the candidate indexed column for the given execution step node.
@@ -8542,8 +8508,7 @@ class IndexJoinPass extends RewritePass<PhysicalQueryPlanNode> {
 		// preferred. A smarter decision is to use the column corresponding to the
 		// bigger incoming relation, such that index accesses are minimized. Use
 		// index stats to figure out the size of each relation.
-		const chosenColumn
-			= rightCandidate !== null ? rightCandidate : leftCandidate;
+		const chosenColumn = rightCandidate !== null ? rightCandidate : leftCandidate;
 
 		joinStep.markAsIndexJoin(chosenColumn);
 		const dummyRelation = new Relation([], [(chosenColumn.getTable() as BaseTable).getEffectiveName()]);
@@ -8588,8 +8553,7 @@ class BoundedKeyRangeCalculator implements IndexKeyRangeCalculator {
 
 		// If this IndexRangeCandidate refers to a single column index there is no
 		// need to perform cartesian product, since there is only one dimension.
-		this.combinations
-			= this.indexSchema.columns.length === 1 ? Array.from(keyRangeMap.values())[0].getValues() : this.calculateCartesianProduct(this.getSortedKeyRangeSets(keyRangeMap));
+		this.combinations = this.indexSchema.columns.length === 1 ? Array.from(keyRangeMap.values())[0].getValues() : this.calculateCartesianProduct(this.getSortedKeyRangeSets(keyRangeMap));
 		this.lastQueryContext = queryContext;
 
 		return this.combinations;
@@ -8749,8 +8713,7 @@ class IndexRangeCandidate {
 	}
 
 	calculateCost(queryContext: Context): number {
-		const combinations: Range[]
-			= this.getKeyRangeCalculator().getKeyRangeCombinations(queryContext);
+		const combinations: Range[] = this.getKeyRangeCalculator().getKeyRangeCombinations(queryContext);
 		const indexData = this.indexStore.get(this.indexSchema.getNormalizedName());
 
 		return combinations.reduce((costSoFar: number, combination: Range) => {
@@ -9113,8 +9076,7 @@ class OrderByStep extends PhysicalQueryPlanNode {
 			// If such a column exists, sort the results of the lf.fn.distinct
 			// aggregator instead, since this is what will be used in the returned
 			// result.
-			const relationToSort
-				= distinctColumn === null ? relations[0] : (relations[0].getAggregationResult(distinctColumn) as Relation);
+			const relationToSort = distinctColumn === null ? relations[0] : (relations[0].getAggregationResult(distinctColumn) as Relation);
 
 			relationToSort.entries.sort(this.entryComparatorFn.bind(this));
 		} else {
@@ -9162,8 +9124,7 @@ class OrderByStep extends PhysicalQueryPlanNode {
 			&& comparisonIndex + 1 < this.orderBy.length
 		);
 
-		let result
-			= leftPayload < rightPayload ? -1 : leftPayload > rightPayload ? 1 : 0;
+		let result = leftPayload < rightPayload ? -1 : leftPayload > rightPayload ? 1 : 0;
 		result = order === Order.ASC ? result : -result;
 		return result;
 	}
@@ -9249,8 +9210,7 @@ class RelationTransformer {
 		// entry there is exactly one field per column.
 		const entry = new RelationEntry(new Row(Row.DUMMY_ID, {}), this.relation.isPrefixApplied());
 		this.columns.forEach((column) => {
-			const value
-				= column instanceof AggregatedColumn ? this.relation.getAggregationResult(column) : this.relation.entries[0].getField(column);
+			const value = column instanceof AggregatedColumn ? this.relation.getAggregationResult(column) : this.relation.entries[0].getField(column);
 			entry.setField(column, value);
 		}, this);
 
@@ -9416,8 +9376,7 @@ class LimitSkipByIndexPass extends RewritePass<PhysicalQueryPlanNode> {
 		// have been calculated. Therefore if such nodes exist this optimization can
 		// not be applied.
 		const stopFn = (node: TreeNode) => {
-			const hasAggregators
-				= node instanceof ProjectStep && node.hasAggregators();
+			const hasAggregators = node instanceof ProjectStep && node.hasAggregators();
 			return (
 				hasAggregators
 				|| node instanceof OrderByStep
@@ -9743,8 +9702,7 @@ class OrderByIndexPass extends RewritePass<PhysicalQueryPlanNode> {
 	): OrderByIndexRangeCandidate | null {
 		// First find an index schema which includes all columns to be sorted in the
 		// same order.
-		const columnsMatch
-			= indexSchema.columns.length === orderBy.length
+		const columnsMatch = indexSchema.columns.length === orderBy.length
 			&& orderBy.every((singleOrderBy, j) => {
 				const indexedColumn = indexSchema.columns[j];
 				return (
@@ -9791,9 +9749,7 @@ class OrderByIndexPass extends RewritePass<PhysicalQueryPlanNode> {
 
 		const xorBitmask = ordersLeftBitmask ^ ordersRightBitmask;
 		const isNatural = xorBitmask === 0;
-		const isReverse
-			= xorBitmask
-			=== 2 ** Math.max(orderBy.length, indexSchema.columns.length) - 1;
+		const isReverse = xorBitmask === 2 ** Math.max(orderBy.length, indexSchema.columns.length) - 1;
 
 		return [isNatural, isReverse];
 	}
@@ -10028,13 +9984,11 @@ class LockTableEntry {
 	}
 
 	canAcquireLock(taskId: number, lockType: LockType): boolean {
-		const noReservedReadOnlyLocksExist
-			= this.reservedReadOnlyLocks === null
+		const noReservedReadOnlyLocksExist = this.reservedReadOnlyLocks === null
 			|| this.reservedReadOnlyLocks.size === 0;
 
 		if (lockType === LockType.EXCLUSIVE) {
-			const noSharedLocksExist
-				= this.sharedLocks === null || this.sharedLocks.size === 0;
+			const noSharedLocksExist = this.sharedLocks === null || this.sharedLocks.size === 0;
 			return (
 				noSharedLocksExist
 				&& noReservedReadOnlyLocksExist
@@ -10786,8 +10740,7 @@ class ColumnImpl implements BaseColumn {
 
 			// Normally there should be only one dedicated index for this column,
 			// but if there are more, just grab the first one.
-			this.index
-				= indices.length > 0 ? indices[0] : (null as unknown as IndexImpl);
+			this.index = indices.length > 0 ? indices[0] : (null as unknown as IndexImpl);
 		}
 		return this.index;
 	}
@@ -11081,8 +11034,7 @@ class TableImpl implements BaseTable {
 		this._functionMap = new Map<string, (payload: PayloadType) => Key>();
 		this._indices.forEach((index) => this._functionMap.set(index.getNormalizedName(), this.getKeyOfIndexFn(columnMap, index)));
 
-		const pk: IndexImpl
-			= pkName === null ? (null as unknown as IndexImpl) : new IndexImpl(this._name, pkName, true, this.generateIndexedColumns(indices, columnMap, pkName));
+		const pk: IndexImpl = pkName === null ? (null as unknown as IndexImpl) : new IndexImpl(this._name, pkName, true, this.generateIndexedColumns(indices, columnMap, pkName));
 		const notNullable = this._columns.filter((col) => !nullable.has(col.getName()));
 		this._constraint = new Constraint(pk, notNullable);
 	}
