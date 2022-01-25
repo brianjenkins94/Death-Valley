@@ -599,16 +599,7 @@ class Resolver<T> {
 class UniqueId {
 	private static nextId = 0;
 
-	uniqueId!: string;
-
 	uniqueNumber!: number;
-
-	getUniqueId(): string {
-		if (this.uniqueId === undefined) {
-			this.uniqueId = `lf_${this.getUniqueNumber()}`;
-		}
-		return this.uniqueId;
-	}
 
 	getUniqueNumber(): number {
 		if (this.uniqueNumber === undefined) {
@@ -813,34 +804,9 @@ class MapSet<K, V> {
 		return this;
 	}
 
-	/**
-	 * Removes a value associated with the given key.
-	 * Returns true if the map was modified.
-	 */
-	delete(key: K, value: V): boolean {
-		const valueSet = this.map.get(key) || null;
-		if (valueSet === null) {
-			return false;
-		}
-
-		const didRemove = valueSet.delete(value);
-		if (didRemove) {
-			this.count--;
-			if (valueSet.size === 0) {
-				this.map.delete(key);
-			}
-		}
-		return didRemove;
-	}
-
 	get(key: K): V[] | null {
 		const valueSet = this.map.get(key) || null;
 		return valueSet === null ? null : Array.from(valueSet);
-	}
-
-	clear(): void {
-		this.map.clear();
-		this.count = 0;
 	}
 
 	keys(): K[] {
@@ -851,17 +817,6 @@ class MapSet<K, V> {
 		const results: V[] = [];
 		this.map.forEach((valueSet) => results.push(...Array.from(valueSet)));
 		return results;
-	}
-
-	// Returns a set for a given key. If the key does not exist in the map,
-	// a new Set will be created.
-	getSet(key: K): Set<V> {
-		let valueSet = this.map.get(key) || null;
-		if (valueSet === null) {
-			valueSet = new Set<V>();
-			this.map.set(key, valueSet);
-		}
-		return valueSet;
 	}
 }
 
@@ -964,56 +919,6 @@ class Info {
 				return (cascadeConstraints || []).concat(restrictConstraints || []);
 			}
 		}
-	}
-
-	// Look up parent tables for given tables.
-	getParentTables(tableName: string): Table[] {
-		return this.expandScope(tableName, this.parents);
-	}
-
-	// Looks up parent tables for a given column set.
-	getParentTablesByColumns(colNames: string[]): Table[] {
-		const tableNames = new Set<string>();
-		colNames.forEach((col) => {
-			const table = this.colParent.get(col);
-			if (table) {
-				tableNames.add(table);
-			}
-		}, this);
-		const tables = Array.from(tableNames.values());
-		return tables.map((tableName) => this.schema.table(tableName));
-	}
-
-	// Looks up child tables for given tables.
-	getChildTables(
-		tableName: string,
-		constraintAction?: ConstraintAction
-	): Table[] {
-		if (!(constraintAction !== undefined && constraintAction !== null)) {
-			return this.expandScope(tableName, this.children);
-		} else if (constraintAction === ConstraintAction.RESTRICT) {
-			return this.expandScope(tableName, this.restrictChildren);
-		} else {
-			return this.expandScope(tableName, this.cascadeChildren);
-		}
-	}
-
-	// Looks up child tables for a given column set.
-	getChildTablesByColumns(colNames: string[]): Table[] {
-		const tableNames = new Set<string>();
-		colNames.forEach((col) => {
-			const children = this.colChild.get(col);
-			if (children) {
-				children.forEach((child) => tableNames.add(child));
-			}
-		}, this);
-		const tables = Array.from(tableNames.values());
-		return tables.map((tableName) => this.schema.table(tableName));
-	}
-
-	private expandScope(tableName: string, map: MapSet<string, Table>): Table[] {
-		const values = map.get(tableName);
-		return values === null ? [] : values;
 	}
 }
 
@@ -1447,13 +1352,6 @@ class TableDiff {
 		}
 	}
 
-	// Merge another diff into this one.
-	merge(other: TableDiff): void {
-		other.added.forEach((row) => { this.add(row); });
-		other.modified.forEach((modification) => { this.modify(modification); });
-		other.deleted.forEach((row) => { this.delete(row); });
-	}
-
 	// Transforms each changes included in this diff (insertion, modification,
 	// deletion) as a pair of before and after values.
 	// Example addition:     [null, rowValue]
@@ -1489,14 +1387,6 @@ class TableDiff {
 		});
 
 		return reverseDiff;
-	}
-
-	isEmpty(): boolean {
-		return (
-			this.added.size === 0
-			&& this.deleted.size === 0
-			&& this.modified.size === 0
-		);
 	}
 }
 
@@ -1576,71 +1466,6 @@ class Journal {
 		return this.scope;
 	}
 
-	insert(t: Table, rows: Row[]): void {
-		const table = t as BaseTable;
-		this.assertJournalWritable();
-		this.checkScope(table);
-		this.constraintChecker.checkNotNullable(table, rows);
-		this.constraintChecker.checkForeignKeysForInsert(table, rows, ConstraintTiming.IMMEDIATE);
-
-		rows.forEach((row) => {
-			this.modifyRow(table, [null /* rowBefore */, row]);
-		}, this);
-	}
-
-	update(t: Table, rows: Row[]): void {
-		const table = t as BaseTable;
-		this.assertJournalWritable();
-		this.checkScope(table);
-		this.constraintChecker.checkNotNullable(table, rows);
-
-		const modifications: Modification[] = rows.map((row) => {
-			const rowBefore = this.cache.get(row.id());
-			return [rowBefore /* rowBefore */, row] as Modification;
-		}, this);
-		this.updateByCascade(table, modifications);
-
-		this.constraintChecker.checkForeignKeysForUpdate(table, modifications, ConstraintTiming.IMMEDIATE);
-		modifications.forEach((modification) => { this.modifyRow(table, modification); });
-	}
-
-	insertOrReplace(t: Table, rows: Row[]): void {
-		const table = t as BaseTable;
-		this.assertJournalWritable();
-		this.checkScope(table);
-		this.constraintChecker.checkNotNullable(table, rows);
-
-		rows.forEach((rowNow) => {
-			let rowBefore = null;
-
-			const existingRowId = this.constraintChecker.findExistingRowIdInPkIndex(table, rowNow);
-
-			if (existingRowId !== undefined && existingRowId !== null) {
-				rowBefore = this.cache.get(existingRowId);
-				rowNow.assignRowId(existingRowId);
-				const modification = [rowBefore, rowNow] as Modification;
-				this.constraintChecker.checkForeignKeysForUpdate(table, [modification], ConstraintTiming.IMMEDIATE);
-			} else {
-				this.constraintChecker.checkForeignKeysForInsert(table, [rowNow], ConstraintTiming.IMMEDIATE);
-			}
-
-			this.modifyRow(table, [rowBefore, rowNow]);
-		}, this);
-	}
-
-	remove(t: Table, rows: Row[]): void {
-		const table = t as BaseTable;
-		this.assertJournalWritable();
-		this.checkScope(table);
-
-		this.removeByCascade(table, rows);
-		this.constraintChecker.checkForeignKeysForDelete(table, rows, ConstraintTiming.IMMEDIATE);
-
-		rows.forEach((row) => {
-			this.modifyRow(table, [row /* rowBefore */, null]);
-		}, this);
-	}
-
 	checkDeferredConstraints(): void {
 		this.tableDiffs.forEach((tableDiff) => {
 			const table = this.scope.get(tableDiff.getName()) as BaseTable;
@@ -1672,95 +1497,6 @@ class Journal {
 	private assertJournalWritable(): void {
 		assert(!this.pendingRollback, "Attempted to use journal that needs to be rolled back.");
 		assert(!this.terminated, "Attempted to commit a terminated journal.");
-	}
-
-	// Checks that the given table is within the declared scope.
-	private checkScope(tableSchema: Table): void {
-		if (!this.scope.has(tableSchema.getName())) {
-			// 106: Attempt to access {0} outside of specified scope.
-			throw new Exception(ErrorCode.OUT_OF_SCOPE, tableSchema.getName());
-		}
-	}
-
-	// Updates the journal to reflect a modification (insertion, update, deletion)
-	// of a single row.
-	private modifyRow(table: Table, modification: Modification): void {
-		const tableName = table.getName();
-		const diff = this.tableDiffs.get(tableName) || new TableDiff(tableName);
-		this.tableDiffs.set(tableName, diff);
-
-		try {
-			this.inMemoryUpdater.updateTableIndicesForRow(table, modification);
-		} catch (e) {
-			this.pendingRollback = true;
-			throw e;
-		}
-
-		const rowBefore = modification[0];
-		const rowNow = modification[1];
-		if (rowBefore === null && rowNow !== null) {
-			// Insertion
-			this.cache.set(tableName, rowNow);
-			diff.add(rowNow);
-		} else if (rowBefore !== null && rowNow !== null) {
-			// Update
-			this.cache.set(tableName, rowNow);
-			diff.modify(modification);
-		} else if (rowBefore !== null && rowNow === null) {
-			// Deletion
-			this.cache.remove(tableName, rowBefore.id());
-			diff.delete(rowBefore);
-		}
-	}
-
-	// Updates rows in the DB as a result of cascading foreign key constraints.
-	// |table| refers to the table where the update is initiated.
-	// |modifications| means the initial modifications.
-	private updateByCascade(table: Table, modifications: Modification[]): void {
-		const foreignKeySpecs = Info.from(this.schema).getReferencingForeignKeys(table.getName(), ConstraintAction.CASCADE);
-		if (foreignKeySpecs === null) {
-			// The affected table does not appear as the parent in any CASCADE foreign
-			// key constraint, therefore no cascading detection is needed.
-			return;
-		}
-		const cascadedUpdates = this.constraintChecker.detectCascadeUpdates(table as BaseTable, modifications, foreignKeySpecs);
-		cascadedUpdates.keys().forEach((rowId) => {
-			const updates = cascadedUpdates.get(rowId);
-			updates.forEach((update) => {
-				const tbl = this.schema.table(update.fkSpec.childTable) as BaseTable;
-				const rowBefore = this.cache.get(rowId) as Row;
-				// TODO(dpapad): Explore faster ways to clone an lf.Row.
-				const rowAfter = tbl.deserializeRow(rowBefore.serialize());
-				rowAfter.payload()[update.fkSpec.childColumn] = update.originalUpdatedRow.payload()[update.fkSpec.parentColumn];
-				this.modifyRow(tbl, [rowBefore /* rowBefore */, rowAfter]);
-			}, this);
-		}, this);
-	}
-
-	// Removes rows in the DB as a result of cascading foreign key constraints.
-	// |table| refers to the table where the update is initiated.
-	// |rows| means the initial rows to be deleted.
-	private removeByCascade(table: Table, deletedRows: Row[]): void {
-		const foreignKeySpecs = Info.from(this.schema).getReferencingForeignKeys(table.getName(), ConstraintAction.CASCADE);
-		if (foreignKeySpecs === null) {
-			// The affected table does not appear as the parent in any CASCADE foreign
-			// key constraint, therefore no cascading detection is needed.
-			return;
-		}
-
-		const cascadeDeletion = this.constraintChecker.detectCascadeDeletion(table as BaseTable, deletedRows);
-		const cascadeRowIds = cascadeDeletion.rowIdsPerTable;
-
-		cascadeDeletion.tableOrder.forEach((tableName) => {
-			const tbl = this.schema.table(tableName) as BaseTable;
-			const rows = cascadeRowIds.get(tableName).map((rowId) => {
-				return this.cache.get(rowId) as Row;
-			}, this);
-			this.constraintChecker.checkForeignKeysForDelete(tbl, rows, ConstraintTiming.IMMEDIATE);
-			rows.forEach((row) => {
-				this.modifyRow(tbl, [row /* rowBefore */, null]);
-			}, this);
-		}, this);
 	}
 }
 
@@ -2179,30 +1915,6 @@ class SingleKeyRange {
 		);
 	}
 
-	// Finds the complement key range. Note that in some cases the complement is
-	// composed of two disjoint key ranges. For example complementing [10, 20]
-	// would result in [unbound, 10) and (20, unbound]. An empty array will be
-	// returned in the case where the complement is empty.
-	complement(): SingleKeyRange[] {
-		// Complement of SingleKeyRange.all() is empty.
-		if (this.isAll()) {
-			return SingleKeyRange.EMPTY_RANGE;
-		}
-
-		let keyRangeLow: SingleKeyRange = null as unknown as SingleKeyRange;
-		let keyRangeHigh: SingleKeyRange = null as unknown as SingleKeyRange;
-
-		if (!SingleKeyRange.isUnbound(this.from)) {
-			keyRangeLow = new SingleKeyRange(SingleKeyRange.UNBOUND_VALUE, this.from, false, !this.excludeLower);
-		}
-
-		if (!SingleKeyRange.isUnbound(this.to)) {
-			keyRangeHigh = new SingleKeyRange(this.to, SingleKeyRange.UNBOUND_VALUE, !this.excludeUpper, false);
-		}
-
-		return [keyRangeLow, keyRangeHigh].filter((keyRange) => keyRange !== null);
-	}
-
 	// Reverses a keyRange such that "lower" refers to larger values and "upper"
 	// refers to smaller values. Note: This is different than what complement()
 	// does.
@@ -2253,37 +1965,6 @@ class SingleKeyRange {
 		return left && right;
 	}
 
-	// Bound the range with [min, max] and return the newly bounded range.
-	// When the given bound has no intersection with this range, or the
-	// range/bound is reversed, return null.
-	getBounded(min: SingleKey, max: SingleKey): SingleKeyRange {
-		// Eliminate out of range scenarios.
-		if (
-			SingleKeyRange.isUnbound(this.from) && !this.contains(min)
-			|| SingleKeyRange.isUnbound(this.to) && !this.contains(max)
-		) {
-			return null as unknown as SingleKeyRange;
-		}
-
-		let from = min;
-		let to = max;
-		let excludeLower = false;
-		let excludeUpper = false;
-		if (!SingleKeyRange.isUnbound(this.from) && this.from >= min) {
-			from = this.from as SingleKey;
-			excludeLower = this.excludeLower;
-		}
-		if (!SingleKeyRange.isUnbound(this.to) && this.to <= max) {
-			to = this.to as SingleKey;
-			excludeUpper = this.excludeUpper;
-		}
-
-		if (from > to || from === to && (excludeUpper || excludeLower)) {
-			return null as unknown as SingleKeyRange;
-		}
-		return new SingleKeyRange(from, to, excludeLower, excludeUpper);
-	}
-
 	equals(range: SingleKeyRange): boolean {
 		return (
 			this.from === range.from
@@ -2323,10 +2004,6 @@ class SingleKeyRangeSet {
 		return this.ranges.map((r) => r.toString()).join(",");
 	}
 
-	containsKey(key: SingleKey): boolean {
-		return this.ranges.some((r) => r.contains(key));
-	}
-
 	getValues(): SingleKeyRange[] {
 		return this.ranges;
 	}
@@ -2355,27 +2032,6 @@ class SingleKeyRangeSet {
 		}
 		results.push(start);
 		this.ranges = results;
-	}
-
-	equals(set: SingleKeyRangeSet): boolean {
-		if (this.ranges.length === set.ranges.length) {
-			return (
-				this.ranges.length === 0
-				|| this.ranges.every((r, index) => r.equals(set.ranges[index]))
-			);
-		}
-
-		return false;
-	}
-
-	// Returns the boundary of this set, null if range set is empty.
-	getBoundingRange(): SingleKeyRange | null {
-		if (this.ranges.length <= 1) {
-			return this.ranges.length === 0 ? null : this.ranges[0];
-		}
-
-		const last = this.ranges.length - 1;
-		return SingleKeyRange.getBoundingRange(this.ranges[0], this.ranges[last]);
 	}
 }
 
@@ -4067,19 +3723,6 @@ interface BTreeNodePayload {
 class BTree implements RuntimeIndex {
 	static EMPTY: number[] = [];
 
-	// Creates tree from serialized leaves.
-	static deserialize(
-		comparator: Comparator,
-		name: string,
-		uniqueKeyOnly: boolean,
-		rows: Row[]
-	): BTree {
-		const tree = new BTree(name, comparator, uniqueKeyOnly);
-		const newRoot = BTreeNode.deserialize(rows, tree);
-		tree.root = newRoot;
-		return tree;
-	}
-
 	private root: BTreeNode;
 
 	private readonly statsObj: IndexStats;
@@ -4386,24 +4029,6 @@ class BTreeNode {
 			node = node.next;
 		}
 		return rows;
-	}
-
-	// Returns new root node.
-	static deserialize(rows: Row[], tree: BTree): BTreeNode {
-		const stats = tree.stats();
-		const leaves = rows.map((row) => {
-			const node = new BTreeNode(row.id(), tree);
-			node.keys = row.payload()["k"] as Key[];
-			node.values = row.payload()["v"] as number[][];
-			node.keys.forEach((key, index) => {
-				stats.add(key, tree.isUniqueKey() ? 1 : (node.values[index] as number[]).length);
-			});
-			return node;
-		});
-		for (let i = 0; i < leaves.length - 1; ++i) {
-			BTreeNode.associate(leaves[i], leaves[i + 1]);
-		}
-		return leaves.length > 1 ? BTreeNode.createInternals(leaves[0]) : leaves[0];
 	}
 
 	// Create B-Tree from sorted array of key-value pairs
@@ -5318,14 +4943,6 @@ class SimpleComparator implements Comparator {
 }
 
 class MultiKeyComparator implements Comparator {
-	static createOrders(numKeys: number, order: Order): Order[] {
-		const orders: Order[] = new Array<Order>(numKeys);
-		for (let i = 0; i < numKeys; ++i) {
-			orders[i] = order;
-		}
-		return orders;
-	}
-
 	protected comparators: SimpleComparator[];
 
 	constructor(orders: Order[]) {
@@ -5524,32 +5141,6 @@ class ComparatorFactory {
 
 // Wraps another index which does not support NULL to accept NULL values.
 class NullableIndex implements RuntimeIndex {
-	static deserialize(
-		deserializeFn: (rows: Row[]) => RuntimeIndex,
-		rows: Row[]
-	): NullableIndex {
-		// Ideally, the special row should be the first one, and we can short cut.
-		let index = -1;
-		for (let i = 0; i < rows.length; ++i) {
-			if (rows[i].id() === NullableIndex.NULL_ROW_ID) {
-				index = i;
-				break;
-			}
-		}
-		if (index === -1) {
-			// 102: Data corruption detected.
-			throw new Exception(ErrorCode.DATA_CORRUPTION);
-		}
-
-		const nulls = rows[index].payload()["v"] as number[];
-		const newRows = rows.slice(0);
-		newRows.splice(index, 1);
-		const tree = deserializeFn(newRows);
-		const nullableIndex = new NullableIndex(tree);
-		nulls.forEach((rowId) => nullableIndex.nulls.add(rowId));
-		return nullableIndex;
-	}
-
 	private static readonly NULL_ROW_ID = -2;
 
 	private readonly nulls: Set<number>;
@@ -5675,13 +5266,6 @@ class RowId implements RuntimeIndex {
 	// The Row ID to use when serializing this index to disk. Currently the entire
 	// index is serialized to a single lf.Row instance with rowId set to ROW_ID.
 	static ROW_ID = 0;
-
-	static deserialize(name: string, rows: Row[]): RowId {
-		const index = new RowId(name);
-		const rowIds: number[] = rows[0].payload()["v"] as number[];
-		rowIds.forEach((rowId) => { index.add(rowId, rowId); });
-		return index;
-	}
 
 	private static readonly EMPTY_ARRAY: number[] = [];
 
@@ -7065,20 +6649,9 @@ class BaseBuilder<CONTEXT extends Context> implements QueryBuilder {
 		return this.query.clone() as CONTEXT;
 	}
 
-	getObservableQuery(): CONTEXT {
-		return this.query;
-	}
-
 	getTaskItem(): TaskItem {
 		return {
 			"context": this.getQuery(),
-			"plan": this.getPlan()
-		};
-	}
-
-	getObservableTaskItem(): TaskItem {
-		return {
-			"context": this.getObservableQuery(),
 			"plan": this.getPlan()
 		};
 	}
@@ -7237,10 +6810,6 @@ class op {
 }
 
 class SelectBuilder extends BaseBuilder<SelectContext> {
-	private fromAlreadyCalled: boolean;
-
-	private whereAlreadyCalled: boolean;
-
 	constructor(private readonly backStore, private readonly schema, private readonly cache, private readonly indexStore, queryEngine, runner, columns: Column[]) {
 		super(backStore, schema, cache, indexStore, queryEngine, runner, new SelectContext());
 		this.fromAlreadyCalled = false;
@@ -7691,8 +7260,7 @@ interface LogicalPlanGenerator {
 
 // TODO(arthurhsu): this abstract base class is not necessary. Refactor to
 // remove and simplify code structure.
-abstract class BaseLogicalPlanGenerator<T extends Context>
-	implements LogicalPlanGenerator {
+abstract class BaseLogicalPlanGenerator<T extends Context> implements LogicalPlanGenerator {
 	private rootNode: LogicalQueryPlanNode;
 
 	constructor(protected query: T) {
