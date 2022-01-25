@@ -165,7 +165,6 @@ enum ErrorCode {
 	SIMULATED_ERROR = 999
 }
 
-// @emptyExport
 interface Predicate {
 	// Returns relation that holds only the entries satisfying given predicate.
 	eval: (relation: Relation) => Relation;
@@ -921,67 +920,6 @@ class ConstraintChecker {
 
 		return parentIndex;
 	}
-
-	// Checks that no referring keys exist for the given rows.
-	// Only constraints with |constraintTiming| will be checked.
-	// Only constraints with |constraintAction| will be checked. If not provided
-	// both CASCADE and RESTRICT are checked.
-	private checkReferringKeys(
-		table: BaseTable,
-		modifications: Modification[],
-		constraintTiming: ConstraintTiming,
-		constraintAction?: ConstraintAction
-	): void {
-		let foreignKeySpecs = Info.from(this.schema).getReferencingForeignKeys(table.getName(), constraintAction);
-		if (foreignKeySpecs === null) {
-			return;
-		}
-
-		// TODO(dpapad): Enhance lf.schema.Info#getReferencingForeignKeys to filter
-		// based on constraint timing, such that this linear search is avoided.
-		foreignKeySpecs = foreignKeySpecs.filter((foreignKeySpec) => {
-			return foreignKeySpec.timing === constraintTiming;
-		});
-
-		if (foreignKeySpecs.length === 0) {
-			return;
-		}
-
-		this.loopThroughReferringRows(foreignKeySpecs, modifications, (foreignKeySpec, childIndex, parentKey) => {
-			if (childIndex.containsKey(parentKey)) {
-				// 203: Foreign key constraint violation on constraint {0}.
-				throw new Exception(ErrorCode.FK_VIOLATION, foreignKeySpec.name);
-			}
-		});
-	}
-
-	// Loops through the given list of foreign key constraints, for each modified
-	// row and invokes the given callback only when a referred column's value has
-	// been modified.
-	private loopThroughReferringRows(
-		foreignKeySpecs: ForeignKeySpec[],
-		modifications: Modification[],
-		callbackFn: (
-			fkSpec: ForeignKeySpec,
-			index: RuntimeIndex,
-			key: Key | null,
-			modification: Modification
-		) => void
-	): void {
-		foreignKeySpecs.forEach((foreignKeySpec) => {
-			const childIndex = this.indexStore.get(foreignKeySpec.name);
-			const parentIndex = this.getParentIndex(foreignKeySpec);
-			modifications.forEach((modification) => {
-				const didColumnValueChange = ConstraintChecker.didColumnValueChange(modification[0], modification[1], parentIndex.getName());
-
-				if (didColumnValueChange) {
-					const rowBefore = modification[0];
-					const parentKey = rowBefore.keyOfIndex(parentIndex.getName());
-					callbackFn(foreignKeySpec, childIndex, parentKey, modification);
-				}
-			}, this);
-		}, this);
-	}
 }
 
 class TableDiff {
@@ -997,14 +935,17 @@ class TableDiff {
 		this.deleted = new Map();
 	}
 
+	// Appears UNUSED
 	getName(): string {
 		return this.name;
 	}
 
+	// Appears UNUSED
 	getAdded(): Map<number, Row> {
 		return this.added;
 	}
 
+	// Appears UNUSED
 	getModified(): Map<number, Modification> {
 		return this.modified;
 	}
@@ -1013,6 +954,7 @@ class TableDiff {
 		return this.deleted;
 	}
 
+	// Appears UNUSED
 	add(row: Row): void {
 		if (this.deleted.has(row.id())) {
 			const modification: Modification = [
@@ -1107,15 +1049,7 @@ class TableDiff {
 // recorded in the journal.
 class Journal {
 	private readonly scope: Map<string, Table>;
-
-	private readonly schema: Schema;
-
-	private readonly cache: Cache;
-
 	private readonly indexStore: IndexStore;
-
-	private readonly constraintChecker: ConstraintChecker;
-
 	private readonly inMemoryUpdater: InMemoryUpdater;
 
 	// A terminated journal can no longer be modified or rolled back. This should
@@ -1139,10 +1073,7 @@ class Journal {
 		this.scope = new Map<string, Table>();
 		txScope.forEach((tableSchema) => this.scope.set(tableSchema.getName(), tableSchema));
 
-		this.schema = schema;
-		this.cache = cache;
 		this.indexStore = indexStore;
-		this.constraintChecker = new ConstraintChecker(schema, cache, indexStore);
 		this.inMemoryUpdater = new InMemoryUpdater(schema, cache, indexStore);
 		this.terminated = false;
 		this.pendingRollback = false;
@@ -1656,25 +1587,6 @@ class SingleKeyRange {
 			&& !this.excludeUpper
 		);
 	}
-
-	contains(key: SingleKey): boolean {
-		const left = SingleKeyRange.isUnbound(this.from)
-			|| key > this.from
-			|| key === this.from && !this.excludeLower;
-		const right = SingleKeyRange.isUnbound(this.to)
-			|| key < this.to
-			|| key === this.to && !this.excludeUpper;
-		return left && right;
-	}
-
-	equals(range: SingleKeyRange): boolean {
-		return (
-			this.from === range.from
-			&& this.excludeLower === range.excludeLower
-			&& this.to === range.to
-			&& this.excludeUpper === range.excludeUpper
-		);
-	}
 }
 
 class SingleKeyRangeSet {
@@ -2131,6 +2043,7 @@ class TreeNode {
 		return this.parent;
 	}
 
+	// Appears UNUSED
 	setParent(parentNode: TreeNode): void {
 		this.parent = parentNode;
 	}
@@ -2784,23 +2697,28 @@ class MemoryTable implements RuntimeTable {
 		return results;
 	}
 
+	// Appears UNUSED
 	getData(): Map<number, Row> {
 		return this.data;
 	}
 
+	// Appears UNUSED
 	get(ids: number[]): Promise<Row[]> {
 		return Promise.resolve(this.getSync(ids));
 	}
 
+	// Appears UNUSED
 	putSync(rows: Row[]): void {
 		rows.forEach((row) => this.data.set(row.id(), row));
 	}
 
+	// Appears UNUSED
 	put(rows: Row[]): Promise<void> {
 		this.putSync(rows);
 		return Promise.resolve();
 	}
 
+	// Appears UNUSED
 	removeSync(ids: number[]): void {
 		if (ids.length === 0 || ids.length === this.data.size) {
 			// Remove all.
@@ -2810,11 +2728,13 @@ class MemoryTable implements RuntimeTable {
 		}
 	}
 
+	// Appears UNUSED
 	remove(ids: number[]): Promise<void> {
 		this.removeSync(ids);
 		return Promise.resolve();
 	}
 
+	// Appears UNUSED
 	getMaxRowId(): number {
 		if (this.data.size === 0) {
 			return 0;
@@ -2887,12 +2807,6 @@ abstract class BaseTx implements Tx {
 	}
 
 	private commitReadWrite(): Promise<unknown> {
-		try {
-			this.journal.checkDeferredConstraints();
-		} catch (e) {
-			return Promise.reject(e);
-		}
-
 		return this.mergeIntoBackstore().then((results) => {
 			this.journal.commit();
 			return results;
@@ -3014,6 +2928,7 @@ class Memory implements BackStore {
 		return true;
 	}
 
+	// Appears UNUSED
 	peek(): Map<string, MemoryTable> {
 		return this.tables;
 	}
@@ -6584,6 +6499,7 @@ class SelectBuilder extends BaseBuilder<SelectContext> {
 		this.checkProjectionList();
 	}
 
+	// Appears UNUSED
 	from(...tables: string[] | Table[]): this {
 		if (
 			tables.every((element) => {
@@ -6609,6 +6525,7 @@ class SelectBuilder extends BaseBuilder<SelectContext> {
 		return this;
 	}
 
+	// Appears UNUSED
 	where(predicate: Predicate): this {
 		// 548: from() has to be called before where().
 		this.checkFrom(ErrorCode.FROM_AFTER_WHERE);
@@ -6623,6 +6540,7 @@ class SelectBuilder extends BaseBuilder<SelectContext> {
 		return this;
 	}
 
+	// Appears UNUSED
 	innerJoin(table: Table, predicate: Predicate): this {
 		// 542: from() has to be called before innerJoin() or leftOuterJoin().
 		this.checkFrom(ErrorCode.MISSING_FROM_BEFORE_JOIN);
@@ -6638,6 +6556,7 @@ class SelectBuilder extends BaseBuilder<SelectContext> {
 		return this;
 	}
 
+	// Appears UNUSED
 	leftOuterJoin(table: Table, predicate: Predicate): this {
 		// 542: from() has to be called before innerJoin() or leftOuterJoin().
 		this.checkFrom(ErrorCode.MISSING_FROM_BEFORE_JOIN);
@@ -6668,6 +6587,7 @@ class SelectBuilder extends BaseBuilder<SelectContext> {
 		return this;
 	}
 
+	// Appears UNUSED
 	limit(numberOfRows: Binder | number): this {
 		if (this.query.limit !== undefined || this.query.limitBinder) {
 			// 528: limit() has already been called.
@@ -6685,6 +6605,7 @@ class SelectBuilder extends BaseBuilder<SelectContext> {
 		return this;
 	}
 
+	// Appears UNUSED
 	skip(numberOfRows: Binder | number): this {
 		if (this.query.skip !== undefined || this.query.skipBinder) {
 			// 529: skip() has already been called.
@@ -6702,6 +6623,7 @@ class SelectBuilder extends BaseBuilder<SelectContext> {
 		return this;
 	}
 
+	// Appears UNUSED
 	orderBy(column: Column, order?: Order): this {
 		// 549: from() has to be called before orderBy() or groupBy().
 		this.checkFrom(ErrorCode.FROM_AFTER_ORDER_GROUPBY);
@@ -6717,6 +6639,7 @@ class SelectBuilder extends BaseBuilder<SelectContext> {
 		return this;
 	}
 
+	// Appears UNUSED
 	groupBy(...columns: Column[]): this {
 		// 549: from() has to be called before orderBy() or groupBy().
 		this.checkFrom(ErrorCode.FROM_AFTER_ORDER_GROUPBY);
@@ -6733,6 +6656,7 @@ class SelectBuilder extends BaseBuilder<SelectContext> {
 		return this;
 	}
 
+	// Appears UNUSED
 	// Provides a clone of this select builder. This is useful when the user needs
 	// to observe the same query with different parameter bindings.
 	clone(): SelectBuilder {
@@ -10386,14 +10310,10 @@ class RuntimeTransaction implements Transaction {
 }
 
 class DatabaseSchemaImpl implements Schema {
-	private _info: Info;
-
 	private readonly tableMap: Map<string, Table>;
 
 	constructor(readonly _name: string) {
 		this.tableMap = new Map<string, Table>();
-		// Lazy initialization
-		this._info = undefined as unknown as Info;
 	}
 
 	name(): string {
@@ -10610,6 +10530,7 @@ class ColumnImpl implements BaseColumn {
 	}
 }
 
+// Appears UNUSED
 class Constraint {
 	constructor(readonly primaryKey: IndexImpl, readonly notNullable: Column[]) { }
 
@@ -10729,9 +10650,6 @@ class TableImpl implements BaseTable {
 	private _alias: string;
 
 	private readonly _columns: Column[];
-
-	private _constraint: Constraint;
-
 	private _functionMap: Map<string, (payload: PayloadType) => Key>;
 
 	private readonly _evalRegistry: EvalRegistry;
@@ -10753,7 +10671,6 @@ class TableImpl implements BaseTable {
 			string,
 			(payload: PayloadType) => Key
 		>;
-		this._constraint = null as unknown as Constraint;
 		this._evalRegistry = EvalRegistry.get();
 		this._alias = alias ? alias : (null as unknown as string);
 	}
@@ -10778,10 +10695,6 @@ class TableImpl implements BaseTable {
 		return this._columns;
 	}
 
-	getConstraint(): Constraint {
-		return this._constraint;
-	}
-
 	persistentIndex(): boolean {
 		return this._usePersistentIndex;
 	}
@@ -10796,7 +10709,6 @@ class TableImpl implements BaseTable {
 			};
 		});
 		const clone = new TableImpl(this._name, colDef, this._indices, this._usePersistentIndex, name);
-		clone._constraint = this._constraint;
 		clone._alias = name;
 		return clone;
 	}
@@ -10827,78 +10739,6 @@ class TableImpl implements BaseTable {
 			obj[key] = value;
 		});
 		return new RowImpl(this._functionMap, this._columns, this._indices, dbRecord.id, obj);
-	}
-
-	constructIndices(
-		pkName: string,
-		indices: Map<string, IndexedColumnSpec[]>,
-		uniqueIndices: Set<string>,
-		nullable: Set<string>
-	): void {
-		if (indices.size === 0) {
-			this._constraint = new Constraint(null as unknown as IndexImpl, []);
-			return;
-		}
-
-		const columnMap = new Map<string, Column>();
-		this._columns.forEach((col) => columnMap.set(col.getName(), col));
-
-		this._indices = Array.from(indices.keys()).map((indexName) => {
-			return new IndexImpl(this._name, indexName, uniqueIndices.has(indexName), this.generateIndexedColumns(indices, columnMap, indexName));
-		});
-
-		this._functionMap = new Map<string, (payload: PayloadType) => Key>();
-		this._indices.forEach((index) => this._functionMap.set(index.getNormalizedName(), this.getKeyOfIndexFn(columnMap, index)));
-
-		const pk: IndexImpl = pkName === null ? (null as unknown as IndexImpl) : new IndexImpl(this._name, pkName, true, this.generateIndexedColumns(indices, columnMap, pkName));
-		const notNullable = this._columns.filter((col) => !nullable.has(col.getName()));
-		this._constraint = new Constraint(pk, notNullable);
-	}
-
-	private generateIndexedColumns(
-		indices: Map<string, IndexedColumnSpec[]>,
-		columnMap: Map<string, Column>,
-		indexName: string
-	): IndexedColumn[] {
-		const index = indices.get(indexName);
-		if (index) {
-			return index.map((indexedColumn) => {
-				return {
-					"autoIncrement": indexedColumn.autoIncrement as unknown as boolean,
-					"order": indexedColumn.order as unknown as Order,
-					"schema": columnMap.get(indexedColumn.name) as unknown as Column
-				};
-			});
-		}
-		throw new Exception(ErrorCode.ASSERTION);
-	}
-
-	private getSingleKeyFn(
-		columnMap: Map<string, Column>,
-		column: Column
-	): (payload: PayloadType) => Key {
-		const col = columnMap.get(column.getName());
-		if (col) {
-			const colType = col.getType();
-			const keyOfIndexFn = this._evalRegistry.getKeyOfIndexEvaluator(colType);
-			return (payload: PayloadType) => keyOfIndexFn(payload[column.getName()] as IndexableType) as SingleKey;
-		}
-		throw new Exception(ErrorCode.ASSERTION);
-	}
-
-	private getMultiKeyFn(
-		columnMap: Map<string, Column>,
-		columns: IndexedColumn[]
-	): (payload: PayloadType) => Key {
-		const getSingleKeyFunctions = columns.map((col) => this.getSingleKeyFn(columnMap, col.schema));
-		return (payload: PayloadType) => getSingleKeyFunctions.map((fn) => fn(payload)) as SingleKey[] as Key;
-	}
-
-	private getKeyOfIndexFn(
-		columnMap: Map<string, Column>,
-		index: IndexImpl
-	): (payload: PayloadType) => Key {
-		return index.columns.length === 1 ? this.getSingleKeyFn(columnMap, index.columns[0].schema) : this.getMultiKeyFn(columnMap, index.columns);
 	}
 }
 
@@ -10961,9 +10801,6 @@ class TableBuilder {
 		// Pass null as indices since Columns are not really constructed yet.
 		const table = new TableImpl(this.name, columns, null as unknown as IndexImpl[], this.persistIndex);
 
-		// Columns shall be constructed within TableImpl ctor, now we can
-		// instruct it to construct proper index schema.
-		table.constructIndices(this.pkName, this.indices, this.uniqueIndices, this.nullable);
 		return table;
 	}
 
