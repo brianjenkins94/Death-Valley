@@ -821,6 +821,17 @@ class MapSet<K, V> {
 		this.map.forEach((valueSet) => results.push(...Array.from(valueSet)));
 		return results;
 	}
+
+	// Returns a set for a given key. If the key does not exist in the map,
+	// a new Set will be created.
+	getSet(key: K): Set<V> {
+		let valueSet = this.map.get(key) || null;
+		if (valueSet === null) {
+			valueSet = new Set<V>();
+			this.map.set(key, valueSet);
+		}
+		return valueSet;
+	}
 }
 
 interface Index {
@@ -840,100 +851,6 @@ interface BaseTable extends Table {
 	getRowIdIndexName: () => string;
 	deserializeRow: (dbRecord: RawRow) => Row;
 }
-
-// Read-only objects that provides information for schema metadata.
-class Info {
-	static from(schema: Schema): Info {
-		return (schema as DatabaseSchemaImpl).info();
-	}
-
-	// A mapping from table name to its referencing CASCADE foreign keys.
-	private readonly cascadeReferringFk: MapSet<string, ForeignKeySpec>;
-
-	// A mapping from table name to its referencing RESTRICT foreign keys.
-	private readonly restrictReferringFk: MapSet<string, ForeignKeySpec>;
-
-	// The map of table name to their parent tables.
-	private readonly parents: MapSet<string, Table>;
-
-	// The map of fully qualified column name to its parent table name.
-	private readonly colParent: Map<string, string>;
-
-	// The map of table to their child tables.
-	private readonly children: MapSet<string, Table>;
-
-	private readonly cascadeChildren: MapSet<string, Table>;
-
-	private readonly restrictChildren: MapSet<string, Table>;
-
-	// The map of full qualified column name to their child table name.
-	private readonly colChild: MapSet<string, string>;
-
-	constructor(private readonly schema: Schema) {
-		this.cascadeReferringFk = new MapSet();
-		this.restrictReferringFk = new MapSet();
-		this.parents = new MapSet();
-		this.colParent = new Map();
-		this.children = new MapSet();
-		this.cascadeChildren = new MapSet();
-		this.restrictChildren = new MapSet();
-		this.colChild = new MapSet();
-
-		this.schema.tables().forEach((t) => {
-			const table = t as BaseTable;
-			const tableName = table.getName();
-			table
-				.getConstraint()
-				.getForeignKeys()
-				.forEach((fkSpec) => {
-					this.parents.set(tableName, this.schema.table(fkSpec.parentTable));
-					this.children.set(fkSpec.parentTable, table);
-					if (fkSpec.action === ConstraintAction.RESTRICT) {
-						this.restrictReferringFk.set(fkSpec.parentTable, fkSpec);
-						this.restrictChildren.set(fkSpec.parentTable, table);
-					} else {
-						// fkSpec.action === ConstraintAction.CASCADE
-						this.cascadeReferringFk.set(fkSpec.parentTable, fkSpec);
-						this.cascadeChildren.set(fkSpec.parentTable, table);
-					}
-
-					this.colParent.set(table.getName() + "." + fkSpec.childColumn, fkSpec.parentTable);
-
-					const ref = `${fkSpec.parentTable}.${fkSpec.parentColumn}`;
-					this.colChild.set(ref, table.getName());
-				}, this);
-		}, this);
-	}
-
-	// Looks up referencing foreign key for a given table.
-	// If no constraint action type were provided, all types are included.
-	getReferencingForeignKeys(
-		tableName: string,
-		constraintAction?: ConstraintAction
-	): ForeignKeySpec[] | null {
-		if (constraintAction !== undefined && constraintAction !== null) {
-			return constraintAction === ConstraintAction.CASCADE ? this.cascadeReferringFk.get(tableName) : this.restrictReferringFk.get(tableName);
-		} else {
-			const cascadeConstraints = this.cascadeReferringFk.get(tableName);
-			const restrictConstraints = this.restrictReferringFk.get(tableName);
-			if (cascadeConstraints === null && restrictConstraints === null) {
-				return null;
-			} else {
-				return (cascadeConstraints || []).concat(restrictConstraints || []);
-			}
-		}
-	}
-}
-
-interface CascadeDeletion {
-	tableOrder: string[];
-	rowIdsPerTable: MapSet<string, number>;
-}
-interface CascadeUpdateItem {
-	fkSpec: ForeignKeySpec;
-	originalUpdatedRow: Row;
-}
-type CascadeUpdate = MapSet<number, CascadeUpdateItem>;
 
 interface BaseColumn extends Column {
 	getAlias: () => string;
@@ -975,94 +892,6 @@ class ConstraintChecker {
 		this.schema = schema;
 		this.cache = cache;
 		this.foreignKeysParentIndices = new Map();
-	}
-
-	// Performs all necessary foreign key constraint checks for the case where new
-	// rows are inserted. Only constraints with |constraintTiming| will be
-	// checked.
-	checkForeignKeysForInsert(
-		table: BaseTable,
-		rows: Row[],
-		constraintTiming: ConstraintTiming
-	): void {
-		if (rows.length === 0) {
-			return;
-		}
-
-		const modifications = rows.map((row) => {
-			return [null /* rowBefore */, row] as Modification;
-		});
-		this.checkReferredKeys(table, modifications, constraintTiming);
-	}
-
-	// Performs all necessary foreign key constraint checks for the case of
-	// existing rows being updated. Only constraints with |constraintTiming| will
-	// be checked.
-	checkForeignKeysForUpdate(
-		table: BaseTable,
-		modifications: Modification[],
-		constraintTiming: ConstraintTiming
-	): void {
-		if (modifications.length === 0) {
-			return;
-		}
-
-		this.checkReferredKeys(table, modifications, constraintTiming);
-		this.checkReferringKeys(table, modifications, constraintTiming, ConstraintAction.RESTRICT);
-	}
-
-	// Performs all necessary foreign key constraint checks for the case of
-	// existing rows being deleted. Only constraints with |constraintTiming| will
-	// be checked.
-	checkForeignKeysForDelete(
-		table: BaseTable,
-		rows: Row[],
-		constraintTiming: ConstraintTiming
-	): void {
-		if (rows.length === 0) {
-			return;
-		}
-
-		const modifications = rows.map((row) => {
-			return [row /* rowBefore */, null] as Modification;
-		});
-		this.checkReferringKeys(table, modifications, constraintTiming);
-	}
-
-	// Checks that all referred keys in the given rows actually exist.
-	// Only constraints with matching |constraintTiming| will be checked.
-	private checkReferredKeys(
-		table: BaseTable,
-		modifications: Modification[],
-		constraintTiming: ConstraintTiming
-	): void {
-		const foreignKeySpecs = table.getConstraint().getForeignKeys();
-		foreignKeySpecs.forEach((foreignKeySpec) => {
-			if (foreignKeySpec.timing === constraintTiming) {
-				this.checkReferredKey(foreignKeySpec, modifications);
-			}
-		}, this);
-	}
-
-	private checkReferredKey(
-		foreignKeySpec: ForeignKeySpec,
-		modifications: Modification[]
-	): void {
-		const parentIndex = this.getParentIndex(foreignKeySpec);
-		modifications.forEach((modification) => {
-			const didColumnValueChange = ConstraintChecker.didColumnValueChange(modification[0], modification[1], foreignKeySpec.name);
-
-			if (didColumnValueChange) {
-				const rowAfter = modification[1];
-				const parentKey = rowAfter.keyOfIndex(foreignKeySpec.name);
-				// A null value in the child column implies to ignore it, and not
-				// considering it as a constraint violation.
-				if (parentKey !== null && !parentIndex.containsKey(parentKey)) {
-					// 203: Foreign key constraint violation on constraint {0}.
-					throw new Exception(ErrorCode.FK_VIOLATION, foreignKeySpec.name);
-				}
-			}
-		}, this);
 	}
 
 	// Finds the index corresponding to the parent column of the given foreign
@@ -1346,15 +1175,6 @@ class Journal {
 
 	getScope(): Map<string, Table> {
 		return this.scope;
-	}
-
-	checkDeferredConstraints(): void {
-		this.tableDiffs.forEach((tableDiff) => {
-			const table = this.scope.get(tableDiff.getName()) as BaseTable;
-			this.constraintChecker.checkForeignKeysForInsert(table, Array.from(tableDiff.getAdded().values()), ConstraintTiming.DEFERRABLE);
-			this.constraintChecker.checkForeignKeysForDelete(table, Array.from(tableDiff.getDeleted().values()), ConstraintTiming.DEFERRABLE);
-			this.constraintChecker.checkForeignKeysForUpdate(table, Array.from(tableDiff.getModified().values()), ConstraintTiming.DEFERRABLE);
-		}, this);
 	}
 
 	// Commits journal changes into cache and indices.
@@ -2691,6 +2511,7 @@ abstract class Context extends UniqueId {
 	}
 
 	abstract getScope(): Set<Table>;
+	abstract clone(): Context;
 
 	protected cloneBase(context: Context): void {
 		if (context.where) {
@@ -6510,12 +6331,11 @@ class BaseBuilder<CONTEXT extends Context> implements QueryBuilder {
 
 	private plan!: PhysicalQueryPlan;
 
-	// UNUSED
 	constructor(
-		backStore,
-		schema,
-		cache,
-		indexStore,
+		private readonly backStore,
+		private readonly schema,
+		private readonly cache,
+		private readonly indexStore,
 		queryEngine,
 		runner,
 		context: Context
@@ -6725,6 +6545,9 @@ class op {
 }
 
 class SelectBuilder extends BaseBuilder<SelectContext> {
+	private fromAlreadyCalled: boolean;
+	private whereAlreadyCalled: boolean;
+
 	constructor(
 		private readonly backStore,
 		private readonly schema,
@@ -10577,13 +10400,6 @@ class DatabaseSchemaImpl implements Schema {
 		return this._name;
 	}
 
-	info(): Info {
-		if (this._info === undefined) {
-			this._info = new Info(this);
-		}
-		return this._info;
-	}
-
 	tables(): Table[] {
 		return Array.from(this.tableMap.values());
 	}
@@ -11237,13 +11053,6 @@ class Database {
 
 	name(): string {
 		return this.schema._name;
-	}
-
-	info(): Info {
-		if (this.schema._info === undefined) {
-			this.schema._info = new Info(this);
-		}
-		return this.schema._info;
 	}
 
 	tables(): Table[] {
