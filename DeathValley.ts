@@ -5901,18 +5901,6 @@ class SqlHelper {
 	static toSql(builder: BaseBuilder<Context>, stripValueInfo = false): string {
 		const query = builder.getQuery();
 
-		// if (query instanceof InsertContext) {
-		// 	return SqlHelper.insertToSql(query, stripValueInfo);
-		// }
-
-		// if (query instanceof DeleteContext) {
-		// 	return SqlHelper.deleteToSql(query, stripValueInfo);
-		// }
-
-		// if (query instanceof UpdateContext) {
-		// 	return SqlHelper.updateToSql(query, stripValueInfo);
-		// }
-
 		if (query instanceof SelectContext) {
 			return SqlHelper.selectToSql(query, stripValueInfo);
 		}
@@ -6589,16 +6577,6 @@ class SelectBuilder extends BaseBuilder<SelectContext> {
 		this.query.groupBy.push(...columns);
 		return this;
 	}
-
-	// Appears UNUSED
-	// Provides a clone of this select builder. This is useful when the user needs
-	// to observe the same query with different parameter bindings.
-	// clone(): SelectBuilder {
-	// 	const builder = new SelectBuilder(this.backStore, this.schema, this.cache, this.indexStore, this.queryEngine, this.runner, this.query.columns);
-	// 	builder.query = this.query.clone();
-	// 	builder.query.clonedFrom = null; // The two builders are not related.
-	// 	return builder;
-	// }
 
 	// Checks that usage of lf.fn.distinct() is correct. Specifically if an
 	// lf.fn.distinct() column is requested, then it can't be combined with any
@@ -7392,15 +7370,10 @@ class LogicalPlanFactory {
 
 	create(query: Context): LogicalQueryPlan {
 		let generator: LogicalPlanGenerator = null as unknown as LogicalPlanGenerator;
-		// if (query instanceof InsertContext) {
-		// 	generator = new InsertLogicalPlanGenerator(query);
-		// } else if (query instanceof DeleteContext) {
-		// 	generator = new DeleteLogicalPlanGenerator(query, this.deleteOptimizationPasses);
-		// } else
+
+
 		if (query instanceof SelectContext) {
 			generator = new SelectLogicalPlanGenerator(query, this.selectOptimizationPasses);
-			// } else if (query instanceof UpdateContext) {
-			// 	generator = new UpdateLogicalPlanGenerator(query);
 		} else {
 			// 513: Unknown query context.
 			throw new Exception(ErrorCode.UNKNOWN_QUERY_CONTEXT);
@@ -8756,7 +8729,6 @@ class OrderByStep extends PhysicalQueryPlanNode {
 
 			relationToSort.entries.sort(this.entryComparatorFn.bind(this));
 		} else {
-			// if (relations.length > 1) {
 			relations.sort(this.relationComparatorFn.bind(this));
 		}
 		return relations;
@@ -9472,12 +9444,6 @@ class PhysicalPlanFactory {
 		queryContext: Context
 	): PhysicalQueryPlan {
 		const logicalQueryPlanRoot = logicalQueryPlan.getRoot();
-		// if (
-		// 	logicalQueryPlanRoot instanceof InsertOrReplaceNode
-		// 	|| logicalQueryPlanRoot instanceof InsertNode
-		// ) {
-		// 	return this.createPlan(logicalQueryPlan, queryContext);
-		// }
 
 		if (
 			logicalQueryPlanRoot instanceof ProjectNode
@@ -9486,13 +9452,6 @@ class PhysicalPlanFactory {
 		) {
 			return this.createPlan(logicalQueryPlan, queryContext, this.selectOptimizationPasses);
 		}
-
-		// if (
-		// 	logicalQueryPlanRoot instanceof DeleteNode
-		// 	|| logicalQueryPlanRoot instanceof UpdateNode
-		// ) {
-		// 	return this.createPlan(logicalQueryPlan, queryContext, this.deleteOptimizationPasses);
-		// }
 
 		// Should never get here since all cases are handled above.
 		// 8: Unknown query plan node.
@@ -9537,15 +9496,6 @@ class PhysicalPlanFactory {
 		} else if (node instanceof TableAccessNode) {
 			return new TableAccessFullStep(this.indexStore, this.cache, node.table);
 		}
-		// else if (node instanceof DeleteNode) {
-		// 	return new DeleteStep(node.table);
-		// } else if (node instanceof UpdateNode) {
-		// 	return new UpdateStep(node.table);
-		// } else if (node instanceof InsertOrReplaceNode) {
-		// 	return new InsertOrReplaceStep(this.global, node.table);
-		// } else if (node instanceof InsertNode) {
-		// 	return new InsertStep(this.global, node.table);
-		// }
 
 		// 514: Unknown node type.
 		throw new Exception(ErrorCode.UNKNOWN_NODE_TYPE);
@@ -10646,9 +10596,6 @@ class TableBuilder {
 		this.checkNamingRules(name);
 		this.checkNameConflicts(name);
 		this.columns.set(name, type);
-		//if (TableBuilder.NULLABLE_TYPES_BY_DEFAULT.has(type)) {
-		// 	this.addNullable([name]);
-		//}
 		return this;
 	}
 
