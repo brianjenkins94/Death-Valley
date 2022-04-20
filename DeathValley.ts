@@ -1610,12 +1610,6 @@ class Row {
 		return new Row(data.id, data.value);
 	}
 
-	// Appears UNUSED
-	// Creates a new Row instance with an automatically assigned ID.
-	static create(payload?: PayloadType): Row {
-		return new Row(Row.getNextId(), payload || {});
-	}
-
 	// ArrayBuffer to hex string.
 	static binToHex(buffer: ArrayBuffer | null): string | null {
 		if (buffer === null) {
@@ -1675,7 +1669,6 @@ class Row {
 		return this.payload_;
 	}
 
-	// Appears UNUSED
 	serialize(): RawRow {
 		return { "id": this.id_, "value": this.toDbPayload() };
 	}
@@ -2602,13 +2595,11 @@ class MemoryTable implements RuntimeTable {
 		rows.forEach((row) => this.data.set(row.id(), row));
 	}
 
-	// Appears UNUSED
 	put(rows: Row[]): Promise<void> {
 		this.putSync(rows);
 		return Promise.resolve();
 	}
 
-	// Appears UNUSED
 	removeSync(ids: number[]): void {
 		if (ids.length === 0 || ids.length === this.data.size) {
 			// Remove all.
@@ -2618,7 +2609,6 @@ class MemoryTable implements RuntimeTable {
 		}
 	}
 
-	// Appears UNUSED
 	remove(ids: number[]): Promise<void> {
 		this.removeSync(ids);
 		return Promise.resolve();
@@ -2808,7 +2798,6 @@ class Memory implements BackStore {
 		return true;
 	}
 
-	// Appears UNUSED
 	peek(): Map<string, MemoryTable> {
 		return this.tables;
 	}
@@ -6367,7 +6356,6 @@ class SelectBuilder extends BaseBuilder<SelectContext> {
 		this.checkProjectionList();
 	}
 
-	// Appears UNUSED
 	from(...tables: string[] | Table[]): this {
 		if (
 			tables.every((element) => {
@@ -6407,7 +6395,6 @@ class SelectBuilder extends BaseBuilder<SelectContext> {
 		return this;
 	}
 
-	// Appears UNUSED
 	limit(numberOfRows: Binder | number): this {
 		if (this.query.limit !== undefined || this.query.limitBinder) {
 			// 528: limit() has already been called.
@@ -6425,7 +6412,6 @@ class SelectBuilder extends BaseBuilder<SelectContext> {
 		return this;
 	}
 
-	// Appears UNUSED
 	skip(numberOfRows: Binder | number): this {
 		if (this.query.skip !== undefined || this.query.skipBinder) {
 			// 529: skip() has already been called.
@@ -6440,6 +6426,37 @@ class SelectBuilder extends BaseBuilder<SelectContext> {
 			}
 			this.query.skip = numberOfRows;
 		}
+		return this;
+	}
+
+	orderBy(column: Column, order?: Order): this {
+		// 549: from() has to be called before orderBy() or groupBy().
+		this.checkFrom(ErrorCode.FROM_AFTER_ORDER_GROUPBY);
+
+		if (this.query.orderBy === undefined) {
+			this.query.orderBy = [];
+		}
+
+		this.query.orderBy.push({
+			"column": column,
+			"order": order !== undefined && order !== null ? order : Order.ASC
+		});
+		return this;
+	}
+
+	groupBy(...columns: Column[]): this {
+		// 549: from() has to be called before orderBy() or groupBy().
+		this.checkFrom(ErrorCode.FROM_AFTER_ORDER_GROUPBY);
+
+		if (this.query.groupBy) {
+			// 530: groupBy() has already been called.
+			throw new Exception(ErrorCode.DUPLICATE_GROUPBY);
+		}
+		if (this.query.groupBy === undefined) {
+			this.query.groupBy = [];
+		}
+
+		this.query.groupBy.push(...columns);
 		return this;
 	}
 

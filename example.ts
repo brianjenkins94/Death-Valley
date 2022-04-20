@@ -5,7 +5,7 @@
 //import { schema } from "./src/lib/schema/schema";
 //import { MockDataGenerator } from "./src/testing/hr_schema/mock_data_generator";
 
-import { query } from "./DeathValley";
+import { Order, query } from "./DeathValley";
 
 (async function() {
 	/*
@@ -5021,7 +5021,7 @@ import { query } from "./DeathValley";
 	});
 	const job = db.table("Job");
 
-	const results = await db.select().from(job).where(job.col("minSalary").gte(300000)).exec();
+	const results = await db.select().from(job).where(job.col("minSalary").gte(300000)).orderBy(job.col("minSalary"), Order.ASC).exec();
 
 	console.log(results);
 

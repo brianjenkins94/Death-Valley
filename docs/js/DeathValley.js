@@ -908,11 +908,6 @@ class Row {
     static deserialize(data) {
         return new Row(data.id, data.value);
     }
-    // Appears UNUSED
-    // Creates a new Row instance with an automatically assigned ID.
-    static create(payload) {
-        return new Row(Row.getNextId(), payload || {});
-    }
     // ArrayBuffer to hex string.
     static binToHex(buffer) {
         if (buffer === null) {
@@ -953,7 +948,6 @@ class Row {
     toDbPayload() {
         return this.payload_;
     }
-    // Appears UNUSED
     serialize() {
         return { "id": this.id_, "value": this.toDbPayload() };
     }
@@ -1674,12 +1668,10 @@ class MemoryTable {
     putSync(rows) {
         rows.forEach((row) => this.data.set(row.id(), row));
     }
-    // Appears UNUSED
     put(rows) {
         this.putSync(rows);
         return Promise.resolve();
     }
-    // Appears UNUSED
     removeSync(ids) {
         if (ids.length === 0 || ids.length === this.data.size) {
             // Remove all.
@@ -1689,7 +1681,6 @@ class MemoryTable {
             ids.forEach((id) => this.data.delete(id));
         }
     }
-    // Appears UNUSED
     remove(ids) {
         this.removeSync(ids);
         return Promise.resolve();
@@ -1838,7 +1829,6 @@ class Memory {
     supportsImport() {
         return true;
     }
-    // Appears UNUSED
     peek() {
         return this.tables;
     }
@@ -4642,7 +4632,6 @@ class SelectBuilder extends BaseBuilder {
         }
         this.checkProjectionList();
     }
-    // Appears UNUSED
     from(...tables) {
         if (tables.every((element) => {
             return typeof element === "string";
@@ -4662,7 +4651,6 @@ class SelectBuilder extends BaseBuilder {
         this.query.from.push(...tables);
         return this;
     }
-    // Appears UNUSED
     where(predicate) {
         // 548: from() has to be called before where().
         this.checkFrom(ErrorCode.FROM_AFTER_WHERE);
@@ -4674,7 +4662,6 @@ class SelectBuilder extends BaseBuilder {
         this.augmentWhereClause(predicate);
         return this;
     }
-    // Appears UNUSED
     limit(numberOfRows) {
         if (this.query.limit !== undefined || this.query.limitBinder) {
             // 528: limit() has already been called.
@@ -4692,7 +4679,6 @@ class SelectBuilder extends BaseBuilder {
         }
         return this;
     }
-    // Appears UNUSED
     skip(numberOfRows) {
         if (this.query.skip !== undefined || this.query.skipBinder) {
             // 529: skip() has already been called.
@@ -4708,6 +4694,31 @@ class SelectBuilder extends BaseBuilder {
             }
             this.query.skip = numberOfRows;
         }
+        return this;
+    }
+    orderBy(column, order) {
+        // 549: from() has to be called before orderBy() or groupBy().
+        this.checkFrom(ErrorCode.FROM_AFTER_ORDER_GROUPBY);
+        if (this.query.orderBy === undefined) {
+            this.query.orderBy = [];
+        }
+        this.query.orderBy.push({
+            "column": column,
+            "order": order !== undefined && order !== null ? order : Order.ASC
+        });
+        return this;
+    }
+    groupBy(...columns) {
+        // 549: from() has to be called before orderBy() or groupBy().
+        this.checkFrom(ErrorCode.FROM_AFTER_ORDER_GROUPBY);
+        if (this.query.groupBy) {
+            // 530: groupBy() has already been called.
+            throw new Exception(ErrorCode.DUPLICATE_GROUPBY);
+        }
+        if (this.query.groupBy === undefined) {
+            this.query.groupBy = [];
+        }
+        this.query.groupBy.push(...columns);
         return this;
     }
     // Checks that usage of lf.fn.distinct() is correct. Specifically if an
@@ -12869,7 +12880,7 @@ function query(objects) {
         ]
     });
     const job = db.table("Job");
-    const results = await db.select().from(job).where(job.col("minSalary").gte(300000)).exec();
+    const results = await db.select().from(job).where(job.col("minSalary").gte(300000)).orderBy(job.col("minSalary"), Order.ASC).exec();
     console.log(results);
     console.log(await db.export());
 })();
