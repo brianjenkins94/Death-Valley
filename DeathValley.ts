@@ -6393,6 +6393,20 @@ class SelectBuilder extends BaseBuilder<SelectContext> {
 		return this;
 	}
 
+	where(predicate: Predicate): this {
+		// 548: from() has to be called before where().
+		this.checkFrom(ErrorCode.FROM_AFTER_WHERE);
+
+		if (this.whereAlreadyCalled) {
+			// 516: where() has already been called.
+			throw new Exception(ErrorCode.DUPLICATE_WHERE);
+		}
+		this.whereAlreadyCalled = true;
+
+		this.augmentWhereClause(predicate);
+		return this;
+	}
+
 	// Appears UNUSED
 	limit(numberOfRows: Binder | number): this {
 		if (this.query.limit !== undefined || this.query.limitBinder) {

@@ -4663,6 +4663,18 @@ class SelectBuilder extends BaseBuilder {
         return this;
     }
     // Appears UNUSED
+    where(predicate) {
+        // 548: from() has to be called before where().
+        this.checkFrom(ErrorCode.FROM_AFTER_WHERE);
+        if (this.whereAlreadyCalled) {
+            // 516: where() has already been called.
+            throw new Exception(ErrorCode.DUPLICATE_WHERE);
+        }
+        this.whereAlreadyCalled = true;
+        this.augmentWhereClause(predicate);
+        return this;
+    }
+    // Appears UNUSED
     limit(numberOfRows) {
         if (this.query.limit !== undefined || this.query.limitBinder) {
             // 528: limit() has already been called.
@@ -4696,33 +4708,6 @@ class SelectBuilder extends BaseBuilder {
             }
             this.query.skip = numberOfRows;
         }
-        return this;
-    }
-    // Appears UNUSED
-    orderBy(column, order) {
-        // 549: from() has to be called before orderBy() or groupBy().
-        this.checkFrom(ErrorCode.FROM_AFTER_ORDER_GROUPBY);
-        if (this.query.orderBy === undefined) {
-            this.query.orderBy = [];
-        }
-        this.query.orderBy.push({
-            "column": column,
-            "order": order !== undefined && order !== null ? order : Order.ASC
-        });
-        return this;
-    }
-    // Appears UNUSED
-    groupBy(...columns) {
-        // 549: from() has to be called before orderBy() or groupBy().
-        this.checkFrom(ErrorCode.FROM_AFTER_ORDER_GROUPBY);
-        if (this.query.groupBy) {
-            // 530: groupBy() has already been called.
-            throw new Exception(ErrorCode.DUPLICATE_GROUPBY);
-        }
-        if (this.query.groupBy === undefined) {
-            this.query.groupBy = [];
-        }
-        this.query.groupBy.push(...columns);
         return this;
     }
     // Checks that usage of lf.fn.distinct() is correct. Specifically if an
