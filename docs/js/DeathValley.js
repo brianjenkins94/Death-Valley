@@ -904,27 +904,6 @@ class Row {
     static getNextId() {
         return Row.nextId++;
     }
-    // Appears UNUSED
-    // Sets the global row id. This is supposed to be called by BackStore
-    // instances during initialization only.
-    // NOTE: nextId is currently shared among different databases. It is
-    // NOT safe to ever decrease this value, because it will result in re-using
-    // row IDs. Currently used only for testing, and for back stores that are
-    // based on remote truth.
-    // @param nextId The next id should be used. This is typically the max
-    //     rowId in database plus 1.
-    static setNextId(nextId) {
-        Row.nextId = nextId;
-    }
-    // Appears UNUSED
-    // Updates global row id. Guarantees that the |nextId_| value will only be
-    // increased. This is supposed to be called by BackStore instances during
-    // initialization only.
-    // @param nextId The next id should be used. This is typically the max
-    //     rowId in database plus 1.
-    static setNextIdIfGreater(nextId) {
-        Row.nextId = Math.max(Row.nextId, nextId);
-    }
     // Creates a new Row instance from DB data.
     static deserialize(data) {
         return new Row(data.id, data.value);
@@ -964,11 +943,6 @@ class Row {
     }
     id() {
         return this.id_;
-    }
-    // Appears UNUSED
-    // Set the ID of this row instance.
-    assignRowId(id) {
-        this.id_ = id;
     }
     payload() {
         return this.payload_;
@@ -1199,10 +1173,6 @@ class TreeNode {
     getParent() {
         return this.parent;
     }
-    // Appears UNUSED
-    setParent(parentNode) {
-        this.parent = parentNode;
-    }
     getRoot() {
         let root = this;
         while (root.parent !== null) {
@@ -1356,10 +1326,6 @@ class ValuePredicate extends PredicateNode {
         const tables = results ? results : new Set();
         tables.add(this.column.getTable());
         return tables;
-    }
-    // Appears UNUSED
-    setBinder(binder) {
-        this.binder = binder;
     }
     bind(values) {
         const checkIndexWithinRange = (index) => {
@@ -1702,10 +1668,6 @@ class MemoryTable {
         }, this);
         return results;
     }
-    // Appears UNUSED
-    getData() {
-        return this.data;
-    }
     get(ids) {
         return Promise.resolve(this.getSync(ids));
     }
@@ -1731,15 +1693,6 @@ class MemoryTable {
     remove(ids) {
         this.removeSync(ids);
         return Promise.resolve();
-    }
-    // Appears UNUSED
-    getMaxRowId() {
-        if (this.data.size === 0) {
-            return 0;
-        }
-        return Array.from(this.data.keys()).reduce((prev, cur) => {
-            return prev > cur ? prev : cur;
-        }, 0);
     }
 }
 // A base class for all native DB transactions wrappers to subclass.
@@ -4707,55 +4660,6 @@ class SelectBuilder extends BaseBuilder {
             this.query.from = [];
         }
         this.query.from.push(...tables);
-        return this;
-    }
-    // Appears UNUSED
-    where(predicate) {
-        // 548: from() has to be called before where().
-        this.checkFrom(ErrorCode.FROM_AFTER_WHERE);
-        if (this.whereAlreadyCalled) {
-            // 516: where() has already been called.
-            throw new Exception(ErrorCode.DUPLICATE_WHERE);
-        }
-        this.whereAlreadyCalled = true;
-        this.augmentWhereClause(predicate);
-        return this;
-    }
-    // Appears UNUSED
-    innerJoin(table, predicate) {
-        // 542: from() has to be called before innerJoin() or leftOuterJoin().
-        this.checkFrom(ErrorCode.MISSING_FROM_BEFORE_JOIN);
-        if (this.whereAlreadyCalled) {
-            // 547: where() cannot be called before innerJoin() or leftOuterJoin().
-            throw new Exception(ErrorCode.INVALID_WHERE);
-        }
-        this.query.from.push(table);
-        this.augmentWhereClause(predicate);
-        return this;
-    }
-    // Appears UNUSED
-    leftOuterJoin(table, predicate) {
-        // 542: from() has to be called before innerJoin() or leftOuterJoin().
-        this.checkFrom(ErrorCode.MISSING_FROM_BEFORE_JOIN);
-        if (!(predicate instanceof JoinPredicate)) {
-            // 541: Outer join accepts only join predicate.
-            throw new Exception(ErrorCode.INVALID_OUTER_JOIN);
-        }
-        if (this.whereAlreadyCalled) {
-            // 547: where() cannot be called before innerJoin() or leftOuterJoin().
-            throw new Exception(ErrorCode.INVALID_WHERE);
-        }
-        this.query.from.push(table);
-        if (this.query.outerJoinPredicates === null
-            || this.query.outerJoinPredicates === undefined) {
-            this.query.outerJoinPredicates = new Set();
-        }
-        let normalizedPredicate = predicate;
-        if (table.getEffectiveName() !== predicate.rightColumn.getTable().getEffectiveName()) {
-            normalizedPredicate = predicate.reverse();
-        }
-        this.query.outerJoinPredicates.add(normalizedPredicate.getId());
-        this.augmentWhereClause(normalizedPredicate);
         return this;
     }
     // Appears UNUSED
@@ -7913,7 +7817,7 @@ class Database {
         this.cache = new DefaultCache(this.schema);
         this.backStore = new Memory(this.schema);
         this.indexStore = new MemoryIndexStore();
-        this.indexStore.init(this.schema);
+        this.indexStore.init(this.schema); // FIXME: This is async
         this.queryEngine = new DefaultQueryEngine(this.indexStore, this.cache);
         this.runner = new Runner();
         this.import(data);

@@ -1605,29 +1605,6 @@ class Row {
 		return Row.nextId++;
 	}
 
-	// Appears UNUSED
-	// Sets the global row id. This is supposed to be called by BackStore
-	// instances during initialization only.
-	// NOTE: nextId is currently shared among different databases. It is
-	// NOT safe to ever decrease this value, because it will result in re-using
-	// row IDs. Currently used only for testing, and for back stores that are
-	// based on remote truth.
-	// @param nextId The next id should be used. This is typically the max
-	//     rowId in database plus 1.
-	static setNextId(nextId: number): void {
-		Row.nextId = nextId;
-	}
-
-	// Appears UNUSED
-	// Updates global row id. Guarantees that the |nextId_| value will only be
-	// increased. This is supposed to be called by BackStore instances during
-	// initialization only.
-	// @param nextId The next id should be used. This is typically the max
-	//     rowId in database plus 1.
-	static setNextIdIfGreater(nextId: number): void {
-		Row.nextId = Math.max(Row.nextId, nextId);
-	}
-
 	// Creates a new Row instance from DB data.
 	static deserialize(data: RawRow): Row {
 		return new Row(data.id, data.value);
@@ -1684,12 +1661,6 @@ class Row {
 
 	id(): number {
 		return this.id_;
-	}
-
-	// Appears UNUSED
-	// Set the ID of this row instance.
-	assignRowId(id: number): void {
-		this.id_ = id;
 	}
 
 	payload(): PayloadType {
@@ -1978,11 +1949,6 @@ class TreeNode {
 		return this.parent;
 	}
 
-	// Appears UNUSED
-	setParent(parentNode: TreeNode): void {
-		this.parent = parentNode;
-	}
-
 	getRoot(): TreeNode {
 		let root: TreeNode = this;
 		while (root.parent !== null) {
@@ -2174,11 +2140,6 @@ class ValuePredicate extends PredicateNode {
 		const tables = results ? results : new Set<BaseTable>();
 		tables.add(this.column.getTable() as BaseTable);
 		return tables;
-	}
-
-	// Appears UNUSED
-	setBinder(binder: unknown): void {
-		this.binder = binder;
 	}
 
 	bind(values: unknown[]): void {
@@ -2633,11 +2594,6 @@ class MemoryTable implements RuntimeTable {
 		return results;
 	}
 
-	// Appears UNUSED
-	getData(): Map<number, Row> {
-		return this.data;
-	}
-
 	get(ids: number[]): Promise<Row[]> {
 		return Promise.resolve(this.getSync(ids));
 	}
@@ -2666,16 +2622,6 @@ class MemoryTable implements RuntimeTable {
 	remove(ids: number[]): Promise<void> {
 		this.removeSync(ids);
 		return Promise.resolve();
-	}
-
-	// Appears UNUSED
-	getMaxRowId(): number {
-		if (this.data.size === 0) {
-			return 0;
-		}
-		return Array.from(this.data.keys()).reduce((prev, cur) => {
-			return prev > cur ? prev : cur;
-		}, 0);
 	}
 }
 
@@ -6448,68 +6394,6 @@ class SelectBuilder extends BaseBuilder<SelectContext> {
 	}
 
 	// Appears UNUSED
-	where(predicate: Predicate): this {
-		// 548: from() has to be called before where().
-		this.checkFrom(ErrorCode.FROM_AFTER_WHERE);
-
-		if (this.whereAlreadyCalled) {
-			// 516: where() has already been called.
-			throw new Exception(ErrorCode.DUPLICATE_WHERE);
-		}
-		this.whereAlreadyCalled = true;
-
-		this.augmentWhereClause(predicate);
-		return this;
-	}
-
-	// Appears UNUSED
-	innerJoin(table: Table, predicate: Predicate): this {
-		// 542: from() has to be called before innerJoin() or leftOuterJoin().
-		this.checkFrom(ErrorCode.MISSING_FROM_BEFORE_JOIN);
-
-		if (this.whereAlreadyCalled) {
-			// 547: where() cannot be called before innerJoin() or leftOuterJoin().
-			throw new Exception(ErrorCode.INVALID_WHERE);
-		}
-
-		this.query.from.push(table);
-		this.augmentWhereClause(predicate);
-
-		return this;
-	}
-
-	// Appears UNUSED
-	leftOuterJoin(table: Table, predicate: Predicate): this {
-		// 542: from() has to be called before innerJoin() or leftOuterJoin().
-		this.checkFrom(ErrorCode.MISSING_FROM_BEFORE_JOIN);
-
-		if (!(predicate instanceof JoinPredicate)) {
-			// 541: Outer join accepts only join predicate.
-			throw new Exception(ErrorCode.INVALID_OUTER_JOIN);
-		}
-		if (this.whereAlreadyCalled) {
-			// 547: where() cannot be called before innerJoin() or leftOuterJoin().
-			throw new Exception(ErrorCode.INVALID_WHERE);
-		}
-		this.query.from.push(table);
-		if (
-			this.query.outerJoinPredicates === null
-			|| this.query.outerJoinPredicates === undefined
-		) {
-			this.query.outerJoinPredicates = new Set<number>();
-		}
-		let normalizedPredicate = predicate;
-		if (
-			(table as BaseTable).getEffectiveName() !== (predicate.rightColumn.getTable() as BaseTable).getEffectiveName()
-		) {
-			normalizedPredicate = predicate.reverse();
-		}
-		this.query.outerJoinPredicates.add(normalizedPredicate.getId());
-		this.augmentWhereClause(normalizedPredicate);
-		return this;
-	}
-
-	// Appears UNUSED
 	limit(numberOfRows: Binder | number): this {
 		if (this.query.limit !== undefined || this.query.limitBinder) {
 			// 528: limit() has already been called.
@@ -6542,39 +6426,6 @@ class SelectBuilder extends BaseBuilder<SelectContext> {
 			}
 			this.query.skip = numberOfRows;
 		}
-		return this;
-	}
-
-	// Appears UNUSED
-	orderBy(column: Column, order?: Order): this {
-		// 549: from() has to be called before orderBy() or groupBy().
-		this.checkFrom(ErrorCode.FROM_AFTER_ORDER_GROUPBY);
-
-		if (this.query.orderBy === undefined) {
-			this.query.orderBy = [];
-		}
-
-		this.query.orderBy.push({
-			"column": column,
-			"order": order !== undefined && order !== null ? order : Order.ASC
-		});
-		return this;
-	}
-
-	// Appears UNUSED
-	groupBy(...columns: Column[]): this {
-		// 549: from() has to be called before orderBy() or groupBy().
-		this.checkFrom(ErrorCode.FROM_AFTER_ORDER_GROUPBY);
-
-		if (this.query.groupBy) {
-			// 530: groupBy() has already been called.
-			throw new Exception(ErrorCode.DUPLICATE_GROUPBY);
-		}
-		if (this.query.groupBy === undefined) {
-			this.query.groupBy = [];
-		}
-
-		this.query.groupBy.push(...columns);
 		return this;
 	}
 
