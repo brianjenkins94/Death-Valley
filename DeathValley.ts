@@ -10477,8 +10477,6 @@ class TableImpl implements BaseTable {
 	private readonly _columns: Column[];
 	private readonly _functionMap: Map<string, (payload: PayloadType) => Key>;
 
-	private readonly _evalRegistry: EvalRegistry;
-
 	constructor(
 		readonly _name: string,
 		cols: ColumnDef[],
@@ -10690,7 +10688,7 @@ class Database {
 		this.cache = new DefaultCache(this.schema);
 		this.backStore = new Memory(this.schema);
 		this.indexStore = new MemoryIndexStore();
-		this.indexStore.init(this.schema);
+		this.indexStore.init(this.schema); // FIXME: This is async
 		this.queryEngine = new DefaultQueryEngine(this.indexStore, this.cache);
 		this.runner = new Runner();
 

@@ -21,11 +21,6 @@ var ConstraintAction;
     ConstraintAction[ConstraintAction["RESTRICT"] = 0] = "RESTRICT";
     ConstraintAction[ConstraintAction["CASCADE"] = 1] = "CASCADE";
 })(ConstraintAction || (ConstraintAction = {}));
-var ConstraintTiming;
-(function (ConstraintTiming) {
-    ConstraintTiming[ConstraintTiming["IMMEDIATE"] = 0] = "IMMEDIATE";
-    ConstraintTiming[ConstraintTiming["DEFERRABLE"] = 1] = "DEFERRABLE";
-})(ConstraintTiming || (ConstraintTiming = {}));
 var Order;
 (function (Order) {
     Order[Order["DESC"] = 0] = "DESC";
@@ -401,305 +396,15 @@ class MapSet {
         this.map.forEach((valueSet) => results.push(...Array.from(valueSet)));
         return results;
     }
-}
-// Read-only objects that provides information for schema metadata.
-class Info {
-    constructor(schema) {
-        this.schema = schema;
-        this.cascadeReferringFk = new MapSet();
-        this.restrictReferringFk = new MapSet();
-        this.parents = new MapSet();
-        this.colParent = new Map();
-        this.children = new MapSet();
-        this.cascadeChildren = new MapSet();
-        this.restrictChildren = new MapSet();
-        this.colChild = new MapSet();
-        this.schema.tables().forEach((t) => {
-            const table = t;
-            const tableName = table.getName();
-            table
-                .getConstraint()
-                .getForeignKeys()
-                .forEach((fkSpec) => {
-                this.parents.set(tableName, this.schema.table(fkSpec.parentTable));
-                this.children.set(fkSpec.parentTable, table);
-                if (fkSpec.action === ConstraintAction.RESTRICT) {
-                    this.restrictReferringFk.set(fkSpec.parentTable, fkSpec);
-                    this.restrictChildren.set(fkSpec.parentTable, table);
-                }
-                else {
-                    // fkSpec.action === ConstraintAction.CASCADE
-                    this.cascadeReferringFk.set(fkSpec.parentTable, fkSpec);
-                    this.cascadeChildren.set(fkSpec.parentTable, table);
-                }
-                this.colParent.set(table.getName() + "." + fkSpec.childColumn, fkSpec.parentTable);
-                const ref = `${fkSpec.parentTable}.${fkSpec.parentColumn}`;
-                this.colChild.set(ref, table.getName());
-            }, this);
-        }, this);
-    }
-    static from(schema) {
-        return schema.info();
-    }
-    // Looks up referencing foreign key for a given table.
-    // If no constraint action type were provided, all types are included.
-    getReferencingForeignKeys(tableName, constraintAction) {
-        if (constraintAction !== undefined && constraintAction !== null) {
-            return constraintAction === ConstraintAction.CASCADE ? this.cascadeReferringFk.get(tableName) : this.restrictReferringFk.get(tableName);
+    // Returns a set for a given key. If the key does not exist in the map,
+    // a new Set will be created.
+    getSet(key) {
+        let valueSet = this.map.get(key) || null;
+        if (valueSet === null) {
+            valueSet = new Set();
+            this.map.set(key, valueSet);
         }
-        else {
-            const cascadeConstraints = this.cascadeReferringFk.get(tableName);
-            const restrictConstraints = this.restrictReferringFk.get(tableName);
-            if (cascadeConstraints === null && restrictConstraints === null) {
-                return null;
-            }
-            else {
-                return (cascadeConstraints || []).concat(restrictConstraints || []);
-            }
-        }
-    }
-}
-class ConstraintChecker {
-    constructor(schema, cache, indexStore) {
-        this.indexStore = indexStore;
-        this.schema = schema;
-        this.cache = cache;
-        this.foreignKeysParentIndices = new Map();
-    }
-    static didColumnValueChange(rowBefore, rowAfter, indexName) {
-        const deletionOrAddition = rowBefore === null ? rowAfter !== null : rowAfter === null;
-        return (deletionOrAddition
-            || rowBefore.keyOfIndex(indexName) !== rowAfter.keyOfIndex(indexName));
-    }
-    // Performs all necessary foreign key constraint checks for the case where new
-    // rows are inserted. Only constraints with |constraintTiming| will be
-    // checked.
-    checkForeignKeysForInsert(table, rows, constraintTiming) {
-        if (rows.length === 0) {
-            return;
-        }
-        const modifications = rows.map((row) => {
-            return [null /* rowBefore */, row];
-        });
-        this.checkReferredKeys(table, modifications, constraintTiming);
-    }
-    // Performs all necessary foreign key constraint checks for the case of
-    // existing rows being updated. Only constraints with |constraintTiming| will
-    // be checked.
-    checkForeignKeysForUpdate(table, modifications, constraintTiming) {
-        if (modifications.length === 0) {
-            return;
-        }
-        this.checkReferredKeys(table, modifications, constraintTiming);
-        this.checkReferringKeys(table, modifications, constraintTiming, ConstraintAction.RESTRICT);
-    }
-    // Performs all necessary foreign key constraint checks for the case of
-    // existing rows being deleted. Only constraints with |constraintTiming| will
-    // be checked.
-    checkForeignKeysForDelete(table, rows, constraintTiming) {
-        if (rows.length === 0) {
-            return;
-        }
-        const modifications = rows.map((row) => {
-            return [row /* rowBefore */, null];
-        });
-        this.checkReferringKeys(table, modifications, constraintTiming);
-    }
-    // Checks that all referred keys in the given rows actually exist.
-    // Only constraints with matching |constraintTiming| will be checked.
-    checkReferredKeys(table, modifications, constraintTiming) {
-        const foreignKeySpecs = table.getConstraint().getForeignKeys();
-        foreignKeySpecs.forEach((foreignKeySpec) => {
-            if (foreignKeySpec.timing === constraintTiming) {
-                this.checkReferredKey(foreignKeySpec, modifications);
-            }
-        }, this);
-    }
-    checkReferredKey(foreignKeySpec, modifications) {
-        const parentIndex = this.getParentIndex(foreignKeySpec);
-        modifications.forEach((modification) => {
-            const didColumnValueChange = ConstraintChecker.didColumnValueChange(modification[0], modification[1], foreignKeySpec.name);
-            if (didColumnValueChange) {
-                const rowAfter = modification[1];
-                const parentKey = rowAfter.keyOfIndex(foreignKeySpec.name);
-                // A null value in the child column implies to ignore it, and not
-                // considering it as a constraint violation.
-                if (parentKey !== null && !parentIndex.containsKey(parentKey)) {
-                    // 203: Foreign key constraint violation on constraint {0}.
-                    throw new Exception(ErrorCode.FK_VIOLATION, foreignKeySpec.name);
-                }
-            }
-        }, this);
-    }
-    // Finds the index corresponding to the parent column of the given foreign
-    // key by querying the schema and the IndexStore.
-    // Returns the index corresponding to the parent column of the
-    // given foreign key constraint.
-    findParentIndex(foreignKeySpec) {
-        const parentTable = this.schema.table(foreignKeySpec.parentTable);
-        const parentColumn = parentTable[foreignKeySpec.parentColumn];
-        // getIndex() must find an index since the parent of a foreign key
-        // constraint must have a dedicated index.
-        const parentIndexSchema = parentColumn.getIndex();
-        return this.indexStore.get(parentIndexSchema.getNormalizedName());
-    }
-    // Gets the index corresponding to the parent column of the given foreign key.
-    // Leverages this.foreignKeysParentIndices map, such that the work for finding
-    // the parent index happens only once per foreign key.
-    // Returns the index corresponding to the parent column of the
-    // given foreign key constraint.
-    getParentIndex(foreignKeySpec) {
-        let parentIndex = this.foreignKeysParentIndices.get(foreignKeySpec.name);
-        if (parentIndex === undefined) {
-            parentIndex = this.findParentIndex(foreignKeySpec);
-            this.foreignKeysParentIndices.set(foreignKeySpec.name, parentIndex);
-        }
-        return parentIndex;
-    }
-    // Checks that no referring keys exist for the given rows.
-    // Only constraints with |constraintTiming| will be checked.
-    // Only constraints with |constraintAction| will be checked. If not provided
-    // both CASCADE and RESTRICT are checked.
-    checkReferringKeys(table, modifications, constraintTiming, constraintAction) {
-        let foreignKeySpecs = Info.from(this.schema).getReferencingForeignKeys(table.getName(), constraintAction);
-        if (foreignKeySpecs === null) {
-            return;
-        }
-        // TODO(dpapad): Enhance lf.schema.Info#getReferencingForeignKeys to filter
-        // based on constraint timing, such that this linear search is avoided.
-        foreignKeySpecs = foreignKeySpecs.filter((foreignKeySpec) => {
-            return foreignKeySpec.timing === constraintTiming;
-        });
-        if (foreignKeySpecs.length === 0) {
-            return;
-        }
-        this.loopThroughReferringRows(foreignKeySpecs, modifications, (foreignKeySpec, childIndex, parentKey) => {
-            if (childIndex.containsKey(parentKey)) {
-                // 203: Foreign key constraint violation on constraint {0}.
-                throw new Exception(ErrorCode.FK_VIOLATION, foreignKeySpec.name);
-            }
-        });
-    }
-    // Loops through the given list of foreign key constraints, for each modified
-    // row and invokes the given callback only when a referred column's value has
-    // been modified.
-    loopThroughReferringRows(foreignKeySpecs, modifications, callbackFn) {
-        foreignKeySpecs.forEach((foreignKeySpec) => {
-            const childIndex = this.indexStore.get(foreignKeySpec.name);
-            const parentIndex = this.getParentIndex(foreignKeySpec);
-            modifications.forEach((modification) => {
-                const didColumnValueChange = ConstraintChecker.didColumnValueChange(modification[0], modification[1], parentIndex.getName());
-                if (didColumnValueChange) {
-                    const rowBefore = modification[0];
-                    const parentKey = rowBefore.keyOfIndex(parentIndex.getName());
-                    callbackFn(foreignKeySpec, childIndex, parentKey, modification);
-                }
-            }, this);
-        }, this);
-    }
-}
-class TableDiff {
-    constructor(name) {
-        this.name = name;
-        this.added = new Map();
-        this.modified = new Map();
-        this.deleted = new Map();
-    }
-    getName() {
-        return this.name;
-    }
-    getAdded() {
-        return this.added;
-    }
-    getModified() {
-        return this.modified;
-    }
-    getDeleted() {
-        return this.deleted;
-    }
-    add(row) {
-        if (this.deleted.has(row.id())) {
-            const modification = [
-                this.deleted.get(row.id()),
-                row
-            ];
-            this.modified.set(row.id(), modification);
-            this.deleted.delete(row.id());
-        }
-        else {
-            this.added.set(row.id(), row);
-        }
-    }
-    modify(modification) {
-        const oldValue = modification[0];
-        const newValue = modification[1];
-        assert(oldValue.id() === newValue.id(), "Row ID mismatch between old/new values.");
-        const id = oldValue.id();
-        if (this.added.has(id)) {
-            this.added.set(id, newValue);
-        }
-        else if (this.modified.has(id)) {
-            const overallModification = [
-                this.modified.get(id)[0],
-                newValue
-            ];
-            this.modified.set(id, overallModification);
-        }
-        else {
-            this.modified.set(id, modification);
-        }
-    }
-    delete(row) {
-        if (this.added.has(row.id())) {
-            this.added.delete(row.id());
-        }
-        else if (this.modified.has(row.id())) {
-            const originalRow = this.modified.get(row.id())[0];
-            this.modified.delete(row.id());
-            this.deleted.set(row.id(), originalRow);
-        }
-        else {
-            this.deleted.set(row.id(), row);
-        }
-    }
-    // Merge another diff into this one.
-    merge(other) {
-        other.added.forEach((row) => { this.add(row); });
-        other.modified.forEach((modification) => { this.modify(modification); });
-        other.deleted.forEach((row) => { this.delete(row); });
-    }
-    // Transforms each changes included in this diff (insertion, modification,
-    // deletion) as a pair of before and after values.
-    // Example addition:     [null, rowValue]
-    // Example modification: [oldRowValue, newRowValue]
-    // Example deletion      [oldRowValue, null]
-    getAsModifications() {
-        const modifications = [];
-        this.added.forEach((row) => modifications.push([null, /* now */ row]));
-        this.modified.forEach((modification) => modifications.push(modification));
-        this.deleted.forEach((row) => modifications.push([row, /* now */ null]));
-        return modifications;
-    }
-    toString() {
-        return (`[${Array.from(this.added.keys()).toString()}], `
-            + `[${Array.from(this.modified.keys()).toString()}], `
-            + `[${Array.from(this.deleted.keys()).toString()}]`);
-    }
-    // Reverses this set of changes. Useful for reverting changes after they have
-    // been applied.
-    getReverse() {
-        const reverseDiff = new TableDiff(this.name);
-        this.added.forEach((row) => { reverseDiff.delete(row); });
-        this.deleted.forEach((row) => { reverseDiff.add(row); });
-        this.modified.forEach((modification) => {
-            reverseDiff.modify([modification[1], modification[0]]);
-        });
-        return reverseDiff;
-    }
-    isEmpty() {
-        return (this.added.size === 0
-            && this.deleted.size === 0
-            && this.modified.size === 0);
+        return valueSet;
     }
 }
 // A transaction journal which is contained within Tx. The journal
@@ -710,10 +415,7 @@ class Journal {
     constructor(schema, cache, indexStore, txScope) {
         this.scope = new Map();
         txScope.forEach((tableSchema) => this.scope.set(tableSchema.getName(), tableSchema));
-        this.schema = schema;
-        this.cache = cache;
         this.indexStore = indexStore;
-        this.constraintChecker = new ConstraintChecker(schema, cache, indexStore);
         this.inMemoryUpdater = new InMemoryUpdater(schema, cache, indexStore);
         this.terminated = false;
         this.pendingRollback = false;
@@ -742,14 +444,6 @@ class Journal {
     }
     getScope() {
         return this.scope;
-    }
-    checkDeferredConstraints() {
-        this.tableDiffs.forEach((tableDiff) => {
-            const table = this.scope.get(tableDiff.getName());
-            this.constraintChecker.checkForeignKeysForInsert(table, Array.from(tableDiff.getAdded().values()), ConstraintTiming.DEFERRABLE);
-            this.constraintChecker.checkForeignKeysForDelete(table, Array.from(tableDiff.getDeleted().values()), ConstraintTiming.DEFERRABLE);
-            this.constraintChecker.checkForeignKeysForUpdate(table, Array.from(tableDiff.getModified().values()), ConstraintTiming.DEFERRABLE);
-        }, this);
     }
     // Commits journal changes into cache and indices.
     commit() {
@@ -1022,8 +716,7 @@ class SingleKeyRange {
             const favor = SingleKeyRange.compareKey(r1.from, r2.from, true);
             if (favor !== Favor.LHS) {
                 from = r1.from;
-                excludeLower
-                    = favor !== Favor.TIE ? r1.excludeLower : r1.excludeLower && r2.excludeLower;
+                excludeLower = favor !== Favor.TIE ? r1.excludeLower : r1.excludeLower && r2.excludeLower;
             }
             else {
                 from = r2.from;
@@ -1034,8 +727,7 @@ class SingleKeyRange {
             const favor = SingleKeyRange.compareKey(r1.to, r2.to, false);
             if (favor !== Favor.RHS) {
                 to = r1.to;
-                excludeUpper
-                    = favor !== Favor.TIE ? r1.excludeUpper : r1.excludeUpper && r2.excludeUpper;
+                excludeUpper = favor !== Favor.TIE ? r1.excludeUpper : r1.excludeUpper && r2.excludeUpper;
             }
             else {
                 to = r2.to;
@@ -1059,8 +751,7 @@ class SingleKeyRange {
         }
         else {
             favor = SingleKeyRange.compareKey(r1.to, r2.to, false);
-            right
-                = favor === Favor.TIE ? r1.excludeUpper ? r1 : r2 : favor === Favor.RHS ? r1 : r2;
+            right = favor === Favor.TIE ? r1.excludeUpper ? r1 : r2 : favor === Favor.RHS ? r1 : r2;
         }
         return new SingleKeyRange(left.from, right.to, left.excludeLower, right.excludeUpper);
     }
@@ -1087,13 +778,13 @@ class SingleKeyRange {
         return complementKeyRanges;
     }
     static compareKey(l, r, isLeftHandSide, excludeL = false, excludeR = false) {
-        const flip = (favor) => (isLeftHandSide ? favor : favor === Favor.LHS ? Favor.RHS : Favor.LHS);
+        const flip = (favor) => isLeftHandSide ? favor : favor === Favor.LHS ? Favor.RHS : Favor.LHS;
         // The following logic is implemented for LHS. RHS is achieved using flip().
-        const tieLogic = () => (!SingleKeyRange.xor(excludeL, excludeR)
+        const tieLogic = () => !SingleKeyRange.xor(excludeL, excludeR)
             ? Favor.TIE
             : excludeL
                 ? flip(Favor.LHS)
-                : flip(Favor.RHS));
+                : flip(Favor.RHS);
         if (SingleKeyRange.isUnbound(l)) {
             return !SingleKeyRange.isUnbound(r) ? flip(Favor.RHS) : tieLogic();
         }
@@ -1140,21 +831,6 @@ class SingleKeyRange {
             && !SingleKeyRange.isUnbound(this.from)
             && !this.excludeLower
             && !this.excludeUpper);
-    }
-    contains(key) {
-        const left = SingleKeyRange.isUnbound(this.from)
-            || key > this.from
-            || key === this.from && !this.excludeLower;
-        const right = SingleKeyRange.isUnbound(this.to)
-            || key < this.to
-            || key === this.to && !this.excludeUpper;
-        return left && right;
-    }
-    equals(range) {
-        return (this.from === range.from
-            && this.excludeLower === range.excludeLower
-            && this.to === range.to
-            && this.excludeUpper === range.excludeUpper);
     }
 }
 SingleKeyRange.UNBOUND_VALUE = new UnboundKey();
@@ -1228,6 +904,7 @@ class Row {
     static getNextId() {
         return Row.nextId++;
     }
+    // Appears UNUSED
     // Sets the global row id. This is supposed to be called by BackStore
     // instances during initialization only.
     // NOTE: nextId is currently shared among different databases. It is
@@ -1239,6 +916,7 @@ class Row {
     static setNextId(nextId) {
         Row.nextId = nextId;
     }
+    // Appears UNUSED
     // Updates global row id. Guarantees that the |nextId_| value will only be
     // increased. This is supposed to be called by BackStore instances during
     // initialization only.
@@ -1251,6 +929,7 @@ class Row {
     static deserialize(data) {
         return new Row(data.id, data.value);
     }
+    // Appears UNUSED
     // Creates a new Row instance with an automatically assigned ID.
     static create(payload) {
         return new Row(Row.getNextId(), payload || {});
@@ -1286,6 +965,7 @@ class Row {
     id() {
         return this.id_;
     }
+    // Appears UNUSED
     // Set the ID of this row instance.
     assignRowId(id) {
         this.id_ = id;
@@ -1299,6 +979,7 @@ class Row {
     toDbPayload() {
         return this.payload_;
     }
+    // Appears UNUSED
     serialize() {
         return { "id": this.id_, "value": this.toDbPayload() };
     }
@@ -1518,6 +1199,7 @@ class TreeNode {
     getParent() {
         return this.parent;
     }
+    // Appears UNUSED
     setParent(parentNode) {
         this.parent = parentNode;
     }
@@ -1649,8 +1331,7 @@ class ValuePredicate extends PredicateNode {
             return this.evalAsIn(relation);
         }
         const entries = relation.entries.filter((entry) => {
-            return (this.evaluatorFn(entry.getField(this.column), this.value)
-                !== this.isComplement);
+            return (this.evaluatorFn(entry.getField(this.column), this.value) !== this.isComplement);
         });
         return new Relation(entries, relation.getTables());
     }
@@ -1676,6 +1357,7 @@ class ValuePredicate extends PredicateNode {
         tables.add(this.column.getTable());
         return tables;
     }
+    // Appears UNUSED
     setBinder(binder) {
         this.binder = binder;
     }
@@ -2020,6 +1702,7 @@ class MemoryTable {
         }, this);
         return results;
     }
+    // Appears UNUSED
     getData() {
         return this.data;
     }
@@ -2029,10 +1712,12 @@ class MemoryTable {
     putSync(rows) {
         rows.forEach((row) => this.data.set(row.id(), row));
     }
+    // Appears UNUSED
     put(rows) {
         this.putSync(rows);
         return Promise.resolve();
     }
+    // Appears UNUSED
     removeSync(ids) {
         if (ids.length === 0 || ids.length === this.data.size) {
             // Remove all.
@@ -2042,10 +1727,12 @@ class MemoryTable {
             ids.forEach((id) => this.data.delete(id));
         }
     }
+    // Appears UNUSED
     remove(ids) {
         this.removeSync(ids);
         return Promise.resolve();
     }
+    // Appears UNUSED
     getMaxRowId() {
         if (this.data.size === 0) {
             return 0;
@@ -2100,12 +1787,6 @@ class BaseTx {
         return this.statsObject;
     }
     commitReadWrite() {
-        try {
-            this.journal.checkDeferredConstraints();
-        }
-        catch (e) {
-            return Promise.reject(e);
-        }
         return this.mergeIntoBackstore().then((results) => {
             this.journal.commit();
             return results;
@@ -2204,6 +1885,7 @@ class Memory {
     supportsImport() {
         return true;
     }
+    // Appears UNUSED
     peek() {
         return this.tables;
     }
@@ -2451,8 +2133,7 @@ class IndexStats {
     // Signals that a row had been added to index.
     add(key, rowCount) {
         this.totalRows += rowCount;
-        this.maxKeyEncountered
-            = this.maxKeyEncountered === null ? key : key > this.maxKeyEncountered ? key : this.maxKeyEncountered;
+        this.maxKeyEncountered = this.maxKeyEncountered === null ? key : key > this.maxKeyEncountered ? key : this.maxKeyEncountered;
     }
     // Signals that row(s) had been removed from index.
     remove(key, removedCount) {
@@ -2702,8 +2383,7 @@ class BTreeNode {
         this.keys = [];
         this.values = [];
         this.children = [];
-        this.getContainingLeaf
-            = tree.comparator().keyDimensions() === 1 ? this.getContainingLeafSingleKey : this.getContainingLeafMultiKey;
+        this.getContainingLeaf = tree.comparator().keyDimensions() === 1 ? this.getContainingLeafSingleKey : this.getContainingLeafMultiKey;
     }
     static create(tree) {
         // TODO(arthurhsu): Should distinguish internal nodes from leaf nodes to
@@ -3400,14 +3080,11 @@ BTreeNode.MAX_KEY_LEN = BTreeNode.MAX_COUNT - 1;
 BTreeNode.MIN_KEY_LEN = BTreeNode.MAX_COUNT >> 1;
 class SimpleComparator {
     constructor(order) {
-        this.compareFn
-            = order === Order.DESC ? SimpleComparator.compareDescending : SimpleComparator.compareAscending;
-        this.normalizeKeyRange
-            = order === Order.DESC ? (keyRange) => {
-                return keyRange !== undefined && keyRange !== null ? keyRange.reverse() : null;
-            } : (keyRange) => keyRange || null;
-        this.orderRange
-            = order === Order.DESC ? SimpleComparator.orderRangeDescending : SimpleComparator.orderRangeAscending;
+        this.compareFn = order === Order.DESC ? SimpleComparator.compareDescending : SimpleComparator.compareAscending;
+        this.normalizeKeyRange = order === Order.DESC ? (keyRange) => {
+            return keyRange !== undefined && keyRange !== null ? keyRange.reverse() : null;
+        } : (keyRange) => keyRange || null;
+        this.orderRange = order === Order.DESC ? SimpleComparator.orderRangeDescending : SimpleComparator.orderRangeAscending;
     }
     static compareAscending(lhs, rhs) {
         return lhs > rhs ? Favor.LHS : lhs < rhs ? Favor.RHS : Favor.TIE;
@@ -3613,8 +3290,7 @@ class SimpleComparatorWithNull extends SimpleComparator {
     }
     constructor(order) {
         super(order);
-        this.compareFn
-            = order === Order.DESC ? SimpleComparatorWithNull.compareDescending : SimpleComparatorWithNull.compareAscending;
+        this.compareFn = order === Order.DESC ? SimpleComparatorWithNull.compareDescending : SimpleComparatorWithNull.compareAscending;
     }
     isInRange(key, range) {
         return key === null ? range.isAll() : super.isInRange(key, range);
@@ -4615,15 +4291,6 @@ JoinPredicate.BLOCK_SIZE_EXPONENT = 8;
 class SqlHelper {
     static toSql(builder, stripValueInfo = false) {
         const query = builder.getQuery();
-        // if (query instanceof InsertContext) {
-        // 	return SqlHelper.insertToSql(query, stripValueInfo);
-        // }
-        // if (query instanceof DeleteContext) {
-        // 	return SqlHelper.deleteToSql(query, stripValueInfo);
-        // }
-        // if (query instanceof UpdateContext) {
-        // 	return SqlHelper.updateToSql(query, stripValueInfo);
-        // }
         if (query instanceof SelectContext) {
             return SqlHelper.selectToSql(query, stripValueInfo);
         }
@@ -4829,8 +4496,11 @@ class SqlHelper {
     }
 }
 class BaseBuilder {
-    // UNUSED
     constructor(backStore, schema, cache, indexStore, queryEngine, runner, context) {
+        this.backStore = backStore;
+        this.schema = schema;
+        this.cache = cache;
+        this.indexStore = indexStore;
         this.queryEngine = queryEngine;
         this.runner = runner;
         this.query = context;
@@ -5019,6 +4689,7 @@ class SelectBuilder extends BaseBuilder {
         }
         this.checkProjectionList();
     }
+    // Appears UNUSED
     from(...tables) {
         if (tables.every((element) => {
             return typeof element === "string";
@@ -5038,6 +4709,7 @@ class SelectBuilder extends BaseBuilder {
         this.query.from.push(...tables);
         return this;
     }
+    // Appears UNUSED
     where(predicate) {
         // 548: from() has to be called before where().
         this.checkFrom(ErrorCode.FROM_AFTER_WHERE);
@@ -5049,6 +4721,7 @@ class SelectBuilder extends BaseBuilder {
         this.augmentWhereClause(predicate);
         return this;
     }
+    // Appears UNUSED
     innerJoin(table, predicate) {
         // 542: from() has to be called before innerJoin() or leftOuterJoin().
         this.checkFrom(ErrorCode.MISSING_FROM_BEFORE_JOIN);
@@ -5060,6 +4733,7 @@ class SelectBuilder extends BaseBuilder {
         this.augmentWhereClause(predicate);
         return this;
     }
+    // Appears UNUSED
     leftOuterJoin(table, predicate) {
         // 542: from() has to be called before innerJoin() or leftOuterJoin().
         this.checkFrom(ErrorCode.MISSING_FROM_BEFORE_JOIN);
@@ -5077,14 +4751,14 @@ class SelectBuilder extends BaseBuilder {
             this.query.outerJoinPredicates = new Set();
         }
         let normalizedPredicate = predicate;
-        if (table.getEffectiveName()
-            !== predicate.rightColumn.getTable().getEffectiveName()) {
+        if (table.getEffectiveName() !== predicate.rightColumn.getTable().getEffectiveName()) {
             normalizedPredicate = predicate.reverse();
         }
         this.query.outerJoinPredicates.add(normalizedPredicate.getId());
         this.augmentWhereClause(normalizedPredicate);
         return this;
     }
+    // Appears UNUSED
     limit(numberOfRows) {
         if (this.query.limit !== undefined || this.query.limitBinder) {
             // 528: limit() has already been called.
@@ -5102,6 +4776,7 @@ class SelectBuilder extends BaseBuilder {
         }
         return this;
     }
+    // Appears UNUSED
     skip(numberOfRows) {
         if (this.query.skip !== undefined || this.query.skipBinder) {
             // 529: skip() has already been called.
@@ -5119,6 +4794,7 @@ class SelectBuilder extends BaseBuilder {
         }
         return this;
     }
+    // Appears UNUSED
     orderBy(column, order) {
         // 549: from() has to be called before orderBy() or groupBy().
         this.checkFrom(ErrorCode.FROM_AFTER_ORDER_GROUPBY);
@@ -5131,6 +4807,7 @@ class SelectBuilder extends BaseBuilder {
         });
         return this;
     }
+    // Appears UNUSED
     groupBy(...columns) {
         // 549: from() has to be called before orderBy() or groupBy().
         this.checkFrom(ErrorCode.FROM_AFTER_ORDER_GROUPBY);
@@ -5143,14 +4820,6 @@ class SelectBuilder extends BaseBuilder {
         }
         this.query.groupBy.push(...columns);
         return this;
-    }
-    // Provides a clone of this select builder. This is useful when the user needs
-    // to observe the same query with different parameter bindings.
-    clone() {
-        const builder = new SelectBuilder(this.backStore, this.schema, this.cache, this.indexStore, this.queryEngine, this.runner, this.query.columns);
-        builder.query = this.query.clone();
-        builder.query.clonedFrom = null; // The two builders are not related.
-        return builder;
     }
     // Checks that usage of lf.fn.distinct() is correct. Specifically if an
     // lf.fn.distinct() column is requested, then it can't be combined with any
@@ -5768,15 +5437,8 @@ class LogicalPlanFactory {
     }
     create(query) {
         let generator = null;
-        // if (query instanceof InsertContext) {
-        // 	generator = new InsertLogicalPlanGenerator(query);
-        // } else if (query instanceof DeleteContext) {
-        // 	generator = new DeleteLogicalPlanGenerator(query, this.deleteOptimizationPasses);
-        // } else
         if (query instanceof SelectContext) {
             generator = new SelectLogicalPlanGenerator(query, this.selectOptimizationPasses);
-            // } else if (query instanceof UpdateContext) {
-            // 	generator = new UpdateLogicalPlanGenerator(query);
         }
         else {
             // 513: Unknown query context.
@@ -5817,9 +5479,6 @@ class UnknownTable {
     }
     deserializeRow(dbRecord) {
         throw new Exception(ErrorCode.NOT_SUPPORTED);
-    }
-    getConstraint() {
-        return null;
     }
     as(alias) {
         this._alias = alias;
@@ -6264,8 +5923,7 @@ class JoinStep extends PhysicalQueryPlanNode {
         this.cache = cache;
         this.predicate = predicate;
         this.isOuterJoin = isOuterJoin;
-        this.algorithm
-            = this.predicate.evaluatorType === EvalType.EQ ? JoinAlgorithm.HASH : JoinAlgorithm.NESTED_LOOP;
+        this.algorithm = this.predicate.evaluatorType === EvalType.EQ ? JoinAlgorithm.HASH : JoinAlgorithm.NESTED_LOOP;
         this.indexJoinInfo = null;
     }
     toString() {
@@ -6345,8 +6003,7 @@ class IndexJoinPass extends RewritePass {
         }
         // Finds which of the two joined columns corresponds to the given table.
         const getColumnForTable = (table) => {
-            return table.getEffectiveName()
-                === joinStep.predicate.rightColumn.getTable().getEffectiveName() ? joinStep.predicate.rightColumn : joinStep.predicate.leftColumn;
+            return table.getEffectiveName() === joinStep.predicate.rightColumn.getTable().getEffectiveName() ? joinStep.predicate.rightColumn : joinStep.predicate.leftColumn;
         };
         // Extracts the candidate indexed column for the given execution step node.
         const getCandidate = (executionStep) => {
@@ -6393,8 +6050,7 @@ class BoundedKeyRangeCalculator {
         this.fillMissingKeyRanges(keyRangeMap);
         // If this IndexRangeCandidate refers to a single column index there is no
         // need to perform cartesian product, since there is only one dimension.
-        this.combinations
-            = this.indexSchema.columns.length === 1 ? Array.from(keyRangeMap.values())[0].getValues() : this.calculateCartesianProduct(this.getSortedKeyRangeSets(keyRangeMap));
+        this.combinations = this.indexSchema.columns.length === 1 ? Array.from(keyRangeMap.values())[0].getValues() : this.calculateCartesianProduct(this.getSortedKeyRangeSets(keyRangeMap));
         this.lastQueryContext = queryContext;
         return this.combinations;
     }
@@ -6797,7 +6453,6 @@ class OrderByStep extends PhysicalQueryPlanNode {
             relationToSort.entries.sort(this.entryComparatorFn.bind(this));
         }
         else {
-            // if (relations.length > 1) {
             relations.sort(this.relationComparatorFn.bind(this));
         }
         return relations;
@@ -7301,8 +6956,7 @@ class OrderByIndexPass extends RewritePass {
         }, 0);
         const xorBitmask = ordersLeftBitmask ^ ordersRightBitmask;
         const isNatural = xorBitmask === 0;
-        const isReverse = xorBitmask
-            === 2 ** Math.max(orderBy.length, indexSchema.columns.length) - 1;
+        const isReverse = xorBitmask === 2 ** Math.max(orderBy.length, indexSchema.columns.length) - 1;
         return [isNatural, isReverse];
     }
 }
@@ -7339,23 +6993,11 @@ class PhysicalPlanFactory {
     }
     create(logicalQueryPlan, queryContext) {
         const logicalQueryPlanRoot = logicalQueryPlan.getRoot();
-        // if (
-        // 	logicalQueryPlanRoot instanceof InsertOrReplaceNode
-        // 	|| logicalQueryPlanRoot instanceof InsertNode
-        // ) {
-        // 	return this.createPlan(logicalQueryPlan, queryContext);
-        // }
         if (logicalQueryPlanRoot instanceof ProjectNode
             || logicalQueryPlanRoot instanceof LimitNode
             || logicalQueryPlanRoot instanceof SkipNode) {
             return this.createPlan(logicalQueryPlan, queryContext, this.selectOptimizationPasses);
         }
-        // if (
-        // 	logicalQueryPlanRoot instanceof DeleteNode
-        // 	|| logicalQueryPlanRoot instanceof UpdateNode
-        // ) {
-        // 	return this.createPlan(logicalQueryPlan, queryContext, this.deleteOptimizationPasses);
-        // }
         // Should never get here since all cases are handled above.
         // 8: Unknown query plan node.
         throw new Exception(ErrorCode.UNKNOWN_PLAN_NODE);
@@ -7401,15 +7043,6 @@ class PhysicalPlanFactory {
         else if (node instanceof TableAccessNode) {
             return new TableAccessFullStep(this.indexStore, this.cache, node.table);
         }
-        // else if (node instanceof DeleteNode) {
-        // 	return new DeleteStep(node.table);
-        // } else if (node instanceof UpdateNode) {
-        // 	return new UpdateStep(node.table);
-        // } else if (node instanceof InsertOrReplaceNode) {
-        // 	return new InsertOrReplaceStep(this.global, node.table);
-        // } else if (node instanceof InsertNode) {
-        // 	return new InsertStep(this.global, node.table);
-        // }
         // 514: Unknown node type.
         throw new Exception(ErrorCode.UNKNOWN_NODE_TYPE);
     }
@@ -7939,17 +7572,9 @@ class DatabaseSchemaImpl {
     constructor(_name) {
         this._name = _name;
         this.tableMap = new Map();
-        // Lazy initialization
-        this._info = undefined;
     }
     name() {
         return this._name;
-    }
-    info() {
-        if (this._info === undefined) {
-            this._info = new Info(this);
-        }
-        return this._info;
     }
     tables() {
         return Array.from(this.tableMap.values());
@@ -8035,8 +7660,7 @@ class ColumnImpl {
             });
             // Normally there should be only one dedicated index for this column,
             // but if there are more, just grab the first one.
-            this.index
-                = indices.length > 0 ? indices[0] : null;
+            this.index = indices.length > 0 ? indices[0] : null;
         }
         return this.index;
     }
@@ -8075,33 +7699,6 @@ class ColumnImpl {
     }
     as(name) {
         return new ColumnImpl(this.table, this.name, this.unique, this.nullable, this.type, name);
-    }
-}
-class Constraint {
-    constructor(primaryKey, notNullable) {
-        this.primaryKey = primaryKey;
-        this.notNullable = notNullable;
-    }
-    getPrimaryKey() {
-        return this.primaryKey;
-    }
-    getNotNullable() {
-        return this.notNullable;
-    }
-}
-class IndexImpl {
-    constructor(tableName, name, isUnique, columns) {
-        this.tableName = tableName;
-        this.name = name;
-        this.isUnique = isUnique;
-        this.columns = columns;
-    }
-    getNormalizedName() {
-        return `${this.tableName}.${this.name}`;
-    }
-    // Whether this index refers to any column that is marked as nullable.
-    hasNullableColumn() {
-        return this.columns.some((column) => column.schema.isNullable());
     }
 }
 class RowImpl extends Row {
@@ -8168,7 +7765,6 @@ class TableImpl {
             this._columns.push(colSchema);
         }, this);
         this._functionMap = null;
-        this._constraint = null;
         this._evalRegistry = EvalRegistry.get();
         this._alias = alias ? alias : null;
     }
@@ -8187,9 +7783,6 @@ class TableImpl {
     getColumns() {
         return this._columns;
     }
-    getConstraint() {
-        return this._constraint;
-    }
     persistentIndex() {
         return this._usePersistentIndex;
     }
@@ -8203,7 +7796,6 @@ class TableImpl {
             };
         });
         const clone = new TableImpl(this._name, colDef, this._indices, this._usePersistentIndex, name);
-        clone._constraint = this._constraint;
         clone._alias = name;
         return clone;
     }
@@ -8232,56 +7824,9 @@ class TableImpl {
         });
         return new RowImpl(this._functionMap, this._columns, this._indices, dbRecord.id, obj);
     }
-    constructIndices(pkName, indices, uniqueIndices, nullable) {
-        if (indices.size === 0) {
-            this._constraint = new Constraint(null, []);
-            return;
-        }
-        const columnMap = new Map();
-        this._columns.forEach((col) => columnMap.set(col.getName(), col));
-        this._indices = Array.from(indices.keys()).map((indexName) => {
-            return new IndexImpl(this._name, indexName, uniqueIndices.has(indexName), this.generateIndexedColumns(indices, columnMap, indexName));
-        });
-        this._functionMap = new Map();
-        this._indices.forEach((index) => this._functionMap.set(index.getNormalizedName(), this.getKeyOfIndexFn(columnMap, index)));
-        const pk = pkName === null ? null : new IndexImpl(this._name, pkName, true, this.generateIndexedColumns(indices, columnMap, pkName));
-        const notNullable = this._columns.filter((col) => !nullable.has(col.getName()));
-        this._constraint = new Constraint(pk, notNullable);
-    }
-    generateIndexedColumns(indices, columnMap, indexName) {
-        const index = indices.get(indexName);
-        if (index) {
-            return index.map((indexedColumn) => {
-                return {
-                    "autoIncrement": indexedColumn.autoIncrement,
-                    "order": indexedColumn.order,
-                    "schema": columnMap.get(indexedColumn.name)
-                };
-            });
-        }
-        throw new Exception(ErrorCode.ASSERTION);
-    }
-    getSingleKeyFn(columnMap, column) {
-        const col = columnMap.get(column.getName());
-        if (col) {
-            const colType = col.getType();
-            const keyOfIndexFn = this._evalRegistry.getKeyOfIndexEvaluator(colType);
-            return (payload) => keyOfIndexFn(payload[column.getName()]);
-        }
-        throw new Exception(ErrorCode.ASSERTION);
-    }
-    getMultiKeyFn(columnMap, columns) {
-        const getSingleKeyFunctions = columns.map((col) => this.getSingleKeyFn(columnMap, col.schema));
-        return (payload) => getSingleKeyFunctions.map((fn) => fn(payload));
-    }
-    getKeyOfIndexFn(columnMap, index) {
-        return index.columns.length === 1 ? this.getSingleKeyFn(columnMap, index.columns[0].schema) : this.getMultiKeyFn(columnMap, index.columns);
-    }
 }
 TableImpl.ROW_ID_INDEX_PATTERN = "#";
 TableImpl.EMPTY_INDICES = [];
-// Dynamic Table schema builder
-// TODO(arthurhsu): FIXME: use a public interface here.
 class TableBuilder {
     constructor(tableName) {
         this.checkNamingRules(tableName);
@@ -8290,7 +7835,6 @@ class TableBuilder {
         this.uniqueColumns = new Set();
         this.uniqueIndices = new Set();
         this.nullable = new Set();
-        this.pkName = null;
         this.indices = new Map();
         this.persistIndex = false;
     }
@@ -8298,9 +7842,6 @@ class TableBuilder {
         this.checkNamingRules(name);
         this.checkNameConflicts(name);
         this.columns.set(name, type);
-        //if (TableBuilder.NULLABLE_TYPES_BY_DEFAULT.has(type)) {
-        // 	this.addNullable([name]);
-        //}
         return this;
     }
     getSchema() {
@@ -8314,9 +7855,6 @@ class TableBuilder {
         });
         // Pass null as indices since Columns are not really constructed yet.
         const table = new TableImpl(this.name, columns, null, this.persistIndex);
-        // Columns shall be constructed within TableImpl ctor, now we can
-        // instruct it to construct proper index schema.
-        table.constructIndices(this.pkName, this.indices, this.uniqueIndices, this.nullable);
         return table;
     }
     checkNamingRules(name) {
@@ -8338,10 +7876,6 @@ class TableBuilder {
         }
     }
 }
-TableBuilder.NULLABLE_TYPES_BY_DEFAULT = new Set([
-    Type.ARRAY_BUFFER,
-    Type.OBJECT
-]);
 class Database {
     constructor(data) {
         this.schema = new DatabaseSchemaImpl("db");
@@ -8385,15 +7919,6 @@ class Database {
         this.import(data);
     }
     // FROM: class DatabaseSchemaImpl
-    name() {
-        return this.schema._name;
-    }
-    info() {
-        if (this.schema._info === undefined) {
-            this.schema._info = new Info(this);
-        }
-        return this.schema._info;
-    }
     tables() {
         return Array.from(this.schema.tableMap.values());
     }
@@ -8412,18 +7937,6 @@ class Database {
     select(...columns) {
         return new SelectBuilder(this.backStore, this.schema, this.cache, this.indexStore, this.queryEngine, this.runner, columns);
     }
-    // public insert(): InsertBuilder {
-    // 	return new InsertBuilder(this.global);
-    // }
-    // public insertOrReplace(): InsertBuilder {
-    // 	return new InsertBuilder(this.global, /* allowReplace */ true);
-    // }
-    // public update(table: Table): UpdateBuilder {
-    // 	return new UpdateBuilder(this.global, table);
-    // }
-    // public delete(): DeleteBuilder {
-    // 	return new DeleteBuilder(this.global);
-    // }
     createTransaction() {
         return new RuntimeTransaction(this.schema, this.cache, this.indexStore, this.backStore, this.runner);
     }
